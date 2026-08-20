@@ -1,0 +1,19 @@
+{
+  "io": {
+    "tree_name": "Events",
+    "file_name": "../data/dati0.root"
+  },
+  "flag": {
+    "en_kinematics": true,
+    "en_isolation": true,
+    "en_opposite_charge": true,
+    "en_mass_window": true
+  },
+  "cut": {
+    "pt_cut": 25.0,
+    "eta_cut": 2.4,
+    "iso_cut": 0.15,
+    "mass_min": 60.0,
+    "mass_max": 120.0
+  }
+}
