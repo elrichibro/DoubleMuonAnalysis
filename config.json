@@ -1,16 +1,15 @@
 {
-  "in_out": {
+  "io": {
     "tree_name": "Events",
-    "file_name": "../data/dati0.root",
-    "output_file": "output_results.root"
+    "file_name": "../data/dati0.root"
   },
-  "flags": {
-    "enable_kinematics": true,
-    "enable_isolation": true,
-    "enable_opposite_charge": true,
-    "enable_mass_window": true
+  "flag": {
+    "en_kinematics": true,
+    "en_isolation": true,
+    "en_opposite_charge": true,
+    "en_mass_window": true
   },
-  "cuts": {
+  "cut": {
     "pt_cut": 25.0,
     "eta_cut": 2.4,
     "iso_cut": 0.15,
