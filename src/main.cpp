@@ -1,6 +1,10 @@
 #include <ROOT/RDataFrame.hxx>
+
 #include <iostream>
 #include <string>
+
+#include <chrono>
+
 #include <TCanvas.h>
 
 // Funzione C++ per il calcolo della massa invariante
@@ -11,7 +15,7 @@ float mass_leptons(const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, co
     );
 }
 
-int main(int argc, char** argv) {
+int main() {
     std::string tree_name = "Events";
     std::string file_name = "../data/dati0.root";
 
@@ -45,11 +49,16 @@ int main(int argc, char** argv) {
 
         auto histo_m_ll = mass_data.Histo1D({"histo_m_ll", "Invariant mass;m_{#mu+#mu-} [GeV];Events", 100, 60.0, 120.0}, "m_ll");
         
+        auto start = std::chrono::high_resolution_clock::now();
         mass_data.Report()->Print();
 
         // Check out -> loop initialized
         histo_m_ll->Draw("HIST");
         
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = end - start;
+        std::cout << "Tempo di esecuzione: " << elapsed.count() << " s" << std::endl;
+
     } catch (const std::exception& except) {
         std::cerr << "Error nature: " << except.what() << std::endl;
         return 1;
