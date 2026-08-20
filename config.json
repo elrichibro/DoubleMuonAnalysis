@@ -1,0 +1,20 @@
+{
+  "in_out": {
+    "tree_name": "Events",
+    "file_name": "../data/dati0.root",
+    "output_file": "output_results.root"
+  },
+  "flags": {
+    "enable_kinematics": true,
+    "enable_isolation": true,
+    "enable_opposite_charge": true,
+    "enable_mass_window": true
+  },
+  "cuts": {
+    "pt_cut": 25.0,
+    "eta_cut": 2.4,
+    "iso_cut": 0.15,
+    "mass_min": 60.0,
+    "mass_max": 120.0
+  }
+}
