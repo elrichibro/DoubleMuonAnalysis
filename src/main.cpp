@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
         // Good Muon Filter
         auto good_selection = [cfg] (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, 
         const ROOT::RVec<bool>& tight_id, const ROOT::RVec<float>& iso) {
-            ROOT::RVec<bool> mask(pt.size(), true);;
+            ROOT::RVec<bool> mask(pt.size(), true);
             
             if (cfg.flag.en_tight_muon) {
                 mask = mask && tight_id;
