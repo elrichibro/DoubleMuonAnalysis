@@ -9,8 +9,7 @@ Usage:
 
     optional:  
     -v or --verbose -> verbose option  
-    -vis or -visualize -> visualization option thourgh TApplication  
-
+    -vis or --visualize -> visualization option thourgh TApplication  
 
 '''
 
