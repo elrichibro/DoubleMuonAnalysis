@@ -10,12 +10,13 @@
 
 #include "Config.h"
 
-// Funzione C++ per il calcolo della massa invariante
-float mass_leptons(const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi, const ROOT::RVec<float>& mass) 
-{
-    return ROOT::VecOps::InvariantMass(ROOT::RVec<float>{pt[0], pt[1]}, ROOT::RVec<float>{eta[0], eta[1]}, ROOT::RVec<float>{phi[0], phi[1]},
-        ROOT::RVec<float>{mass[0], mass[1]}
-    );
+//Template for invariant mass calculus
+template <typename T>
+T mass_leptons(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi, const ROOT::RVec<T>& mass) {
+    
+    return ROOT::VecOps::InvariantMass(ROOT::RVec<T>{pt[0], pt[1]}, ROOT::RVec<T>{eta[0], eta[1]}, ROOT::RVec<T>{phi[0], phi[1]},
+        ROOT::RVec<T>{mass[0], mass[1]} );
+
 }
 
 int main(int argc, char* argv[]) {
@@ -95,17 +96,19 @@ int main(int argc, char* argv[]) {
 
         // Opposite Charge filter
         if (cfg.flag.en_opposite_charge) {
-            mass_data = mass_data.Filter([cfg] (const ROOT::RVec<int>& charge) { return charge[0] != charge[1];}, "good_Charge");
+            mass_data = mass_data.Filter([cfg] (const ROOT::RVec<int>& charge) { return charge[0] != charge[1]; }, {"good_Charge"});
         }
 
-        // Leptons Invarian Mass
-        mass_data.Define("m_ll", mass_leptons, {"good_Pt", "good_Eta", "good_Phi", "good_Mass"});
+        // Invarian Mass
+        mass_data = mass_data.Define("m_ll", [](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi, 
+            const ROOT::RVec<float>& mass) { return mass_leptons(pt, eta, phi, mass); }, {"good_Pt", "good_Eta", "good_Phi", "good_Mass"});
+        
         if (cfg.flag.en_mass_window) {
             mass_data = mass_data.Filter([cfg] (const float mass) { return (mass > cfg.cut.mass_min) && (mass < cfg.cut.mass_max); },
-             {"m_ll"});
+            {"m_ll"});
         }
 
-        auto histo_m_ll = mass_data.Histo1D({"histo_m_ll", "Invariant mass;m_{#mu+#mu-} [GeV];Events", 100, 60.0, 120.0}, "m_ll");
+        auto histo_m_ll = mass_data.Histo1D({"histo_m_ll", "Invariant mass; m_{#mu+#mu-} [GeV]; Events", 100, 60.0, 120.0}, "m_ll");
         
         //auto start = std::chrono::high_resolution_clock::now();
         mass_data.Report()->Print();
