@@ -16,9 +16,9 @@ struct flags_config {
 };
 
 struct cuts_config {
-    float pt_min = 25.0f;
-    float eta_max = 2.4f;
-    float iso_max = 0.15f;
+    float pt_cut = 25.0f;
+    float eta_cut = 2.4f;
+    float iso_cut = 0.15f;
     float mass_min = 60.0f;
     float mass_max = 120.0f;
 };
@@ -30,6 +30,7 @@ struct config_struct {
 };
 
 int Configure(config_struct& value, std::string json_path);
-void Verbose_config();
+
+void Verbose_config(const config_struct& value);
 
 #endif
