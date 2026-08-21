@@ -5,6 +5,7 @@
 
 #include <chrono>
 
+#include <TApplication.h>
 #include <TCanvas.h>
 
 #include "Config.h"
@@ -12,7 +13,7 @@
 // Funzione C++ per il calcolo della massa invariante
 float mass_leptons(const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi, const ROOT::RVec<float>& mass) 
 {
-    return ROOT::VecOps::InvariantMass( ROOT::RVec<float>{pt[0], pt[1]}, ROOT::RVec<float>{eta[0], eta[1]}, ROOT::RVec<float>{phi[0], phi[1]},
+    return ROOT::VecOps::InvariantMass(ROOT::RVec<float>{pt[0], pt[1]}, ROOT::RVec<float>{eta[0], eta[1]}, ROOT::RVec<float>{phi[0], phi[1]},
         ROOT::RVec<float>{mass[0], mass[1]}
     );
 }
@@ -21,6 +22,7 @@ int main(int argc, char* argv[]) {
 
     std::string json_path = "";
     int verbose = 0;
+    int visualize = 0;
     
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -29,6 +31,8 @@ int main(int argc, char* argv[]) {
             json_path = arg;
         } else if (arg == "--verbose" || arg == "-v") {
             verbose = 1;
+        } else if ((arg == "--visualize") || (arg == "-vis")) {
+            visualize = 1;
         } else {
             std::cout << "ERROR: invalid input command, please try again, exinting.\n" << std::endl;
             return 1;
@@ -38,6 +42,16 @@ int main(int argc, char* argv[]) {
     config_struct cfg;
     Configure(cfg, json_path);
 
+    if (verbose) {
+        Verbose_config(cfg);
+    }
+
+    
+    TApplication* app = nullptr;
+    if (visualize) {
+        app = new TApplication("app", &argc, argv);
+    }
+    
     try {
         // Trying to Enable Implicit MT
         ROOT::EnableImplicitMT();
@@ -68,15 +82,24 @@ int main(int argc, char* argv[]) {
 
         auto histo_m_ll = mass_data.Histo1D({"histo_m_ll", "Invariant mass;m_{#mu+#mu-} [GeV];Events", 100, 60.0, 120.0}, "m_ll");
         
-        auto start = std::chrono::high_resolution_clock::now();
+        //auto start = std::chrono::high_resolution_clock::now();
         mass_data.Report()->Print();
 
-        // Check out -> loop initialized
-        histo_m_ll->Draw("HIST");
-        
-        auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> elapsed = end - start;
-        std::cout << "Tempo di esecuzione: " << elapsed.count() << " s" << std::endl;
+        if (visualize) {
+            TCanvas canvas("c1", "Massa Z", 800, 600);
+            histo_m_ll->Draw("HIST");
+            
+            canvas.Connect("Closed()", "TApplication", app, "Terminate()");
+            canvas.Update();
+            
+            app->Run(); 
+        } else {
+            std::cout << "No visualization booked.\n" << std::endl;
+        }
+
+        //auto end = std::chrono::high_resolution_clock::now();
+        //std::chrono::duration<double> elapsed = end - start;
+        //std::cout << "Tempo di esecuzione: " << elapsed.count() << " s" << std::endl;
 
     } catch (const std::exception& except) {
         std::cerr << "Error nature: " << except.what() << std::endl;

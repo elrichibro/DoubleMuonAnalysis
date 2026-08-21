@@ -42,13 +42,13 @@ int Configure(config_struct& value, std::string json_path) {
 
         if (j.contains("cut")) {
             if (j["cut"].contains("pt_cut")) {
-                value.cut.pt_min = j["cut"]["pt_min"];
+                value.cut.pt_cut = j["cut"]["pt_cut"];
             }
             if (j["cut"].contains("eta_cut")) {
-                value.cut.eta_max = j["cut"]["eta_max"];
+                value.cut.eta_cut = j["cut"]["eta_cut"];
             }
             if (j["cut"].contains("iso_cut")) {
-                value.cut.iso_max = j["cut"]["iso_max"];
+                value.cut.iso_cut = j["cut"]["iso_cut"];
             }
             if (j["cut"].contains("mass_min")) {
                 value.cut.mass_min = j["cut"]["mass_min"];
@@ -64,4 +64,22 @@ int Configure(config_struct& value, std::string json_path) {
     return 0;
 }
 
-void Verbose_config() {}
+void Verbose_config(const config_struct& value) {
+    std::cout << "Init Verbose -> Loaded Configuration:" << std::endl;
+    std::cout << "Input file: " << value.io.input_file << " | Tree: " << value.io.tree_name << std::endl;
+    
+    std::cout << "Flags:" << std::endl;
+    std::cout << "    Kinematics: " << value.flag.en_kinematics << std::endl;
+    std::cout << "    Isolation: " << value.flag.en_isolation << std::endl;
+    std::cout << "    Opposite charge: " << value.flag.en_opposite_charge << std::endl;
+    std::cout << "    Mass window: " << value.flag.en_mass_window << std::endl;
+    
+    std::cout << "Cuts:" << std::endl;
+    std::cout << "    p_T cut: " << value.cut.pt_cut << std::endl;
+    std::cout << "    Eta cut: " << value.cut.eta_cut << std::endl;
+    std::cout << "    Isolation cut: " << value.cut.iso_cut << std::endl;
+    std::cout << "    Max mass: " << value.cut.mass_max << std::endl;
+    std::cout << "    Min mass: " << value.cut.mass_min << std::endl;
+
+    std::cout << "End of Verbose" << std::endl;
+}
