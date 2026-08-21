@@ -5,7 +5,11 @@ This is my final project for the Computing Methods for Experimental Physics exam
 
 Usage:
 '''bash
+    ./analyse ../config.json + optional
 
+    optional:  
+    -v or --verbose -> verbose option  
+    -vis or -visualize -> visualization option thourgh TApplication  
 
 
 '''
