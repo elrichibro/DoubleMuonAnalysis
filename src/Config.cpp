@@ -38,6 +38,9 @@ int Configure(config_struct& value, std::string json_path) {
             if (j["flag"].contains("en_mass_window")) {
                 value.flag.en_mass_window = j["flag"]["en_mass_window"];
             }
+            if (j["flag"].contains("en_tight_muon")) {
+                value.flag.en_tight_muon = j["flag"]["en_tight_muon"];
+            }
         }
 
         if (j.contains("cut")) {
@@ -73,6 +76,8 @@ void Verbose_config(const config_struct& value) {
     std::cout << "    Isolation: " << value.flag.en_isolation << std::endl;
     std::cout << "    Opposite charge: " << value.flag.en_opposite_charge << std::endl;
     std::cout << "    Mass window: " << value.flag.en_mass_window << std::endl;
+    std::cout << "    Tight muon: " << value.flag.en_tight_muon << std::endl;
+
     
     std::cout << "Cuts:" << std::endl;
     std::cout << "    p_T cut: " << value.cut.pt_cut << std::endl;
