@@ -20,6 +20,8 @@ float mass_leptons(const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, co
 
 int main(int argc, char* argv[]) {
 
+    // Variables needed
+    config_struct cfg;
     std::string json_path = "";
     int verbose = 0;
     int visualize = 0;
@@ -39,8 +41,10 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    config_struct cfg;
-    Configure(cfg, json_path);
+    if (Configure(cfg, json_path) != 0) {
+        std::cout << "Configurations fails, check needed, exiting." << std::endl;
+        return 1;
+    }
 
     if (verbose) {
         Verbose_config(cfg);
@@ -57,9 +61,27 @@ int main(int argc, char* argv[]) {
         ROOT::EnableImplicitMT();
         ROOT::RDataFrame data_frame(cfg.io.tree_name, cfg.io.input_file);
 
-        auto mass_data = data_frame
-            // Defining a bool variable -> GoodMuon that is true when the condition succed: Kinematics + Identification + Isolation
-            .Define("GoodMuon", "(Muon_pt > 25) && (abs(Muon_eta) < 2.4) && (Muon_tightId != 0) && (Muon_pfRelIso04_all < 0.15)")
+        // Good Muon Filter
+        auto good_selection = [cfg] (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, 
+        const ROOT::RVec<bool>& tight_id, const ROOT::RVec<float>& iso) {
+            ROOT::RVec<bool> mask(pt.size(), true);;
+            
+            if (cfg.flag.en_tight_muon) {
+                mask = mask && tight_id;
+            }
+            if (cfg.flag.en_kinematics) {
+                mask = mask && (pt > cfg.cut.pt_cut) && (abs(eta) < cfg.cut.eta_cut);
+            }
+            if (cfg.flag.en_isolation) {
+                mask = mask && (iso < cfg.cut.iso_cut);
+            }
+            
+            return mask;
+        };
+
+        ROOT::RDF::RNode mass_data = data_frame
+            // Defining a bool variable -> GoodMuon: Kinematics + Identification + Isolation
+            .Define("GoodMuon", good_selection, {"Muon_pt", "Muon_eta", "Muon_tightId", "Muon_pfRelIso04_all"})
             
             // Minumum number of Good Muons
             .Filter("Sum(GoodMuon) >= 2")
@@ -69,16 +91,19 @@ int main(int argc, char* argv[]) {
             .Define("good_Eta",  "Muon_eta[GoodMuon]")
             .Define("good_Phi",  "Muon_phi[GoodMuon]")
             .Define("good_Mass", "Muon_mass[GoodMuon]")
-            
-            // Opposit charge filter
-            .Define("good_Charge", "Muon_charge[GoodMuon]")
-            .Filter("good_Charge[0] != good_Charge[1]")
-            
-            // Using external function -> mass_leptons
-            .Define("m_ll", mass_leptons, {"good_Pt", "good_Eta", "good_Phi", "good_Mass"})
+            .Define("good_Charge", "Muon_charge[GoodMuon]");
 
-            // Invariant Mass filter in the Z region
-            .Filter("m_ll > 60 && m_ll < 120", "Z mass window");
+        // Opposite Charge filter
+        if (cfg.flag.en_opposite_charge) {
+            mass_data = mass_data.Filter([cfg] (const ROOT::RVec<int>& charge) { return charge[0] != charge[1];}, "good_Charge");
+        }
+
+        // Leptons Invarian Mass
+        mass_data.Define("m_ll", mass_leptons, {"good_Pt", "good_Eta", "good_Phi", "good_Mass"});
+        if (cfg.flag.en_mass_window) {
+            mass_data = mass_data.Filter([cfg] (const float mass) { return (mass > cfg.cut.mass_min) && (mass < cfg.cut.mass_max); },
+             {"m_ll"});
+        }
 
         auto histo_m_ll = mass_data.Histo1D({"histo_m_ll", "Invariant mass;m_{#mu+#mu-} [GeV];Events", 100, 60.0, 120.0}, "m_ll");
         
