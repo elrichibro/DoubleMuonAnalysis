@@ -100,8 +100,7 @@ int main(int argc, char* argv[]) {
         }
 
         // Invarian Mass
-        mass_data = mass_data.Define("m_ll", [](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi, 
-            const ROOT::RVec<float>& mass) { return mass_leptons(pt, eta, phi, mass); }, {"good_Pt", "good_Eta", "good_Phi", "good_Mass"});
+        mass_data = mass_data.Define("m_ll", mass_leptons<float>, {"good_Pt", "good_Eta", "good_Phi", "good_Mass"});
         
         if (cfg.flag.en_mass_window) {
             mass_data = mass_data.Filter([cfg] (const float mass) { return (mass > cfg.cut.mass_min) && (mass < cfg.cut.mass_max); },
