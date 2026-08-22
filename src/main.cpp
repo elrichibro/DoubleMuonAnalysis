@@ -9,15 +9,7 @@
 #include <TCanvas.h>
 
 #include "Config.h"
-
-//Template for invariant mass calculus
-template <typename T>
-T mass_leptons(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi, const ROOT::RVec<T>& mass) {
-    
-    return ROOT::VecOps::InvariantMass(ROOT::RVec<T>{pt[0], pt[1]}, ROOT::RVec<T>{eta[0], eta[1]}, ROOT::RVec<T>{phi[0], phi[1]},
-        ROOT::RVec<T>{mass[0], mass[1]} );
-
-}
+#include "Utils.h"
 
 int main(int argc, char* argv[]) {
 
@@ -107,14 +99,19 @@ int main(int argc, char* argv[]) {
             {"m_ll"});
         }
 
+        ROOT::RDF::RNode phis_data = mass_data.Define("phi_star", phi_star<float>, {"good_Eta", "good_Phi"});
+
         auto histo_m_ll = mass_data.Histo1D({"histo_m_ll", "Invariant mass; m_{#mu+#mu-} [GeV]; Events", 100, 60.0, 120.0}, "m_ll");
-        
+        auto histo_phis = phis_data.Histo1D({"histo_phis", "Angular variable; #phi* [rad]; Events", 100, 0, 6}, "phi_star");
         //auto start = std::chrono::high_resolution_clock::now();
         mass_data.Report()->Print();
 
         if (visualize) {
             TCanvas canvas("c1", "Massa Z", 800, 600);
             histo_m_ll->Draw("HIST");
+
+            TCanvas canvas2("c2", "Phi", 800, 600);
+            histo_phis->Draw("HIST_PHI");
             
             canvas.Connect("Closed()", "TApplication", app, "Terminate()");
             canvas.Update();
