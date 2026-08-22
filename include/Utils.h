@@ -72,9 +72,4 @@ inline validation_type Validation_load(const std::string& json_path) {
     return validation_map;
 }
 
-inline int Validation_check(const validation_type& validation_map) {
-    
-}
-
-
 #endif
