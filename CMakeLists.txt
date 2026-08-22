@@ -10,6 +10,6 @@ find_package(nlohmann_json REQUIRED)
 
 include_directories(include)
 
-add_executable(analyze src/main.cpp src/Config.cpp)
+add_executable(analyze src/main.cpp src/Config.cpp src/Filters.cpp)
 
 target_link_libraries(analyze PRIVATE ROOT::ROOTDataFrame nlohmann_json::nlohmann_json)
