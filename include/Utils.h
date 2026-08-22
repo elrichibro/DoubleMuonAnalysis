@@ -6,9 +6,6 @@
 
 #include <cmath>
 #include <cstdint>
-#include <fstream>
-
-
 
 /**
  * @brief Calculate the invariant mass of the first two particles in the event.
@@ -43,34 +40,6 @@ T phi_star(const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi) {
     T sin = std::sqrt(1.0 - (cos * cos));
 
     return std::tan((M_PI - delta_phi) / 2.0) * sin;
-}
-
-using validation_type = std::unordered_map<std::uint32_t, std::vector<std::pair<std::uint16_t, std::uint16_t>>>;
-
-inline validation_type Validation_load(const std::string& json_path) {
-    validation_type validation_map;
-    
-    std::ifstream file(json_path);
-    if (!file.is_open()) {
-        throw std::runtime_error("Error: cannot open " + json_path);
-    }
-
-    nlohmann::json json_data = nlohmann::json::parse(file);// JSON CORE !!!
-
-    for (const auto& [run_number, lum_block] : json_data.items()) {
-        std::uint32_t run = static_cast<std::uint32_t>(std::stoul(run_number));
-
-        std::vector<std::pair<std::uint16_t, std::uint16_t>> blocks;
-        blocks.reserve(lum_block.size());
-
-        for (const auto& iter : lum_block) {
-            std::uint16_t start = static_cast<std::uint16_t>(iter[0].get<unsigned int>());
-            std::uint16_t end   = static_cast<std::uint16_t>(iter[1].get<unsigned int>());
-            blocks.emplace_back(start, end);
-        }
-        validation_map[run] = std::move(blocks);
-    }
-    return validation_map;
 }
 
 #endif
