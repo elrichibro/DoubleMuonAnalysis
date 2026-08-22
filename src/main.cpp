@@ -10,6 +10,7 @@
 
 #include "Config.h"
 #include "Utils.h"
+#include "Filters.h"
 
 int main(int argc, char* argv[]) {
 
@@ -68,73 +69,12 @@ int main(int argc, char* argv[]) {
 
         auto validation_map = Validation_load(cfg.io.validation_file);
 
-        // Validation filter
-        auto validation_selection = [&validation_map] (const UInt_t run, const UInt_t lum_block) {
-            
-            thread_local static UInt_t last_run = 0;
-            thread_local static UInt_t last_lumi = 0;
-            thread_local static bool last_decision = false;
-
-            if (run == last_run && lum_block == last_lumi) {
-                return last_decision;
-            }
-            
-            last_run = run;
-            last_lumi = lum_block;
-
-            auto it = validation_map.find(run);
-            
-            if (it != validation_map.end()) {
-                for (const auto& blocks : it->second) {
-                    if (lum_block >= blocks.first && lum_block <= blocks.second) {
-                        last_decision = true;
-                        return true;
-                    }
-                }
-            }
-            last_decision = false;
-            return false;
-        };
-        
-        /*
-        auto validation_selection = [&validation_map](const UInt_t run, const UInt_t lum_block) {
-            auto it = validation_map.find(run);
-            
-            if (it != validation_map.end()) {
-                for (const auto& blocks : it->second) {
-                    if (lum_block >= blocks.first && lum_block <= blocks.second) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        };
-        */
-
-        // Good Muon Filter
-        auto good_selection = [cfg] (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, 
-        const ROOT::RVec<bool>& tight_id, const ROOT::RVec<float>& iso) {
-            ROOT::RVec<bool> mask(pt.size(), true);
-            
-            if (cfg.flag.en_tight_muon) {
-                mask = mask && tight_id;
-            }
-            if (cfg.flag.en_kinematics) {
-                mask = mask && (pt > cfg.cut.pt_cut) && (abs(eta) < cfg.cut.eta_cut);
-            }
-            if (cfg.flag.en_isolation) {
-                mask = mask && (iso < cfg.cut.iso_cut);
-            }
-            
-            return mask;
-        };
-
         ROOT::RDF::RNode mass_data = data_frame
             // Validation run filter
-            .Filter(validation_selection, {"run", "luminosityBlock"})
+            .Filter(Validation_filter(validation_map), {"run" ,"luminosityBlock"})
             
             // Defining a bool variable -> GoodMuon: Kinematics + Identification + Isolation
-            .Define("GoodMuon", good_selection, {"Muon_pt", "Muon_eta", "Muon_tightId", "Muon_pfRelIso04_all"})
+            .Define("GoodMuon", GoodMuon_filter(cfg), {"Muon_pt", "Muon_eta", "Muon_tightId", "Muon_pfRelIso04_all"})
             
             // Minumum number of Good Muons
             .Filter("Sum(GoodMuon) >= 2")
@@ -148,14 +88,14 @@ int main(int argc, char* argv[]) {
 
         // Opposite Charge filter
         if (cfg.flag.en_opposite_charge) {
-            mass_data = mass_data.Filter([cfg] (const ROOT::RVec<int>& charge) { return charge[0] != charge[1]; }, {"good_Charge"});
+            mass_data = mass_data.Filter([&cfg] (const ROOT::RVec<int>& charge) { return charge[0] != charge[1]; }, {"good_Charge"});
         }
 
         // Invarian Mass
         mass_data = mass_data.Define("m_ll", mass_leptons<float>, {"good_Pt", "good_Eta", "good_Phi", "good_Mass"});
         
         if (cfg.flag.en_mass_window) {
-            mass_data = mass_data.Filter([cfg] (const float mass) { return (mass > cfg.cut.mass_min) && (mass < cfg.cut.mass_max); },
+            mass_data = mass_data.Filter([&cfg] (const float mass) { return (mass > cfg.cut.mass_min) && (mass < cfg.cut.mass_max); },
             {"m_ll"});
         }
 
@@ -188,7 +128,7 @@ int main(int argc, char* argv[]) {
             histo_m_ll->Draw("E_HIST");
 
             TCanvas canvas2("c2", "Phi", 800, 600);
-            histo_phis->Draw("");
+            histo_phis->Draw("E_HIST");
             
             canvas.Connect("Closed()", "TApplication", app, "Terminate()");
             canvas.Update();

@@ -2,6 +2,12 @@
 #define CONFIG_H
 
 #include <string>
+#include <unordered_map>
+#include <vector>
+#include <utility>// std::pair
+
+#include <cstdint>// uint.._t
+
 
 struct io_config {
     std::string tree_name = "";
@@ -34,5 +40,9 @@ struct config_struct {
 int Configure(config_struct& value, std::string json_path);
 
 void Verbose_config(const config_struct& value);
+
+using validation_type = std::unordered_map<std::uint32_t, std::vector<std::pair<std::uint16_t, std::uint16_t>>>;
+
+validation_type Validation_load(const std::string& json_path);
 
 #endif
