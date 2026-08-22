@@ -1,8 +1,8 @@
 {
   "io": {
     "tree_name": "Events",
-    "file_name": "../data/dati0.root",
-    "validation_file": "../validation_run.json" 
+    "input_file": "../data/dati0.root",
+    "validation_file": "../data/validation_muon_run.json" 
   },
   "flag": {
     "en_kinematics": true,

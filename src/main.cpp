@@ -18,6 +18,7 @@ int main(int argc, char* argv[]) {
     std::string json_path = "";
     int verbose = 0;
     int visualize = 0;
+    int time = 0;
     
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -28,10 +29,16 @@ int main(int argc, char* argv[]) {
             verbose = 1;
         } else if ((arg == "--visualize") || (arg == "-vis")) {
             visualize = 1;
+        } else if ((arg == "--time") || (arg == "-t")) {
+            time = 1;
         } else {
             std::cout << "ERROR: invalid input command, please try again, exinting.\n" << std::endl;
             return 1;
         }
+    }
+
+    if (verbose) {
+        Verbose_config(cfg);
     }
 
     if (Configure(cfg, json_path) != 0) {
@@ -52,13 +59,17 @@ int main(int argc, char* argv[]) {
     try {
         // Trying to Enable Implicit MT
         ROOT::EnableImplicitMT();
-        ROOT::RDataFrame data_frame(cfg.io.tree_name, cfg.io.input_file);
 
+        if (verbose){ 
+            std::cout << "RDataFrame object created" << std::endl;
+        }
+
+        ROOT::RDataFrame data_frame(cfg.io.tree_name, cfg.io.input_file);
 
         auto validation_map = Validation_load(cfg.io.validation_file);
 
         // Validation filter
-        auto validation_selection = [validation_map] (const UInt_t run, const UInt_t lum_block) {
+        auto validation_selection = [&validation_map] (const UInt_t run, const UInt_t lum_block) {
             
             thread_local static UInt_t last_run = 0;
             thread_local static UInt_t last_lumi = 0;
@@ -84,6 +95,21 @@ int main(int argc, char* argv[]) {
             last_decision = false;
             return false;
         };
+        
+        /*
+        auto validation_selection = [&validation_map](const UInt_t run, const UInt_t lum_block) {
+            auto it = validation_map.find(run);
+            
+            if (it != validation_map.end()) {
+                for (const auto& blocks : it->second) {
+                    if (lum_block >= blocks.first && lum_block <= blocks.second) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        };
+        */
 
         // Good Muon Filter
         auto good_selection = [cfg] (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, 
@@ -104,7 +130,9 @@ int main(int argc, char* argv[]) {
         };
 
         ROOT::RDF::RNode mass_data = data_frame
+            // Validation run filter
             .Filter(validation_selection, {"run", "luminosityBlock"})
+            
             // Defining a bool variable -> GoodMuon: Kinematics + Identification + Isolation
             .Define("GoodMuon", good_selection, {"Muon_pt", "Muon_eta", "Muon_tightId", "Muon_pfRelIso04_all"})
             
@@ -135,8 +163,25 @@ int main(int argc, char* argv[]) {
 
         auto histo_m_ll = mass_data.Histo1D({"histo_m_ll", "Invariant mass; m_{#mu+#mu-} [GeV]; Events", 100, 60.0, 120.0}, "m_ll");
         auto histo_phis = phis_data.Histo1D({"histo_phis", "Angular variable; #phi* [rad]; Events", 100, 0, 6}, "phi_star");
-        //auto start = std::chrono::high_resolution_clock::now();
+        
+        if (verbose){ 
+            std::cout << "Initializing Event Loop" << std::endl;
+        }
+        
+        std::chrono::high_resolution_clock::time_point start;
+        if (time) {
+            start = std::chrono::high_resolution_clock::now();
+        }
+        
         mass_data.Report()->Print();
+        
+        if (time) {
+            auto end = std::chrono::high_resolution_clock::now();
+
+            std::chrono::duration<double> elapsed = end - start;
+            std::cout << "Tempo di esecuzione: " << elapsed.count() << " s" << std::endl;
+        }
+
 
         if (visualize) {
             TCanvas canvas("c1", "Massa Z", 800, 600);
@@ -152,10 +197,6 @@ int main(int argc, char* argv[]) {
         } else {
             std::cout << "No visualization booked.\n" << std::endl;
         }
-
-        //auto end = std::chrono::high_resolution_clock::now();
-        //std::chrono::duration<double> elapsed = end - start;
-        //std::cout << "Tempo di esecuzione: " << elapsed.count() << " s" << std::endl;
 
     } catch (const std::exception& except) {
         std::cerr << "Error nature: " << except.what() << std::endl;

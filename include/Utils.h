@@ -2,11 +2,12 @@
 #define UTILS_H
 
 #include <ROOT/RVec.hxx>
+#include <nlohmann/json.hpp>
+
 #include <cmath>
 #include <cstdint>
 #include <fstream>
 
-#include <nlohmann/json.hpp>
 
 
 /**
