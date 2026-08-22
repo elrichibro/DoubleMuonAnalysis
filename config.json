@@ -1,7 +1,8 @@
 {
   "io": {
     "tree_name": "Events",
-    "file_name": "../data/dati0.root"
+    "file_name": "../data/dati0.root",
+    "validation_file": "../validation_run.json" 
   },
   "flag": {
     "en_kinematics": true,

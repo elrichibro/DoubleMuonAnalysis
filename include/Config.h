@@ -4,8 +4,9 @@
 #include <string>
 
 struct io_config {
-    std::string tree_name = "Events";
-    std::string input_file = "../data/dati0.root";
+    std::string tree_name = "";
+    std::string input_file = "";
+    std::string validation_file = "";
 };
 
 struct flags_config {

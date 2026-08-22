@@ -54,6 +54,37 @@ int main(int argc, char* argv[]) {
         ROOT::EnableImplicitMT();
         ROOT::RDataFrame data_frame(cfg.io.tree_name, cfg.io.input_file);
 
+
+        auto validation_map = Validation_load(cfg.io.validation_file);
+
+        // Validation filter
+        auto validation_selection = [validation_map] (const UInt_t run, const UInt_t lum_block) {
+            
+            thread_local static UInt_t last_run = 0;
+            thread_local static UInt_t last_lumi = 0;
+            thread_local static bool last_decision = false;
+
+            if (run == last_run && lum_block == last_lumi) {
+                return last_decision;
+            }
+            
+            last_run = run;
+            last_lumi = lum_block;
+
+            auto it = validation_map.find(run);
+            
+            if (it != validation_map.end()) {
+                for (const auto& blocks : it->second) {
+                    if (lum_block >= blocks.first && lum_block <= blocks.second) {
+                        last_decision = true;
+                        return true;
+                    }
+                }
+            }
+            last_decision = false;
+            return false;
+        };
+
         // Good Muon Filter
         auto good_selection = [cfg] (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, 
         const ROOT::RVec<bool>& tight_id, const ROOT::RVec<float>& iso) {
@@ -73,6 +104,7 @@ int main(int argc, char* argv[]) {
         };
 
         ROOT::RDF::RNode mass_data = data_frame
+            .Filter(validation_selection, {"run", "luminosityBlock"})
             // Defining a bool variable -> GoodMuon: Kinematics + Identification + Isolation
             .Define("GoodMuon", good_selection, {"Muon_pt", "Muon_eta", "Muon_tightId", "Muon_pfRelIso04_all"})
             
@@ -108,10 +140,10 @@ int main(int argc, char* argv[]) {
 
         if (visualize) {
             TCanvas canvas("c1", "Massa Z", 800, 600);
-            histo_m_ll->Draw("HIST");
+            histo_m_ll->Draw("E_HIST");
 
             TCanvas canvas2("c2", "Phi", 800, 600);
-            histo_phis->Draw("HIST_PHI");
+            histo_phis->Draw("");
             
             canvas.Connect("Closed()", "TApplication", app, "Terminate()");
             canvas.Update();
