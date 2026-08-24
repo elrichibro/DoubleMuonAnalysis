@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
         ROOT::EnableImplicitMT();
 
         if (verbose){ 
-            std::cout << "RDataFrame object created" << std::endl;
+            std::cout << "RDataFrame object created, starting analysis ..." << std::endl;
         }
 
         ROOT::RDataFrame data_frame(cfg.io.tree_name, cfg.io.input_file);
@@ -76,8 +76,14 @@ int main(int argc, char* argv[]) {
             // Defining a bool variable -> GoodMuon: Kinematics + Identification + Isolation
             .Define("GoodMuon", GoodMuon_filter(cfg), {"Muon_pt", "Muon_eta", "Muon_tightId", "Muon_pfRelIso04_all"})
             
+            .Define("LooseMuon", "Muon_pt > 10.0 && abs(Muon_eta) < 2.4 && Muon_looseId")
+            .Define("LooseElectron", "Electron_pt > 10.0 && abs(Electron_eta) < 2.5 && Electron_cutBased == 2")
+
+            .Filter("Sum(GoodMuon) == 2")
+            .Filter("Sum(LooseMuon) + Sum(LooseElectron) == 2")
+
             // Minumum number of Good Muons
-            .Filter("Sum(GoodMuon) >= 2")
+            .Filter("Sum(GoodMuon) == 2")
 
             // Creating good variables needed for the invariant mass calculus
             .Define("good_Pt",   "Muon_pt[GoodMuon]")
@@ -100,7 +106,7 @@ int main(int argc, char* argv[]) {
         }
 
         ROOT::RDF::RNode phis_data = mass_data.Define("phi_star", phi_star<float>, {"good_Eta", "good_Phi"});
-
+        
         auto histo_m_ll = mass_data.Histo1D({"histo_m_ll", "Invariant mass; m_{#mu+#mu-} [GeV]; Events", 100, 60.0, 120.0}, "m_ll");
         auto histo_phis = phis_data.Histo1D({"histo_phis", "Angular variable; #phi* [rad]; Events", 100, 0, 6}, "phi_star");
         
@@ -121,7 +127,6 @@ int main(int argc, char* argv[]) {
             std::chrono::duration<double> elapsed = end - start;
             std::cout << "Tempo di esecuzione: " << elapsed.count() << " s" << std::endl;
         }
-
 
         if (visualize) {
             TCanvas canvas("c1", "Massa Z", 800, 600);
