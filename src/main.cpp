@@ -54,6 +54,7 @@ int main(int argc, char* argv[]) {
     
     TApplication* app = nullptr;
     if (visualize) {
+        std::cout << "Visualization inializating ..." << std::endl;
         app = new TApplication("app", &argc, argv);
     }
     
@@ -69,46 +70,47 @@ int main(int argc, char* argv[]) {
 
         auto validation_map = Validation_load(cfg.io.validation_file);
 
-        ROOT::RDF::RNode mass_data = data_frame
-            // Validation run filter
-            .Filter(Validation_filter(validation_map), {"run" ,"luminosityBlock"})
-            
+        // Validation run filter
+        auto node_valid_data = data_frame.Filter(Validation_filter(validation_map), {"run" ,"luminosityBlock"}, "1. JSON Validation");
+
+        auto node1_good_muon = node_valid_data
             // Defining a bool variable -> GoodMuon: Kinematics + Identification + Isolation
             .Define("GoodMuon", GoodMuon_filter(cfg), {"Muon_pt", "Muon_eta", "Muon_tightId", "Muon_pfRelIso04_all"})
-            
+            .Filter("Sum(GoodMuon) == 2", "2. Good muon selection");
+        
+        auto node2_good_muon = node1_good_muon
+            .Define("good_Charge", "Muon_charge[GoodMuon]")
+            .Filter([&cfg] (const ROOT::RVec<int>& charge) { return charge[0] != charge[1]; }, {"good_Charge"}, "3. Opposite charge muons");
+
+        // Subtracting Multiboson background
+        auto node3_good_muon = node2_good_muon
             .Define("LooseMuon", "Muon_pt > 10.0 && abs(Muon_eta) < 2.4 && Muon_looseId")
             .Define("LooseElectron", "Electron_pt > 10.0 && abs(Electron_eta) < 2.5 && Electron_cutBased == 2")
+            .Filter("Sum(LooseMuon) + Sum(LooseElectron) == 2", "4. Multiboson background");
 
-            .Filter("Sum(GoodMuon) == 2")
-            .Filter("Sum(LooseMuon) + Sum(LooseElectron) == 2")
-
-            // Minumum number of Good Muons
-            .Filter("Sum(GoodMuon) == 2")
-
-            // Creating good variables needed for the invariant mass calculus
+        // Creating good variables needed for the invariant mass calculus
+        auto node_good_variables = node3_good_muon
             .Define("good_Pt",   "Muon_pt[GoodMuon]")
             .Define("good_Eta",  "Muon_eta[GoodMuon]")
             .Define("good_Phi",  "Muon_phi[GoodMuon]")
-            .Define("good_Mass", "Muon_mass[GoodMuon]")
-            .Define("good_Charge", "Muon_charge[GoodMuon]");
-
-        // Opposite Charge filter
-        if (cfg.flag.en_opposite_charge) {
-            mass_data = mass_data.Filter([&cfg] (const ROOT::RVec<int>& charge) { return charge[0] != charge[1]; }, {"good_Charge"});
-        }
-
-        // Invarian Mass
-        mass_data = mass_data.Define("m_ll", mass_leptons<float>, {"good_Pt", "good_Eta", "good_Phi", "good_Mass"});
+            .Define("good_Mass", "Muon_mass[GoodMuon]");
+            
+        ROOT::RDF::RNode node_inv_mass = node_good_variables    
+            .Define("m_ll", mass_leptons<float>, {"good_Pt", "good_Eta", "good_Phi", "good_Mass"});
         
         if (cfg.flag.en_mass_window) {
-            mass_data = mass_data.Filter([&cfg] (const float mass) { return (mass > cfg.cut.mass_min) && (mass < cfg.cut.mass_max); },
-            {"m_ll"});
+            node_inv_mass = node_inv_mass.Filter([&cfg] (const float mass) { return (mass > cfg.cut.mass_min) && (mass < cfg.cut.mass_max); },
+            {"m_ll"}, "5. Z0 range selection");
         }
 
-        ROOT::RDF::RNode phis_data = mass_data.Define("phi_star", phi_star<float>, {"good_Eta", "good_Phi"});
+        auto cut_report = node_inv_mass.Report();
+
+        // Phi* definition -> NOT in Z range
+        auto node_phi_star = node_good_variables.Define("phi_star", phi_star<float>, {"good_Eta", "good_Phi"});
         
-        auto histo_m_ll = mass_data.Histo1D({"histo_m_ll", "Invariant mass; m_{#mu+#mu-} [GeV]; Events", 100, 60.0, 120.0}, "m_ll");
-        auto histo_phis = phis_data.Histo1D({"histo_phis", "Angular variable; #phi* [rad]; Events", 100, 0, 6}, "phi_star");
+        // Histogram booked
+        auto histo_m_ll = node_inv_mass.Histo1D({"histo_m_ll", "Invariant mass; m_{#mu+#mu-} [GeV]; Events", 100, 60.0, 120.0}, "m_ll");
+        auto histo_phis = node_phi_star.Histo1D({"histo_phis", "Angular variable; #phi* [rad]; Events", 100, 0, 6}, "phi_star");
         
         if (verbose){ 
             std::cout << "Initializing Event Loop" << std::endl;
@@ -119,7 +121,7 @@ int main(int argc, char* argv[]) {
             start = std::chrono::high_resolution_clock::now();
         }
         
-        mass_data.Report()->Print();
+        cut_report->Print();        
         
         if (time) {
             auto end = std::chrono::high_resolution_clock::now();

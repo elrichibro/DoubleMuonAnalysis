@@ -18,7 +18,6 @@ struct io_config {
 struct flags_config {
     bool en_kinematics = false;
     bool en_isolation = false;
-    bool en_opposite_charge = false;
     bool en_mass_window = false;
     bool en_tight_muon = false;
 };

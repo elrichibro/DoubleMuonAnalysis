@@ -7,7 +7,6 @@
   "flag": {
     "en_kinematics": true,
     "en_isolation": true,
-    "en_opposite_charge": true,
     "en_mass_window": true,
     "en_tight_muon" : true
   },
