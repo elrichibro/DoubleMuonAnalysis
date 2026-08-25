@@ -132,7 +132,9 @@ int main(int argc, char* argv[]) {
 
         if (visualize) {
             TCanvas canvas("c1", "Massa Z", 800, 600);
+
             histo_m_ll->Draw("E_HIST");
+            canvas.SetLogy();
 
             TCanvas canvas2("c2", "Phi", 800, 600);
             histo_phis->Draw("E_HIST");

@@ -5,7 +5,7 @@ bool Validation_filter::operator()(const UInt_t run, const UInt_t lum_block) con
     thread_local static UInt_t last_lum_block = 0;
     thread_local static bool last_decision = false;
 
-    if (run == last_run && lum_block == last_lum_block) {
+    if ((run == last_run) && (lum_block == last_lum_block)) {
         return last_decision;
     }
 
@@ -15,8 +15,8 @@ bool Validation_filter::operator()(const UInt_t run, const UInt_t lum_block) con
     auto it = val_map.find(run);
 
     if (it != val_map.end()) {
-        for (const auto& blocks : it->second) {
-            if (lum_block >= blocks.first && lum_block <= blocks.second) {
+        for (const auto& block : it->second) {
+            if ((lum_block >= block.first) && (lum_block <= block.second)) {
                 last_decision = true;
                 return true;
             }
