@@ -10,6 +10,14 @@ find_package(nlohmann_json REQUIRED)
 
 include_directories(include)
 
-add_executable(analyze src/main.cpp src/Config.cpp src/Filters.cpp)
+set(COMMON_SRCS
+    src/Config.cpp
+    src/Filters.cpp
+)
 
+add_executable(analyze src/main.cpp ${COMMON_SRCS})
 target_link_libraries(analyze PRIVATE ROOT::ROOTDataFrame nlohmann_json::nlohmann_json)
+
+add_executable(analyze_mc src/mainMC.cpp ${COMMON_SRCS})
+target_link_libraries(analyze_mc PRIVATE ROOT::ROOTDataFrame nlohmann_json::nlohmann_json)
+
