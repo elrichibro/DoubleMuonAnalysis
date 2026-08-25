@@ -17,14 +17,20 @@ int Configure(config_struct& value, std::string json_path) {
         file >> j;
 
         if (j.contains("io")) {
-            if (j["io"].contains("tree_name")) {
-                value.io.tree_name = j["io"]["tree_name"];
+            if (j["io"].contains("tree_data_name")) {
+                value.io.tree_data_name = j["io"]["tree_data_name"];
             }
-            if (j["io"].contains("input_file")) {
-                value.io.input_file = j["io"]["input_file"];
+            if (j["io"].contains("in_data_file")) {
+                value.io.in_data_file = j["io"]["in_data_file"];
             }
-            if (j["io"].contains("validation_file")) {
-                value.io.validation_file = j["io"]["validation_file"];
+            if (j["io"].contains("tree_mc_name")) {
+                value.io.tree_mc_name = j["io"]["tree_mc_name"];
+            }
+            if (j["io"].contains("in_mc_file")) {
+                value.io.in_mc_file = j["io"]["in_mc_file"];
+            }
+            if (j["io"].contains("val_file")) {
+                value.io.val_file = j["io"]["val_file"];
             }
         }
 
@@ -69,9 +75,11 @@ int Configure(config_struct& value, std::string json_path) {
 
 void Verbose_config(const config_struct& value) {
     std::cout << "Init Verbose -> Loaded Configuration:" << std::endl;
-    std::cout << "Input file: " << value.io.input_file << std::endl;
-    std::cout << "Validation file: " << value.io.validation_file << std::endl;
-    std::cout << "Tree: " << value.io.tree_name << std::endl;
+    std::cout << "Input data file: " << value.io.in_data_file << std::endl;
+    std::cout << "Data Tree: " << value.io.tree_data_name << std::endl;
+    std::cout << "Input MC file: " << value.io.in_mc_file << std::endl;
+    std::cout << "MC Tree: " << value.io.tree_mc_name << std::endl;
+    std::cout << "Validation file: " << value.io.val_file << std::endl;
     
     std::cout << "Flags:" << std::endl;
     std::cout << "    Kinematics: " << value.flag.en_kinematics << std::endl;

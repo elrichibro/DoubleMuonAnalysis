@@ -66,9 +66,9 @@ int main(int argc, char* argv[]) {
             std::cout << "RDataFrame object created, starting analysis ..." << std::endl;
         }
 
-        ROOT::RDataFrame data_frame(cfg.io.tree_name, cfg.io.input_file);
+        ROOT::RDataFrame data_frame(cfg.io.tree_data_name, cfg.io.in_data_file);
 
-        auto validation_map = Validation_load(cfg.io.validation_file);
+        auto validation_map = Validation_load(cfg.io.val_file);
 
         // Validation run filter
         auto node_valid_data = data_frame.Filter(Validation_filter(validation_map), {"run" ,"luminosityBlock"}, "1. JSON Validation");
