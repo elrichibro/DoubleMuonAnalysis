@@ -46,4 +46,8 @@ ROOT::RVec<bool> GoodMuon_filter::operator()(const ROOT::RVec<float>& pt, const 
     }
     
     return mask;
-};
+}
+
+ROOT::RVec<bool> is_Good_Z0(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags) {
+    return ((pdgId == 23) && ((flags & (1 << 0)) != 0) && ((flags & (1 << 8)) != 0) && ((flags & (1 << 13)) != 0));
+}
