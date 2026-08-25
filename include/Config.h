@@ -10,9 +10,11 @@
 
 
 struct io_config {
-    std::string tree_name = "";
-    std::string input_file = "";
-    std::string validation_file = "";
+    std::string tree_data_name = "";// Data tree name
+    std::string in_data_file = "";// Input data file
+    std::string tree_mc_name = "";// MonteCarlo tree name
+    std::string in_mc_file = "";// Input MonteCarlo file
+    std::string val_file = "";// Validation json file
 };
 
 struct flags_config {
