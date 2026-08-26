@@ -11,11 +11,14 @@
 
 int main(int argc, char* argv[]) {
 
-    // Variables needed
     config_struct cfg;
     std::string json_path = "";
     int verbose = 0;
     int visualize = 0;
+    
+    // ---------
+    // INTERFACE
+    // ---------
     
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -31,11 +34,11 @@ int main(int argc, char* argv[]) {
             return 1;
         }
     }
-/*
-    if (verbose) {
-        Verbose_config(cfg);
-    }
-*/
+
+    // ------------------
+    // JSON CONFIGURATION
+    // ------------------
+
     if (Configure(cfg, json_path) != 0) {
         std::cout << "Configurations fails, check needed, exiting." << std::endl;
         return 1;
@@ -44,6 +47,10 @@ int main(int argc, char* argv[]) {
     if (verbose) {
         Verbose_config(cfg);
     }
+
+    // --------------------
+    // VISUALIZATION OPTION
+    // --------------------
     
     TApplication* app = nullptr;
     if (visualize) {
@@ -52,15 +59,18 @@ int main(int argc, char* argv[]) {
     }
 
     try {
-        // Trying to Enable Implicit MT
-        //ROOT::EnableImplicitMT();
-
-        if (verbose){ 
-            std::cout << "RDataFrame object created, starting analysis ..." << std::endl;
-        }
+        ROOT::EnableImplicitMT();// MultiThread option: ON
 
         ROOT::RDataFrame data_frame(cfg.io.tree_mc_name, cfg.io.in_mc_file);
+        if (verbose){ 
+            std::cout << "RDataFrame object created, unpaching" << cfg.io.tree_mc_name 
+            << " from " << cfg.io.in_mc_file << " file, starting analysis ..." << std::endl;
+        }
 
+        // -----
+        // NODES
+        // -----
+        
         auto node_isEvent = data_frame
         .Filter(is_MC_Event, {"GenPart_pdgId", "GenPart_statusFlags"}, "1. True Event");
 
@@ -73,11 +83,14 @@ int main(int argc, char* argv[]) {
         .Define("event_AntiMu_pt",   "GenPart_pt[AntiMu_mask]")
         .Define("event_AntiMu_eta",  "GenPart_eta[AntiMu_mask]");
 
-        
-        auto h_mu_pt  = node_analysis.Histo1D({"h_mu_pt",  "p_{T}(#mu^{-});p_{T} [GeV];Events", 100, 0, 100}, "event_Mu_pt");
-        auto h_mu_eta = node_analysis.Histo1D({"h_mu_eta", "#eta(#mu^{-});#eta;Events",          50, -2.5, 2.5}, "event_Mu_eta");
-        auto h_antimu_pt = node_analysis.Histo1D({"h_antimu_pt",   "p_{T}(#mu^{+});p_{T} [GeV];Events", 100, 0, 100}, "event_AntiMu_pt");
-        auto h_antimu_eta = node_analysis.Histo1D({"h_antimu_eta",  "#eta(#mu^{+});#eta;Events",          50, -2.5, 2.5}, "event_AntiMu_eta");          
+        // ----------
+        // HISTOGRAMS
+        // ----------
+
+        auto h_mu_pt  = node_analysis.Histo1D({"h_mu_pt", "p_{T}(#mu^{-}); p_{T} [GeV]; Events", 100, 0, 100}, "event_Mu_pt");
+        auto h_mu_eta = node_analysis.Histo1D({"h_mu_eta", "#eta(#mu^{-}); #eta; Events", 50, -2.5, 2.5}, "event_Mu_eta");
+        auto h_antimu_pt = node_analysis.Histo1D({"h_antimu_pt", "p_{T}(#mu^{+}); p_{T} [GeV]; Events", 100, 0, 100}, "event_AntiMu_pt");
+        auto h_antimu_eta = node_analysis.Histo1D({"h_antimu_eta", "#eta(#mu^{+}); #eta; Events", 50, -2.5, 2.5}, "event_AntiMu_eta");          
         
         if (visualize) {
             auto canvas = new TCanvas("c_all", "Muon Kinematics", 1200, 800);
