@@ -9,6 +9,8 @@
 #include <cstdint>// uint.._t
 
 
+
+
 struct io_config {
     std::string tree_data_name = "";// Data tree name
     std::string in_data_file = "";// Input data file
@@ -33,6 +35,7 @@ struct cuts_config {
 };
 
 struct config_struct {
+    std::string mode;
     io_config io;
     flags_config flag;
     cuts_config cut;

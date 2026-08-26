@@ -16,6 +16,10 @@ int Configure(config_struct& value, std::string json_path) {
         nlohmann::json j;
         file >> j;
 
+        if(j.contains("mode")) {
+            value.mode = j["mode"];
+        }
+
         if (j.contains("io")) {
             if (j["io"].contains("tree_data_name")) {
                 value.io.tree_data_name = j["io"]["tree_data_name"];

@@ -1,4 +1,6 @@
 {
+  "mode": "both" 
+  ,
   "io": {
     "tree_data_name": "Events",
     "in_data_file": "../data/dati0.root",
