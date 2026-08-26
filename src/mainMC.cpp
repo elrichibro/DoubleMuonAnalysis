@@ -54,10 +54,30 @@ int main(int argc, char* argv[]) {
         .Define("is_good_Z0", is_Good_Z0, {"GenPart_pdgId", "GenPart_statusFlags"})
         .Filter("Sum(is_good_Z0) == 1", "1. True Z0");
 
+/*
+        std::vector<ROOT::RDF::RResultPtr<double>> check_results;
+
+        for (int i = 0; i < 15; ++i) {
+            std::string flag_name = "Flag_" + std::to_string(i);
+
+            auto node_check = data_frame
+            .Define(flag_name, [i](const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags) {
+                return static_cast<int>(ROOT::VecOps::Sum((pdgId == 23) && ((flags & (1 << i)) != 0))); }, {"GenPart_pdgId", "GenPart_statusFlags"})
+            .Sum(flag_name);
+
+            check_results.push_back(node_check);
+        }
+*/
         auto cut_report = node_is_Z0.Report();
 
         cut_report->Print();
-
+/*
+        std::cout << "\n--- Check flags Z0 ---" << std::endl;
+        for(int i = 0; i < 15; ++i) {
+            std::cout << "Flag: " << i << " -> iterations: " << *check_results[i] << std::endl;
+        }
+        std::cout << "--------------------\n" << std::endl;
+*/
     } catch (const std::exception& except) {
         std::cerr << "Error nature: " << except.what() << std::endl;
         return 1;
