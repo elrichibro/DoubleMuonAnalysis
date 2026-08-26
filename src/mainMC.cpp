@@ -3,6 +3,9 @@
 #include <iostream>
 #include <string>
 
+#include <TApplication.h>
+#include <TCanvas.h>
+
 #include "Config.h"
 #include "Filters.h"
 
@@ -12,6 +15,7 @@ int main(int argc, char* argv[]) {
     config_struct cfg;
     std::string json_path = "";
     int verbose = 0;
+    int visualize = 0;
     
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -20,6 +24,8 @@ int main(int argc, char* argv[]) {
             json_path = arg;
         } else if (arg == "--verbose" || arg == "-v") {
             verbose = 1;
+        } else if ((arg == "--visualize") || (arg == "-vis")) {
+            visualize = 1;
         } else {
             std::cout << "ERROR: invalid input command, please try again, exinting.\n" << std::endl;
             return 1;
@@ -39,9 +45,15 @@ int main(int argc, char* argv[]) {
         Verbose_config(cfg);
     }
     
+    TApplication* app = nullptr;
+    if (visualize) {
+        std::cout << "Visualization inializating ..." << std::endl;
+        app = new TApplication("app", &argc, argv);
+    }
+
     try {
         // Trying to Enable Implicit MT
-        ROOT::EnableImplicitMT();
+        //ROOT::EnableImplicitMT();
 
         if (verbose){ 
             std::cout << "RDataFrame object created, starting analysis ..." << std::endl;
@@ -49,40 +61,45 @@ int main(int argc, char* argv[]) {
 
         ROOT::RDataFrame data_frame(cfg.io.tree_mc_name, cfg.io.in_mc_file);
 
-        // Validation run filter
-        auto node_is_Z0 = data_frame
-        .Define("is_good_Z0", is_Good_Z0, {"GenPart_pdgId", "GenPart_statusFlags"})
-        .Filter("Sum(is_good_Z0) == 1", "1. True Z0");
-/*
-        std::vector<ROOT::RDF::RResultPtr<double>> check_results;
+        auto node_isEvent = data_frame
+        .Filter(is_MC_Event, {"GenPart_pdgId", "GenPart_statusFlags"}, "1. True Event");
 
-        for (int i = 0; i < 15; ++i) {
-            std::string flag_name = "Flag_" + std::to_string(i);
+        auto node_analysis = node_isEvent
+        .Define("Mu_mask", is_MC_Muon, {"GenPart_pdgId", "GenPart_statusFlags"})
+        .Define("AntiMu_mask", is_MC_AntiMuon, {"GenPart_pdgId", "GenPart_status"})
 
-            auto node_check = data_frame
-            .Define(flag_name, [i](const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags) {
-                return static_cast<int>(ROOT::VecOps::Sum((pdgId == 23) && ((flags & (1 << i)) != 0))); }, {"GenPart_pdgId", "GenPart_statusFlags"})
-            .Sum(flag_name);
+        .Define("event_Mu_pt",  "GenPart_pt[Mu_mask]")
+        .Define("event_Mu_eta", "GenPart_eta[Mu_mask]")
+        .Define("event_AntiMu_pt",   "GenPart_pt[AntiMu_mask]")
+        .Define("event_AntiMu_eta",  "GenPart_eta[AntiMu_mask]");
 
-            check_results.push_back(node_check);
+        
+        auto h_mu_pt  = node_analysis.Histo1D({"h_mu_pt",  "p_{T}(#mu^{-});p_{T} [GeV];Events", 100, 0, 100}, "event_Mu_pt");
+        auto h_mu_eta = node_analysis.Histo1D({"h_mu_eta", "#eta(#mu^{-});#eta;Events",          50, -2.5, 2.5}, "event_Mu_eta");
+        auto h_antimu_pt = node_analysis.Histo1D({"h_antimu_pt",   "p_{T}(#mu^{+});p_{T} [GeV];Events", 100, 0, 100}, "event_AntiMu_pt");
+        auto h_antimu_eta = node_analysis.Histo1D({"h_antimu_eta",  "#eta(#mu^{+});#eta;Events",          50, -2.5, 2.5}, "event_AntiMu_eta");          
+        
+        if (visualize) {
+            TCanvas canvas1("c1", "Muon pt", 800, 600);
+            h_mu_pt->Draw("E_HIST");
+
+            TCanvas canvas2("c2", "Muon eta", 800, 600);
+            h_mu_eta->Draw("E_HIST");
+
+            TCanvas canvas3("c3", "AntiMuon pt", 800, 600);
+            h_antimu_pt->Draw("E_HIST");
+
+            TCanvas canvas4("c4", "AntiMuon eta", 800, 600);
+            h_antimu_eta->Draw("E_HIST");
+            
+            canvas1.Connect("Closed()", "TApplication", app, "Terminate()");
+            canvas1.Update();
+            
+            app->Run(); 
+        } else {
+            std::cout << "No visualization booked.\n" << std::endl;
         }
-*/
-        auto node_is_mu = node_is_Z0
-        .Define("Z0_idx", idx_Z0, {"is_good_Z0"})
-        .Define("true_Muon", "((GenPart_pdgId == 13) || (GenPart_pdgId == -13)) && (GenPart_genPartIdxMother == Z0_idx)")
-        .Filter("Sum(true_Muon) >=2","2. True muon");
 
-        //auto report1 = node_is_Z0.Report();
-        auto report2 = node_is_mu.Report();
-
-        report2->Print();
-/*
-        std::cout << "\n--- Check flags Z0 ---" << std::endl;
-        for(int i = 0; i < 15; ++i) {
-            std::cout << "Flag: " << i << " -> iterations: " << *check_results[i] << std::endl;
-        }
-        std::cout << "--------------------\n" << std::endl;
-*/
     } catch (const std::exception& except) {
         std::cerr << "Error nature: " << except.what() << std::endl;
         return 1;
