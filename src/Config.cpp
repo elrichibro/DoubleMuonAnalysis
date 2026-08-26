@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iostream>
 
-int Configure(config_struct& value, std::string json_path) {
+int Configure(config_struct& value, const std::string& json_path) {
     std::ifstream file(json_path);
     
     if (!file.is_open()) {
