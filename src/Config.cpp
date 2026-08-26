@@ -13,65 +13,36 @@ int Configure(config_struct& value, const std::string& json_path) {
     }
 
     try {
-        nlohmann::json j;
-        file >> j;
+        nlohmann::json json_obj;
+        file >> json_obj;
 
-        if(j.contains("mode")) {
-            value.mode = j["mode"];
+        value.mode = json_obj.value("mode", value.mode);
+
+        if (json_obj.contains("io")) {
+            value.io.tree_data_name = json_obj["io"].value("tree_data_name", value.io.tree_data_name);
+            value.io.in_data_file = json_obj["io"].value("in_data_file", value.io.in_data_file);
+            value.io.tree_mc_name = json_obj["io"].value("tree_mc_name", value.io.tree_mc_name);
+            value.io.in_mc_file = json_obj["io"].value("in_mc_file", value.io.in_mc_file);
+            value.io.val_file = json_obj["io"].value("", value.io.val_file);
         }
 
-        if (j.contains("io")) {
-            if (j["io"].contains("tree_data_name")) {
-                value.io.tree_data_name = j["io"]["tree_data_name"];
-            }
-            if (j["io"].contains("in_data_file")) {
-                value.io.in_data_file = j["io"]["in_data_file"];
-            }
-            if (j["io"].contains("tree_mc_name")) {
-                value.io.tree_mc_name = j["io"]["tree_mc_name"];
-            }
-            if (j["io"].contains("in_mc_file")) {
-                value.io.in_mc_file = j["io"]["in_mc_file"];
-            }
-            if (j["io"].contains("val_file")) {
-                value.io.val_file = j["io"]["val_file"];
-            }
+        if (json_obj.contains("flag")) {
+            value.flag.en_kinematics = json_obj["flag"].value("en_kinematics", value.flag.en_kinematics);
+            value.flag.en_isolation = json_obj["flag"].value("en_isolation", value.flag.en_isolation);
+            value.flag.en_mass_window = json_obj["flag"].value("en_mass_window", value.flag.en_mass_window);
+            value.flag.en_tight_muon = json_obj["flag"].value("en_tight_muon", value.flag.en_tight_muon);
         }
 
-        if (j.contains("flag")) {
-            if (j["flag"].contains("en_kinematics")) {
-                value.flag.en_kinematics = j["flag"]["en_kinematics"];
-            }
-            if (j["flag"].contains("en_isolation")) {
-                value.flag.en_isolation = j["flag"]["en_isolation"];
-            }
-            if (j["flag"].contains("en_mass_window")) {
-                value.flag.en_mass_window = j["flag"]["en_mass_window"];
-            }
-            if (j["flag"].contains("en_tight_muon")) {
-                value.flag.en_tight_muon = j["flag"]["en_tight_muon"];
-            }
-        }
-
-        if (j.contains("cut")) {
-            if (j["cut"].contains("pt_cut")) {
-                value.cut.pt_cut = j["cut"]["pt_cut"];
-            }
-            if (j["cut"].contains("eta_cut")) {
-                value.cut.eta_cut = j["cut"]["eta_cut"];
-            }
-            if (j["cut"].contains("iso_cut")) {
-                value.cut.iso_cut = j["cut"]["iso_cut"];
-            }
-            if (j["cut"].contains("mass_min")) {
-                value.cut.mass_min = j["cut"]["mass_min"];
-            }
-            if (j["cut"].contains("mass_max")) {
-                value.cut.mass_max = j["cut"]["mass_max"];
-            }
+        if (json_obj.contains("cut")) {
+            value.cut.pt_cut = json_obj["cut"].value("pt_cut", value.cut.pt_cut);
+            value.cut.eta_cut = json_obj["cut"].value("eta_cut", value.cut.eta_cut);
+            value.cut.iso_cut = json_obj["cut"].value("iso_cut", value.cut.iso_cut);
+            value.cut.mass_min = json_obj["cut"].value("mass_min", value.cut.mass_min);
+            value.cut.mass_max = json_obj["cut"].value("mass_max", value.cut.mass_max);
         }
     } catch (const std::exception& except) {
         std::cout << "ERROR: " << except.what() << std::endl;
+        return -1;
     }
 
     return 0;
