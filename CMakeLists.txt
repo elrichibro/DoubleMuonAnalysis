@@ -22,5 +22,5 @@ add_executable(analyze_mc src/mainMC.cpp ${COMMON_SRCS})
 target_link_libraries(analyze_mc PRIVATE ROOT::ROOTDataFrame nlohmann_json::nlohmann_json)
 
 add_executable(analyze_merge src/main_merge.cpp ${COMMON_SRCS})
-target_link_libraries(analyze_mc PRIVATE ROOT::ROOTDataFrame nlohmann_json::nlohmann_json)
+target_link_libraries(analyze_merge PRIVATE ROOT::ROOTDataFrame nlohmann_json::nlohmann_json)
 
