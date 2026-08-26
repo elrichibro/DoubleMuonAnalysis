@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
 
         auto node_analysis = node_isEvent
         .Define("Mu_mask", is_MC_Muon, {"GenPart_pdgId", "GenPart_statusFlags"})
-        .Define("AntiMu_mask", is_MC_AntiMuon, {"GenPart_pdgId", "GenPart_status"})
+        .Define("AntiMu_mask", is_MC_AntiMuon, {"GenPart_pdgId", "GenPart_statusFlags"})
 
         .Define("event_Mu_pt",  "GenPart_pt[Mu_mask]")
         .Define("event_Mu_eta", "GenPart_eta[Mu_mask]")
@@ -80,22 +80,18 @@ int main(int argc, char* argv[]) {
         auto h_antimu_eta = node_analysis.Histo1D({"h_antimu_eta",  "#eta(#mu^{+});#eta;Events",          50, -2.5, 2.5}, "event_AntiMu_eta");          
         
         if (visualize) {
-            TCanvas canvas1("c1", "Muon pt", 800, 600);
-            h_mu_pt->Draw("E_HIST");
+            auto canvas = new TCanvas("c_all", "Muon Kinematics", 1200, 800);
+            canvas->Divide(2, 2);
 
-            TCanvas canvas2("c2", "Muon eta", 800, 600);
-            h_mu_eta->Draw("E_HIST");
+            canvas->cd(1); h_mu_pt->Draw("E HIST");
+            canvas->cd(2); h_mu_eta->Draw("E HIST");
+            canvas->cd(3); h_antimu_pt->Draw("E HIST");
+            canvas->cd(4); h_antimu_eta->Draw("E HIST");
 
-            TCanvas canvas3("c3", "AntiMuon pt", 800, 600);
-            h_antimu_pt->Draw("E_HIST");
+            canvas->Connect("Closed()", "TApplication", app, "Terminate()");
+            canvas->Update();
 
-            TCanvas canvas4("c4", "AntiMuon eta", 800, 600);
-            h_antimu_eta->Draw("E_HIST");
-            
-            canvas1.Connect("Closed()", "TApplication", app, "Terminate()");
-            canvas1.Update();
-            
-            app->Run(); 
+            app->Run();
         } else {
             std::cout << "No visualization booked.\n" << std::endl;
         }
