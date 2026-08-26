@@ -51,3 +51,7 @@ ROOT::RVec<bool> GoodMuon_filter::operator()(const ROOT::RVec<float>& pt, const 
 ROOT::RVec<bool> is_Good_Z0(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags) {
     return ((pdgId == 23) && ((flags & (1 << 0)) != 0) && ((flags & (1 << 8)) != 0) && ((flags & (1 << 13)) != 0));
 }
+
+std::size_t idx_Z0(const ROOT::RVec<bool>& is_Z0) {
+    return ROOT::VecOps::ArgMax(is_Z0);
+}

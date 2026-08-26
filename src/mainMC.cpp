@@ -53,7 +53,6 @@ int main(int argc, char* argv[]) {
         auto node_is_Z0 = data_frame
         .Define("is_good_Z0", is_Good_Z0, {"GenPart_pdgId", "GenPart_statusFlags"})
         .Filter("Sum(is_good_Z0) == 1", "1. True Z0");
-
 /*
         std::vector<ROOT::RDF::RResultPtr<double>> check_results;
 
@@ -68,9 +67,15 @@ int main(int argc, char* argv[]) {
             check_results.push_back(node_check);
         }
 */
-        auto cut_report = node_is_Z0.Report();
+        auto node_is_mu = node_is_Z0
+        .Define("Z0_idx", idx_Z0, {"is_good_Z0"})
+        .Define("true_Muon", "((GenPart_pdgId == 13) || (GenPart_pdgId == -13)) && (GenPart_genPartIdxMother == Z0_idx)")
+        .Filter("Sum(true_Muon) >=2","2. True muon");
 
-        cut_report->Print();
+        //auto report1 = node_is_Z0.Report();
+        auto report2 = node_is_mu.Report();
+
+        report2->Print();
 /*
         std::cout << "\n--- Check flags Z0 ---" << std::endl;
         for(int i = 0; i < 15; ++i) {

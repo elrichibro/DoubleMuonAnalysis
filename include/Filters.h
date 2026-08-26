@@ -46,4 +46,6 @@ struct GoodMuon_filter {
 
 ROOT::RVec<bool> is_Good_Z0(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags);    
 
+std::size_t idx_Z0(const ROOT::RVec<bool>& is_Z0);
+
 #endif
