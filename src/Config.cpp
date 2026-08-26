@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iostream>
 
-int Configure(config_struct& value, std::string json_path) {
+int Configure(config_struct& value, const std::string& json_path) {
     std::ifstream file(json_path);
     
     if (!file.is_open()) {
@@ -15,6 +15,10 @@ int Configure(config_struct& value, std::string json_path) {
     try {
         nlohmann::json j;
         file >> j;
+
+        if(j.contains("mode")) {
+            value.mode = j["mode"];
+        }
 
         if (j.contains("io")) {
             if (j["io"].contains("tree_data_name")) {
