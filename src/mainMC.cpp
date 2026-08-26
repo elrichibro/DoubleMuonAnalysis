@@ -63,8 +63,8 @@ int main(int argc, char* argv[]) {
 
         ROOT::RDataFrame data_frame(cfg.io.tree_mc_name, cfg.io.in_mc_file);
         if (verbose){ 
-            std::cout << "RDataFrame object created, unpaching" << cfg.io.tree_mc_name 
-            << " from " << cfg.io.in_mc_file << " file, starting analysis ..." << std::endl;
+            std::cout << "RDataFrame object created, unpacking " << cfg.io.tree_mc_name << " tree from " << cfg.io.in_mc_file << " file." << std::endl;
+            std::cout << "Starting analysis ..." << std::endl;
         }
 
         // -----

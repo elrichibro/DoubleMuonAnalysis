@@ -8,9 +8,6 @@
 
 #include <cstdint>// uint.._t
 
-
-
-
 struct io_config {
     std::string tree_data_name = "";// Data tree name
     std::string in_data_file = "";// Input data file
