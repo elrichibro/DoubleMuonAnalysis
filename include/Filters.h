@@ -44,6 +44,10 @@ struct GoodMuon_filter {
     const ROOT::RVec<float>& iso) const;
 };
 
-ROOT::RVec<bool> is_Good_Z0(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags);
+ROOT::RVec<bool> is_MC_Z0(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags);
+ROOT::RVec<bool> is_MC_Muon(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags);
+ROOT::RVec<bool> is_MC_AntiMuon(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags);
+
+bool is_MC_Event(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags);
 
 #endif

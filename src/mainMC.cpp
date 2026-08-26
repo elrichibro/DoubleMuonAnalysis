@@ -3,6 +3,9 @@
 #include <iostream>
 #include <string>
 
+#include <TApplication.h>
+#include <TCanvas.h>
+
 #include "Config.h"
 #include "Filters.h"
 
@@ -12,6 +15,7 @@ int main(int argc, char* argv[]) {
     config_struct cfg;
     std::string json_path = "";
     int verbose = 0;
+    int visualize = 0;
     
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -20,6 +24,8 @@ int main(int argc, char* argv[]) {
             json_path = arg;
         } else if (arg == "--verbose" || arg == "-v") {
             verbose = 1;
+        } else if ((arg == "--visualize") || (arg == "-vis")) {
+            visualize = 1;
         } else {
             std::cout << "ERROR: invalid input command, please try again, exinting.\n" << std::endl;
             return 1;
@@ -39,9 +45,15 @@ int main(int argc, char* argv[]) {
         Verbose_config(cfg);
     }
     
+    TApplication* app = nullptr;
+    if (visualize) {
+        std::cout << "Visualization inializating ..." << std::endl;
+        app = new TApplication("app", &argc, argv);
+    }
+
     try {
         // Trying to Enable Implicit MT
-        ROOT::EnableImplicitMT();
+        //ROOT::EnableImplicitMT();
 
         if (verbose){ 
             std::cout << "RDataFrame object created, starting analysis ..." << std::endl;
@@ -49,14 +61,40 @@ int main(int argc, char* argv[]) {
 
         ROOT::RDataFrame data_frame(cfg.io.tree_mc_name, cfg.io.in_mc_file);
 
-        // Validation run filter
-        auto node_is_Z0 = data_frame
-        .Define("is_good_Z0", is_Good_Z0, {"GenPart_pdgId", "GenPart_statusFlags"})
-        .Filter("Sum(is_good_Z0) == 1", "1. True Z0");
+        auto node_isEvent = data_frame
+        .Filter(is_MC_Event, {"GenPart_pdgId", "GenPart_statusFlags"}, "1. True Event");
 
-        auto cut_report = node_is_Z0.Report();
+        auto node_analysis = node_isEvent
+        .Define("Mu_mask", is_MC_Muon, {"GenPart_pdgId", "GenPart_statusFlags"})
+        .Define("AntiMu_mask", is_MC_AntiMuon, {"GenPart_pdgId", "GenPart_statusFlags"})
 
-        cut_report->Print();
+        .Define("event_Mu_pt",  "GenPart_pt[Mu_mask]")
+        .Define("event_Mu_eta", "GenPart_eta[Mu_mask]")
+        .Define("event_AntiMu_pt",   "GenPart_pt[AntiMu_mask]")
+        .Define("event_AntiMu_eta",  "GenPart_eta[AntiMu_mask]");
+
+        
+        auto h_mu_pt  = node_analysis.Histo1D({"h_mu_pt",  "p_{T}(#mu^{-});p_{T} [GeV];Events", 100, 0, 100}, "event_Mu_pt");
+        auto h_mu_eta = node_analysis.Histo1D({"h_mu_eta", "#eta(#mu^{-});#eta;Events",          50, -2.5, 2.5}, "event_Mu_eta");
+        auto h_antimu_pt = node_analysis.Histo1D({"h_antimu_pt",   "p_{T}(#mu^{+});p_{T} [GeV];Events", 100, 0, 100}, "event_AntiMu_pt");
+        auto h_antimu_eta = node_analysis.Histo1D({"h_antimu_eta",  "#eta(#mu^{+});#eta;Events",          50, -2.5, 2.5}, "event_AntiMu_eta");          
+        
+        if (visualize) {
+            auto canvas = new TCanvas("c_all", "Muon Kinematics", 1200, 800);
+            canvas->Divide(2, 2);
+
+            canvas->cd(1); h_mu_pt->Draw("E HIST");
+            canvas->cd(2); h_mu_eta->Draw("E HIST");
+            canvas->cd(3); h_antimu_pt->Draw("E HIST");
+            canvas->cd(4); h_antimu_eta->Draw("E HIST");
+
+            canvas->Connect("Closed()", "TApplication", app, "Terminate()");
+            canvas->Update();
+
+            app->Run();
+        } else {
+            std::cout << "No visualization booked.\n" << std::endl;
+        }
 
     } catch (const std::exception& except) {
         std::cerr << "Error nature: " << except.what() << std::endl;

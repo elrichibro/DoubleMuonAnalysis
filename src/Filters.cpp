@@ -48,6 +48,21 @@ ROOT::RVec<bool> GoodMuon_filter::operator()(const ROOT::RVec<float>& pt, const 
     return mask;
 }
 
-ROOT::RVec<bool> is_Good_Z0(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags) {
-    return ((pdgId == 23) && ((flags & (1 << 0)) != 0) && ((flags & (1 << 8)) != 0) && ((flags & (1 << 13)) != 0));
+ROOT::RVec<bool> is_MC_Z0(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags) {
+    return ((pdgId == 23) && ((flags & 0x2101) == 0x2101));
 }
+
+ROOT::RVec<bool> is_MC_Muon(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags) {
+    return ((pdgId == 13) && ((flags & 0x2101) == 0x2101));
+}
+
+ROOT::RVec<bool> is_MC_AntiMuon(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags) {
+    return ((pdgId == -13) && ((flags & 0x2101) == 0x2101));
+}
+
+bool is_MC_Event(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags) {
+
+    return ((ROOT::VecOps::Sum(is_MC_Z0(pdgId, flags)) == 1) && 
+    (ROOT::VecOps::Sum(is_MC_Muon(pdgId, flags)) == 1) && (ROOT::VecOps::Sum(is_MC_AntiMuon(pdgId, flags)) == 1)); 
+}
+
