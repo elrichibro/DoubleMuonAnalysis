@@ -8,13 +8,13 @@
 #include <cstdint>
 
 /**
- * @brief Calculate the invariant mass of the first two particles in the event.
+ * @brief Calculates the invariant mass of the first two particles in the event.
  * @tparam Template: float, double.
- * @param pt Is the RVec containing the transverse momentum of the particles.
- * @param eta Is the pseudorapidity of the particles.
- * @param phi Is the angular variable in cilindrical cordinates.
- * @param mass Mass values of the particles.
- * @return Returns the invariant mass depending on the input type.
+ * @param pt ROOT Vector containing the transverse momentum of the particles.
+ * @param eta Pseudorapidity.
+ * @param phi Angular variable in cilindrical cordinates.
+ * @param mass Mass values of the event particles.
+ * @return Returns the invariant mass.
  */
 template <typename T>
 T mass_leptons(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi, const ROOT::RVec<T>& mass) {
@@ -25,11 +25,11 @@ T mass_leptons(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const ROOT::RV
 }
 
 /**
- * @brief Calculate the special angular variable between the first two particles in the event.
+ * @brief Calculates the special angular variable between the first two particles in the event.
  * @tparam Template: float, double.
- * @param eta Is the pseudorapidity of the particles.
- * @param phi Is the angular variable in cilindrical cordinates.
- * @return Returns special angular variable depending on the input type.
+ * @param eta Pseudorapidity of the particles.
+ * @param phi Angular variable in cilindrical cordinates.
+ * @return Returns special angular variable.
  */
 template <typename T>
 T phi_star(const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi) {
