@@ -72,57 +72,61 @@ ROOT::RVec<bool> GoodMuon_filter::operator()(const ROOT::RVec<float>& pt, const 
     0 x ( 0 0 1 0 )( 0 0 0 1 )( 0 0 0 0 )( 0 0 0 1 ) = 0x2101
 */
 
-
-ROOT::RDF::RNode InvMass_AfterFSR(ROOT::RDF::RNode node, const config_struct& cfg) {
-
-    node
-        .Filter([](const ROOT::RVec<Int_t>& pdg, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother) {
-            return is_MC_Event(pdg, flags, mother, 2);
-        }, {"GenPart_pdgId", "GenPart_statusFlags", "GenPart_genPartIdxMother"}, "1. True Event Post-FSR")      
-        
-        .Define("Mu_mask_aFSR", is_MC_AntiMuon_aFSR, {"GenPart_pdgId", "GenPart_statusFlags"})
-        .Define("AMu_mask_aFSR", is_MC_AntiMuon_aFSR, {"GenPart_pdgId", "GenPart_statusFlags"})
-
-        .Define("good_Pt_aFSR", "GenPart_pt[Mu_mask_aFSR]")
-        .Define("good_Eta_aFSR", "GenPart_eta[(Mu_mask_aFSR || AMu_mask_aFSR)]")
-        .Define("good_Phi_aFSR", "GenPart_phi[(Mu_mask_aFSR || AMu_mask_aFSR)]")
-        .Define("good_Mass_aFSR", "GenPart_mass[(Mu_mask_aFSR || AMu_mask_aFSR)]");
-
-    ROOT::RDF::RNode node_InvMass_aFSR = node    
-    .Define("m_ll_aFSR", mass_leptons<float>, {"good_Pt_aFSR", "good_Eta_aFSR", "good_Phi_aFSR", "good_Mass_aFSR"});
-
-    if (cfg.flag.en_mass_window) {
-        node_InvMass_aFSR = node_InvMass_aFSR.Filter([&cfg] (const float mass) { return (mass > cfg.cut.mass_min) && (mass < cfg.cut.mass_max); },
-        {"m_ll_aFSR"}, "2. Z0 range selection");
-    }
-
-    return node_InvMass_aFSR;
-}
-
 ROOT::RDF::RNode InvMass_BeforeFSR(ROOT::RDF::RNode node, const config_struct& cfg) {
-    node
+    auto node_b = node
         .Filter([](const ROOT::RVec<Int_t>& pdg, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother) {
             return is_MC_Event(pdg, flags, mother, 1);
             },
-        {"GenPart_pdgId", "GenPart_statusFlags", "GenPart_genPartIdxMother"}, "1. True Event Pre-FSR")
+        {"GenPart_pdgId", "GenPart_statusFlags", "GenPart_genPartIdxMother"}, "1.b True Event")
         
         .Define("Mu_mask_bFSR", is_MC_Muon_bFSR, {"GenPart_pdgId", "GenPart_statusFlags", "GenPart_genPartIdxMother"})
         .Define("AMu_mask_bFSR", is_MC_AntiMuon_bFSR, {"GenPart_pdgId", "GenPart_statusFlags", "GenPart_genPartIdxMother"})
 
-        .Define("good_Pt_bFSR", "GenPart_pt[(Mu_mask_bFSR || AntiMu_mask_bFSR)]")
-        .Define("good_Eta_bFSR", "GenPart_eta[(Mu_mask_bFSR || AntiMu_mask_bFSR)]")
-        .Define("good_Phi_bFSR", "GenPart_phi[(Mu_mask_bFSR || AntiMu_mask_bFSR)]")
-        .Define("good_Mass_bFSR", "GenPart_mass[(Mu_mask_bFSR || AntiMu_mask_bFSR)]");
+        .Define("good_mask_bFSR", "Mu_mask_bFSR || AMu_mask_bFSR")
 
-    ROOT::RDF::RNode node_inv_mass_bFSR = node    
+        .Define("good_Pt_bFSR", "GenPart_pt[good_mask_bFSR]")
+        .Define("good_Eta_bFSR", "GenPart_eta[good_mask_bFSR]")
+        .Define("good_Phi_bFSR", "GenPart_phi[good_mask_bFSR]")
+        .Define("good_Mass_bFSR", "GenPart_mass[good_mask_bFSR]");
+
+    ROOT::RDF::RNode node_inv_mass_bFSR = node_b
     .Define("m_ll_bFSR", mass_leptons<float>, {"good_Pt_bFSR", "good_Eta_bFSR", "good_Phi_bFSR", "good_Mass_bFSR"});
 
     if (cfg.flag.en_mass_window) {
         node_inv_mass_bFSR = node_inv_mass_bFSR.Filter([&cfg] (const float mass) { return (mass > cfg.cut.mass_min) && (mass < cfg.cut.mass_max); },
-        {"m_ll_bFSR"}, "2. Z0 range selection");
+        {"m_ll_bFSR"}, "2.b Z0 range selection");
     }
 
     return node_inv_mass_bFSR;
+}
+
+
+ROOT::RDF::RNode InvMass_AfterFSR(ROOT::RDF::RNode node, const config_struct& cfg) {
+
+    auto node_a = node
+        .Filter([](const ROOT::RVec<Int_t>& pdg, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother) {
+            return is_MC_Event(pdg, flags, mother, 2);
+        }, {"GenPart_pdgId", "GenPart_statusFlags", "GenPart_genPartIdxMother"}, "1.a True Event")      
+        
+        .Define("Mu_mask_aFSR", is_MC_Muon_aFSR, {"GenPart_pdgId", "GenPart_statusFlags"})
+        .Define("AMu_mask_aFSR", is_MC_AntiMuon_aFSR, {"GenPart_pdgId", "GenPart_statusFlags"})
+
+        .Define("good_mask_aFSR", "Mu_mask_aFSR || AMu_mask_aFSR")
+
+        .Define("good_Pt_aFSR", "GenPart_pt[good_mask_aFSR]")
+        .Define("good_Eta_aFSR", "GenPart_eta[good_mask_aFSR]")
+        .Define("good_Phi_aFSR", "GenPart_phi[good_mask_aFSR]")
+        .Define("good_Mass_aFSR", "GenPart_mass[good_mask_aFSR]");
+
+    ROOT::RDF::RNode node_InvMass_aFSR = node_a
+    .Define("m_ll_aFSR", mass_leptons<float>, {"good_Pt_aFSR", "good_Eta_aFSR", "good_Phi_aFSR", "good_Mass_aFSR"});
+
+    if (cfg.flag.en_mass_window) {
+        node_InvMass_aFSR = node_InvMass_aFSR.Filter([&cfg] (const float mass) { return (mass > cfg.cut.mass_min) && (mass < cfg.cut.mass_max); },
+        {"m_ll_aFSR"}, "2.a Z0 range selection");
+    }
+
+    return node_InvMass_aFSR;
 }
 
 
