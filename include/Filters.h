@@ -34,7 +34,6 @@ struct Validation_filter {
  * @param pt ROOT Vector. Stores the transverse momentum.
  * @param eta Pseudorapidity of the particles.
  * @param tight_id Identification muon flag.
- * @param iso Isolation variable.
  * @return Returns the mask for GoodMuons.
 */
 struct GoodMuon_filter {
@@ -42,17 +41,13 @@ struct GoodMuon_filter {
 
     GoodMuon_filter(const config_struct& init_struct) : cfg_struct(init_struct) {}
 
-    ROOT::RVec<bool> operator() (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<bool>& tight_id, 
-    const ROOT::RVec<float>& iso) const;
+    ROOT::RVec<bool> operator() (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<bool>& tight_id) const;
 };
 
 
-ROOT::RDF::RNode InvMass(ROOT::RDF::RNode node, const config_struct& cfg, const std::string& tag, int FSR);
+ROOT::RDF::RNode InvMass(ROOT::RDF::RNode node, const std::string& tag, int FSR);
 
-ROOT::RDF::RNode InvMass_BeforeFSR(ROOT::RDF::RNode node, const config_struct& cfg);
-
-
-ROOT::RDF::RNode InvMass_AfterFSR(ROOT::RDF::RNode node, const config_struct& cfg);
+ROOT::RDF::RNode node_recMC(ROOT::RDF::RNode node);
 
 
 /**
@@ -109,12 +104,6 @@ ROOT::RVec<bool> is_MC_AntiMuon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT:
  * @param flags Status flag stored bitwise.
  * @return Returns true for a Z0 decaying into mu+mu-, else false.
 */
-
-
-
 bool is_MC_Event(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother_id, const int FSR);
-
-
-
 
 #endif

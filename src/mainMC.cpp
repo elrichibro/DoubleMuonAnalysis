@@ -5,6 +5,7 @@
 
 #include <TApplication.h>
 #include <TCanvas.h>
+#include "TEfficiency.h"
 
 #include "Config.h"
 #include "Filters.h"
@@ -68,34 +69,60 @@ int main(int argc, char* argv[]) {
             << " from " << cfg.io.in_mc_file << " file, starting analysis ..." << std::endl;
         }
 
-        // -----
-        // NODES
-        // -----
+        // --------------
+        // Invariant Mass
+        // --------------
 
-        /*
-        ROOT::RDF::RNode node_InvMass_bFSR = data_frame;
-        node_InvMass_bFSR = InvMass_BeforeFSR(node_InvMass_bFSR, cfg);
-
-        ROOT::RDF::RNode node_InvMass_aFSR = data_frame;
-        node_InvMass_aFSR = InvMass_AfterFSR(node_InvMass_aFSR, cfg);
+        auto node_InvMass_bFSR = InvMass(data_frame, "bFSR", 1);
+        auto node_InvMass_aFSR = InvMass(data_frame, "aFSR", 2);
         
         auto report_bFSR = node_InvMass_bFSR.Report();
         auto report_aFSR = node_InvMass_aFSR.Report();
-        */
-
-        auto node_InvMass_bFSR = InvMass(data_frame, cfg, "bFSR", 1);
-        auto node_InvMass_aFSR = InvMass(data_frame, cfg, "aFSR", 2);
-        
-        auto report_bFSR = node_InvMass_bFSR.Report();
-        auto report_aFSR = node_InvMass_aFSR.Report();
-        
-        // ----------
-        // HISTOGRAMS
-        // ----------
 
         auto h_mass_ll_bFSR = node_InvMass_bFSR.Histo1D({"m_ll_bFSR", "Massa invariante dileptoni Before FSR; m_{#mu^{+}#mu^{-}}; Events", 100, 60, 120}, "m_ll_bFSR");        
         auto h_mass_ll_aFSR = node_InvMass_aFSR.Histo1D({"m_ll_aFSR", "Massa invariante dileptoni After FSR; m_{#mu^{+}#mu^{-}}; Events", 100, 60, 120}, "m_ll_aFSR");
 
+        // ----------
+        // Efficiency
+        // ----------
+
+        auto node_GEN_event = node_InvMass_aFSR
+            .Filter([](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, float mass) {
+                return (ROOT::VecOps::All(pt > 25.0f) && ROOT::VecOps::All(abs(eta) < 2.4f) && (mass > 60.0f) && (mass < 120.0f));
+            }, {"good_Pt_aFSR", "good_Eta_aFSR", "m_ll_aFSR"}, "Generator Event");
+
+        auto h_pt_gen = node_GEN_event.Histo1D({"h_pt_gen", "Generator; p_{T} [GeV]; Entries", 100, 25, 100}, "good_Pt_aFSR");
+        auto h_eta_gen = node_GEN_event.Histo1D({"h_eta_gen", "Generator; #eta; Entries", 100, -2.4, 2.4}, "good_Eta_aFSR");
+
+        ROOT::RDF::RNode node_REC_event = node_recMC(node_GEN_event);
+        
+        node_REC_event = node_REC_event
+            .Filter([](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, float mass) {
+                return (ROOT::VecOps::All(pt > 25.0f) && ROOT::VecOps::All(abs(eta) < 2.4f) && (mass > 60.0f) && (mass < 120.0f));
+            }, {"good_Muon_pt", "good_Muon_eta", "Muon_inv_mass"}, "4. Reconstructed Event");
+            
+        auto h_pt_rec = node_REC_event.Histo1D({"h_pt_rec", "Reconstructed; p_{T} [GeV]; Entries", 100, 25, 100}, "good_Pt_aFSR");
+        auto h_eta_rec = node_REC_event.Histo1D({"h_eta_rec", "Reconstructed; #eta; Entries", 100, -2.4, 2.4}, "good_Eta_aFSR");
+
+
+        auto eff_pt = std::make_unique<TEfficiency>(*h_pt_rec, *h_pt_gen);
+        auto eff_eta = std::make_unique<TEfficiency>(*h_eta_rec, *h_eta_gen);
+
+        eff_pt->SetTitle("p_{T} Efficiency; p_{T} [GeV]; #epsilon_{p_{T}}");
+        eff_eta->SetTitle("#eta Efficiency; #eta; #epsilon_{#eta}");
+
+        TCanvas c1("c1", "Efficiency Canvas", 800, 600);
+        c1.SetGrid();
+        eff_pt->Draw("AP");
+
+        TCanvas c2("c2", "Efficiency Canvas", 800, 600);
+        c2.SetGrid();
+        eff_eta->Draw("AP");
+
+        // ----------
+        // HISTOGRAMS
+        // ----------
+        
         report_bFSR->Print();
         report_aFSR->Print();
 
