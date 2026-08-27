@@ -47,6 +47,8 @@ struct GoodMuon_filter {
 };
 
 
+ROOT::RDF::RNode InvMass(ROOT::RDF::RNode node, const config_struct& cfg, const std::string& tag, int FSR);
+
 ROOT::RDF::RNode InvMass_BeforeFSR(ROOT::RDF::RNode node, const config_struct& cfg);
 
 
@@ -89,7 +91,7 @@ ROOT::RVec<bool> is_MC_AntiMuon_bFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT:
  * @param flags Status flag stored bitwise.
  * @return Returns a mask for true muons.
 */
-ROOT::RVec<bool> is_MC_Muon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags);
+ROOT::RVec<bool> is_MC_Muon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother_id);
 
 
 /**
@@ -98,7 +100,7 @@ ROOT::RVec<bool> is_MC_Muon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVe
  * @param flags Status flag stored bitwise.
  * @return Returns a mask for an antimuon selection.
 */
-ROOT::RVec<bool> is_MC_AntiMuon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags);
+ROOT::RVec<bool> is_MC_AntiMuon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother_id);
 
 
 /**

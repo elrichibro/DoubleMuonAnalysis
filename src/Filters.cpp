@@ -72,6 +72,44 @@ ROOT::RVec<bool> GoodMuon_filter::operator()(const ROOT::RVec<float>& pt, const 
     0 x ( 0 0 1 0 )( 0 0 0 1 )( 0 0 0 0 )( 0 0 0 1 ) = 0x2101
 */
 
+ROOT::RDF::RNode InvMass(ROOT::RDF::RNode node, const config_struct& cfg, const std::string& tag, int FSR) {
+    // String construction
+    const std::string mask = "good_mask_" + tag;
+    const std::string pt = "good_Pt_" + tag;
+    const std::string eta = "good_Eta_" + tag;
+    const std::string phi = "good_Phi_" + tag;
+    const std::string mass = "good_Mass_" + tag;
+    const std::string mll = "m_ll_" + tag;
+
+    // Node definition
+    ROOT::RDF::RNode node_fsr = node
+        .Filter([FSR](const ROOT::RVec<Int_t>& pdg, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother) {
+            return is_MC_Event(pdg, flags, mother, FSR);
+            },
+        {"GenPart_pdgId", "GenPart_statusFlags", "GenPart_genPartIdxMother"}, "1. True Event" + tag)
+        
+        .Define("Mu_mask_" + tag, (FSR == 1) ? is_MC_Muon_bFSR : is_MC_Muon_aFSR, {"GenPart_pdgId", "GenPart_statusFlags", "GenPart_genPartIdxMother"})
+        .Define("AMu_mask_" + tag, (FSR == 1) ? is_MC_AntiMuon_bFSR : is_MC_AntiMuon_aFSR, {"GenPart_pdgId", "GenPart_statusFlags", "GenPart_genPartIdxMother"})
+
+        .Define(mask, "Mu_mask_" + tag + " || AMu_mask_" + tag)
+
+        .Define(pt, "GenPart_pt[" + mask + "]")
+        .Define(eta, "GenPart_eta[" + mask + "]")
+        .Define(phi, "GenPart_phi[" + mask + "]")
+        .Define(mass, "GenPart_mass[" + mask + "]")
+
+        .Define(mll, mass_leptons<float>, {pt, eta, phi, mass});
+
+    // Optional mass cut
+    if (cfg.flag.en_mass_window) {
+        node_fsr = node_fsr.Filter([&cfg] (const float mass) { return (mass > cfg.cut.mass_min) && (mass < cfg.cut.mass_max); },
+        {mll}, "2. Z0 range selection" + tag);
+    }
+
+    return node_fsr;
+}
+
+
 ROOT::RDF::RNode InvMass_BeforeFSR(ROOT::RDF::RNode node, const config_struct& cfg) {
     auto node_b = node
         .Filter([](const ROOT::RVec<Int_t>& pdg, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother) {
@@ -164,11 +202,11 @@ ROOT::RVec<bool> is_MC_AntiMuon_bFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT:
     return ((pdgId == -13) && ((flags & 0x181) == 0x181) && (mother_id == z_idx));
 }
 
-ROOT::RVec<bool> is_MC_Muon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags) {
+ROOT::RVec<bool> is_MC_Muon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother_id) {
     return ((pdgId == 13) && ((flags & 0x2101) == 0x2101));
 }
 
-ROOT::RVec<bool> is_MC_AntiMuon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags) {
+ROOT::RVec<bool> is_MC_AntiMuon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother_id) {
     return ((pdgId == -13) && ((flags & 0x2101) == 0x2101));
 }
 
@@ -182,8 +220,8 @@ bool is_MC_Event(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags,
     } else if (FSR == 2) {
         return 
         ((ROOT::VecOps::Sum(is_MC_Z0(pdgId, flags)) == 1) && 
-        (ROOT::VecOps::Sum(is_MC_Muon_aFSR(pdgId, flags)) == 1) && 
-        (ROOT::VecOps::Sum(is_MC_AntiMuon_aFSR(pdgId, flags)) == 1)); 
+        (ROOT::VecOps::Sum(is_MC_Muon_aFSR(pdgId, flags, mother_id)) == 1) && 
+        (ROOT::VecOps::Sum(is_MC_AntiMuon_aFSR(pdgId, flags, mother_id)) == 1)); 
     }
 
     return false;
