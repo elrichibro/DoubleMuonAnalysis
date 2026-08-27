@@ -2,7 +2,7 @@
 #define UTILS_H
 
 #include <ROOT/RVec.hxx>
-#include <nlohmann/json.hpp>
+#include <TMath.h>
 
 #include <cmath>
 #include <cstdint>
@@ -39,7 +39,7 @@ T phi_star(const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi) {
     T cos = std::tanh(delta_eta / 2.0);
     T sin = std::sqrt(1.0 - (cos * cos));
 
-    return std::tan((M_PI - delta_phi) / 2.0) * sin;
+    return std::tan((TMath::Pi() - delta_phi) / 2.0) * sin;
 }
 
 #endif

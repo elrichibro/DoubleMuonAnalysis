@@ -8,6 +8,7 @@
 
 #include "Config.h"
 #include "Filters.h"
+#include "Utils.h"
 
 int main(int argc, char* argv[]) {
 
@@ -81,17 +82,32 @@ int main(int argc, char* argv[]) {
         .Define("event_Mu_pt",  "GenPart_pt[Mu_mask]")
         .Define("event_Mu_eta", "GenPart_eta[Mu_mask]")
         .Define("event_AntiMu_pt",   "GenPart_pt[AntiMu_mask]")
-        .Define("event_AntiMu_eta",  "GenPart_eta[AntiMu_mask]");
+        .Define("event_AntiMu_eta",  "GenPart_eta[AntiMu_mask]")
 
+        .Define("good_Pt", "GenPart_pt[(Mu_mask || AntiMu_mask)]")
+        .Define("good_Eta", "GenPart_eta[(Mu_mask || AntiMu_mask)]")
+        .Define("good_Phi", "GenPart_phi[(Mu_mask || AntiMu_mask)]")
+        .Define("good_Mass", "GenPart_mass[(Mu_mask || AntiMu_mask)]");
+
+        ROOT::RDF::RNode node_inv_mass = node_analysis    
+            .Define("m_ll", mass_leptons<float>, {"good_Pt", "good_Eta", "good_Phi", "good_Mass"});
+        
+        if (cfg.flag.en_mass_window) {
+            node_inv_mass = node_inv_mass.Filter([&cfg] (const float mass) { return (mass > cfg.cut.mass_min) && (mass < cfg.cut.mass_max); },
+            {"m_ll"}, "2. Z0 range selection");
+        }
+        
         // ----------
         // HISTOGRAMS
         // ----------
 
         auto h_mu_pt  = node_analysis.Histo1D({"h_mu_pt", "p_{T}(#mu^{-}); p_{T} [GeV]; Events", 100, 0, 100}, "event_Mu_pt");
-        auto h_mu_eta = node_analysis.Histo1D({"h_mu_eta", "#eta(#mu^{-}); #eta; Events", 50, -2.5, 2.5}, "event_Mu_eta");
+        auto h_mu_eta = node_analysis.Histo1D({"h_mu_eta", "#eta(#mu^{-}); #eta; Events", 100, -2.5, 2.5}, "event_Mu_eta");
         auto h_antimu_pt = node_analysis.Histo1D({"h_antimu_pt", "p_{T}(#mu^{+}); p_{T} [GeV]; Events", 100, 0, 100}, "event_AntiMu_pt");
-        auto h_antimu_eta = node_analysis.Histo1D({"h_antimu_eta", "#eta(#mu^{+}); #eta; Events", 50, -2.5, 2.5}, "event_AntiMu_eta");          
+        auto h_antimu_eta = node_analysis.Histo1D({"h_antimu_eta", "#eta(#mu^{+}); #eta; Events", 100, -2.5, 2.5}, "event_AntiMu_eta");
         
+        auto h_mass_ll = node_inv_mass.Histo1D({"h_mass_ll", "Massa invariante dileptoni; m_{(#mu^{+})(#mu^{-})}; Events", 100, 0, 200}, "m_ll");
+
         if (visualize) {
             auto canvas = new TCanvas("c_all", "Muon Kinematics", 1200, 800);
             canvas->Divide(2, 2);
@@ -100,6 +116,9 @@ int main(int argc, char* argv[]) {
             canvas->cd(2); h_mu_eta->Draw("E HIST");
             canvas->cd(3); h_antimu_pt->Draw("E HIST");
             canvas->cd(4); h_antimu_eta->Draw("E HIST");
+
+            auto canvas2 = new TCanvas("c", "Zmass", 800, 600);
+            h_mass_ll->Draw("E HIST");
 
             canvas->Connect("Closed()", "TApplication", app, "Terminate()");
             canvas->Update();
