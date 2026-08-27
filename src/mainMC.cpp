@@ -71,27 +71,30 @@ int main(int argc, char* argv[]) {
         // -----
         // NODES
         // -----
-        
-        auto node_InvMass_aFSR = InvMass_AfterFSR(data_frame, cfg);
-        auto node_InvMass_bFSR = InvMass_BeforeFSR(data_frame, cfg);
 
+        /*
+        ROOT::RDF::RNode node_InvMass_bFSR = data_frame;
+        node_InvMass_bFSR = InvMass_BeforeFSR(node_InvMass_bFSR, cfg);
+
+        ROOT::RDF::RNode node_InvMass_aFSR = data_frame;
+        node_InvMass_aFSR = InvMass_AfterFSR(node_InvMass_aFSR, cfg);
+        
         auto report_bFSR = node_InvMass_bFSR.Report();
         auto report_aFSR = node_InvMass_aFSR.Report();
+        */
+
+        auto node_InvMass_bFSR = InvMass(data_frame, cfg, "bFSR", 1);
+        auto node_InvMass_aFSR = InvMass(data_frame, cfg, "aFSR", 2);
         
+        auto report_bFSR = node_InvMass_bFSR.Report();
+        auto report_aFSR = node_InvMass_aFSR.Report();
         
         // ----------
         // HISTOGRAMS
         // ----------
 
-        /*
-        auto h_mu_pt  = node_analysis.Histo1D({"h_mu_pt", "p_{T}(#mu^{-}); p_{T} [GeV]; Events", 100, 0, 100}, "event_Mu_pt");
-        auto h_mu_eta = node_analysis.Histo1D({"h_mu_eta", "#eta(#mu^{-}); #eta; Events", 100, -2.5, 2.5}, "event_Mu_eta");
-        auto h_antimu_pt = node_analysis.Histo1D({"h_antimu_pt", "p_{T}(#mu^{+}); p_{T} [GeV]; Events", 100, 0, 100}, "event_AntiMu_pt");
-        auto h_antimu_eta = node_analysis.Histo1D({"h_antimu_eta", "#eta(#mu^{+}); #eta; Events", 100, -2.5, 2.5}, "event_AntiMu_eta");
-        */
-
-        auto h_mass_ll_bFSR = node_InvMass_bFSR.Histo1D({"m_ll_bFSR", "Massa invariante dileptoni Before FSR; m_{(#mu^{+})(#mu^{-})}; Events", 100, 0, 200}, "m_ll_bFSR");        
-        auto h_mass_ll_aFSR = node_InvMass_aFSR.Histo1D({"m_ll_aFSR", "Massa invariante dileptoni After FSR; m_{(#mu^{+})(#mu^{-})}; Events", 100, 0, 200}, "m_ll_aFSR");
+        auto h_mass_ll_bFSR = node_InvMass_bFSR.Histo1D({"m_ll_bFSR", "Massa invariante dileptoni Before FSR; m_{#mu^{+}#mu^{-}}; Events", 100, 60, 120}, "m_ll_bFSR");        
+        auto h_mass_ll_aFSR = node_InvMass_aFSR.Histo1D({"m_ll_aFSR", "Massa invariante dileptoni After FSR; m_{#mu^{+}#mu^{-}}; Events", 100, 60, 120}, "m_ll_aFSR");
 
         report_bFSR->Print();
         report_aFSR->Print();
