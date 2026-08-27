@@ -22,11 +22,11 @@ set(COMMON_LIBS
     nlohmann_json::nlohmann_json
 )
 
-add_executable(analyze src/main.cpp ${COMMON_SRCS})
-target_link_libraries(analyze PRIVATE ${COMMON_LIBS})
+#add_executable(analyze src/main.cpp ${COMMON_SRCS})
+#target_link_libraries(analyze PRIVATE ${COMMON_LIBS})
 
 add_executable(analyze_mc src/mainMC.cpp ${COMMON_SRCS})
 target_link_libraries(analyze_mc PRIVATE ${COMMON_LIBS})
 
-add_executable(analyze_merge src/main_merge.cpp ${COMMON_SRCS})
-target_link_libraries(analyze_merge PRIVATE ${COMMON_LIBS})
+#add_executable(analyze_merge src/main_merge.cpp ${COMMON_SRCS})
+#target_link_libraries(analyze_merge PRIVATE ${COMMON_LIBS})
