@@ -3,6 +3,30 @@
 #include "Utils.h"
 #include <cstdint>
 
+/* Flags summary:
+    0 : isPrompt                -> SELECTED
+    1 : isDecayedLeptonHadron
+    2 : isTauDecayProduct
+    3 : isPromptTauDecayProduct
+    4 : isDirectTauDecayProduct
+    5 : isDirectPromptTauDecayProduct
+    6 : isDirectHadronDecayProduct
+    7 : isHardProcess
+    8 : fromHardProcess         -> SELECTED
+    9 : isHardProcessTauDecayProduct
+    10 : isDirectHardProcessTauDecayProduct
+    11 : fromHardProcessBeforeFSR
+    12 : isFirstCopy
+    13 : isLastCopy             -> SELECTED
+    14 : isLastCopyBeforeFSR
+
+
+    Bitwise mask1: 0, 8, 13 -> 2^13 + 2^8 + 2^0 = 8192 + 256 + 1 = 8449
+    0 x ( 0 0 1 0 )( 0 0 0 1 )( 0 0 0 0 )( 0 0 0 1 ) = 0x2101
+
+    Bitwise mask2: 0, 7, 8 -> 2^8 + 2^7 + 2^0 = 256 + 128 + 1 = 385
+    0 x ( 0 0 0 1 )( 1 0 0 0 )( 0 0 0 1 ) = 0x181
+*/
 
 ROOT::RDF::RNode InvMass(ROOT::RDF::RNode node, const std::string& tag, int FSR) {
     // String construction
@@ -108,31 +132,6 @@ ROOT::RVec<bool> is_MC_AntiMuon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT:
     return ((pdgId == -13) && ((flags & 0x2101) == 0x2101));
 }
 
-
-/* Flags summary:
-    0 : isPrompt                -> SELECTED
-    1 : isDecayedLeptonHadron
-    2 : isTauDecayProduct
-    3 : isPromptTauDecayProduct
-    4 : isDirectTauDecayProduct
-    5 : isDirectPromptTauDecayProduct
-    6 : isDirectHadronDecayProduct
-    7 : isHardProcess
-    8 : fromHardProcess         -> SELECTED
-    9 : isHardProcessTauDecayProduct
-    10 : isDirectHardProcessTauDecayProduct
-    11 : fromHardProcessBeforeFSR
-    12 : isFirstCopy
-    13 : isLastCopy             -> SELECTED
-    14 : isLastCopyBeforeFSR
-
-
-    Bitwise mask1: 0, 8, 13 -> 2^13 + 2^8 + 2^0 = 8192 + 256 + 1 = 8449           
-    0 x ( 0 0 1 0 )( 0 0 0 1 )( 0 0 0 0 )( 0 0 0 1 ) = 0x2101
-
-    Bitwise mask2: 0, 7, 8 -> 2^8 + 2^7 + 2^0 = 256 + 128 + 1 = 385           
-    0 x ( 0 0 0 1 )( 1 0 0 0 )( 0 0 0 1 ) = 0x181
-*/
 bool is_MC_Event(const ROOT::RVec<int>& pdgId, const ROOT::RVec<int>& flags, const ROOT::RVec<int>& mother_id, const int FSR) {
     const uint16_t num_parts = pdgId.size();
     
