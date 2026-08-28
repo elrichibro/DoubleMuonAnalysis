@@ -127,8 +127,11 @@ ROOT::RVec<bool> is_MC_AntiMuon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT:
     14 : isLastCopyBeforeFSR
 
 
-    Bitwie mask: 0, 8, 13 -> 2^13 + 2^8 + 2^0 = 8192 + 256 + 1 = 8449           
+    Bitwise mask1: 0, 8, 13 -> 2^13 + 2^8 + 2^0 = 8192 + 256 + 1 = 8449           
     0 x ( 0 0 1 0 )( 0 0 0 1 )( 0 0 0 0 )( 0 0 0 1 ) = 0x2101
+
+    Bitwise mask2: 0, 7, 8 -> 2^8 + 2^7 + 2^0 = 256 + 128 + 1 = 385           
+    0 x ( 0 0 0 1 )( 1 0 0 0 )( 0 0 0 1 ) = 0x181
 */
 bool is_MC_Event(const ROOT::RVec<int>& pdgId, const ROOT::RVec<int>& flags, const ROOT::RVec<int>& mother_id, const int FSR) {
     const uint16_t num_parts = pdgId.size();
@@ -180,6 +183,5 @@ bool is_MC_Event(const ROOT::RVec<int>& pdgId, const ROOT::RVec<int>& flags, con
         }
         return ((count_Z0 == 1) && (count_Mu == 1) && (count_aMu == 1));
     }
-
     return false;
 }
