@@ -10,6 +10,7 @@
 #include "Config.h"
 #include "Filters.h"
 #include "Utils.h"
+#include "Checks.h"
 
 int main(int argc, char* argv[]) {
 
