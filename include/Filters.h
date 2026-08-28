@@ -66,26 +66,10 @@ int get_MC_Z0_idx(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags
  * @brief Selects muons based on flags requirements.
  * @param pdgId PDG identification index. (13 Muon)
  * @param flags Status flag stored bitwise.
+ * @param mother_id Id of the mother particle.
  * @return Returns a mask for true muons.
 */
 ROOT::RVec<bool> is_MC_Muon_bFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother_id);
-
-
-/**
- * @brief Accepts antimuons on physics requirements.
- * @param pdgId PDG identification index. (-13 AntiMuon)
- * @param flags Status flag stored bitwise.
- * @return Returns a mask for an antimuon selection.
-*/
-ROOT::RVec<bool> is_MC_AntiMuon_bFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother_id);
-
-
-/**
- * @brief Selects muons based on flags requirements.
- * @param pdgId PDG identification index. (13 Muon)
- * @param flags Status flag stored bitwise.
- * @return Returns a mask for true muons.
-*/
 ROOT::RVec<bool> is_MC_Muon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother_id);
 
 
@@ -93,8 +77,10 @@ ROOT::RVec<bool> is_MC_Muon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVe
  * @brief Accepts antimuons on physics requirements.
  * @param pdgId PDG identification index. (-13 AntiMuon)
  * @param flags Status flag stored bitwise.
+ * @param mother_id Id of the mother particle.
  * @return Returns a mask for an antimuon selection.
 */
+ROOT::RVec<bool> is_MC_AntiMuon_bFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother_id);
 ROOT::RVec<bool> is_MC_AntiMuon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother_id);
 
 
