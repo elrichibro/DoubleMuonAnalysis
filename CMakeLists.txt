@@ -15,6 +15,7 @@ include_directories(include)
 set(COMMON_SRCS
     src/Config.cpp
     src/Filters.cpp
+    src/Checks.cpp
 )
 
 set(COMMON_LIBS
@@ -27,6 +28,3 @@ set(COMMON_LIBS
 
 add_executable(analyze_mc src/mainMC.cpp ${COMMON_SRCS})
 target_link_libraries(analyze_mc PRIVATE ${COMMON_LIBS})
-
-#add_executable(analyze_merge src/main_merge.cpp ${COMMON_SRCS})
-#target_link_libraries(analyze_merge PRIVATE ${COMMON_LIBS})

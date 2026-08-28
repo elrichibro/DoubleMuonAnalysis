@@ -1,6 +1,8 @@
 #include "Checks.h"
 #include "Filters.h"
 #include "Utils.h"
+#include <cstdint>
+
 
 ROOT::RDF::RNode InvMass(ROOT::RDF::RNode node, const std::string& tag, int FSR) {
     // String construction
@@ -128,39 +130,55 @@ ROOT::RVec<bool> is_MC_AntiMuon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT:
     Bitwie mask: 0, 8, 13 -> 2^13 + 2^8 + 2^0 = 8192 + 256 + 1 = 8449           
     0 x ( 0 0 1 0 )( 0 0 0 1 )( 0 0 0 0 )( 0 0 0 1 ) = 0x2101
 */
-
-
-bool is_MC_Event(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother_id, const int FSR) {
-    ROOT::RVec<bool> is_MC_Z0 = ((pdgId == 23) && ((flags & 0x2101) == 0x2101));
-
-    if (!ROOT::VecOps::Any(is_MC_Z0)) {
-        return -1;
-    }
+bool is_MC_Event(const ROOT::RVec<int>& pdgId, const ROOT::RVec<int>& flags, const ROOT::RVec<int>& mother_id, const int FSR) {
+    const uint16_t num_parts = pdgId.size();
     
-    int MC_Z0_idx = static_cast<int>(ROOT::VecOps::ArgMax(is_MC_Z0));
+    unsigned int count_Z0 = 0;
+    unsigned int count_Mu = 0;
+    unsigned int count_aMu = 0;
 
-    if (MC_Z0_idx < 0) {
-        return false;
-    }
+    const uint16_t mask_aFSR = 0x2101;
+    const uint16_t mask_bFSR = 0x181;
 
-    ROOT::RVec<bool> is_MC_Muon_bFSR = ((pdgId == 13) && ((flags & 0x181) == 0x181) && (mother_id == MC_Z0_idx));
-
-    ROOT::RVec<bool> is_MC_Muon_aFSR = ((pdgId == 13) && ((flags & 0x2101) == 0x2101));
-    
-    ROOT::RVec<bool> is_MC_AntiMuon_bFSR = ((pdgId == -13) && ((flags & 0x181) == 0x181) && (mother_id == MC_Z0_idx));
-    
-    ROOT::RVec<bool> is_MC_AntiMuon_aFSR = ((pdgId == -13) && ((flags & 0x2101) == 0x2101));
-    
     if (FSR == 1) {
-        return 
-        ((ROOT::VecOps::Sum(is_MC_Z0) == 1) && 
-        (ROOT::VecOps::Sum(is_MC_Muon_bFSR) == 1) && 
-        (ROOT::VecOps::Sum(is_MC_AntiMuon_bFSR) == 1)); 
+        int z_idx = -1;
+
+        for (uint8_t i = 0; i < num_parts; i++) {
+            if ((pdgId[i] == 23) && ((flags[i] & mask_aFSR) == mask_aFSR)) {
+                count_Z0++;
+                z_idx = static_cast<int>(i);
+            }
+        }
+
+        if (count_Z0 != 1 || z_idx < 0) {
+            return false;
+        }
+
+        for (size_t i = 0; i < num_parts; i++) {
+            if (((flags[i] & mask_bFSR) == mask_bFSR) && (mother_id[i] == z_idx)) {
+                if (pdgId[i] == 13) {
+                    count_Mu++;
+                } else if (pdgId[i] == -13) {
+                    count_aMu++;
+                }
+            }
+        }
+
+        return ((count_Mu == 1) && (count_aMu == 1));
+
     } else if (FSR == 2) {
-        return 
-        ((ROOT::VecOps::Sum(is_MC_Z0) == 1) && 
-        (ROOT::VecOps::Sum(is_MC_Muon_aFSR) == 1) && 
-        (ROOT::VecOps::Sum(is_MC_AntiMuon_aFSR) == 1)); 
+        for (size_t i = 0; i < num_parts; i++) {
+            if ((flags[i] & mask_aFSR) == mask_aFSR) {
+                if (pdgId[i] == 23) {
+                    count_Z0++;
+                } else if (pdgId[i] == 13) {
+                    count_Mu++;
+                } else if (pdgId[i] == -13) {
+                    count_aMu++;
+                }
+            }
+        }
+        return ((count_Z0 == 1) && (count_Mu == 1) && (count_aMu == 1));
     }
 
     return false;
