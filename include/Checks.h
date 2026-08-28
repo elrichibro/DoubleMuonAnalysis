@@ -2,6 +2,7 @@
 #define CHECKS_H
 
 #include <map>
+#include <cstdint>
 #include <iostream>
 #include <string>
 
