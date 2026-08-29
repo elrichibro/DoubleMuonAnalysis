@@ -11,6 +11,7 @@
 #include "Filters.h"
 #include "Utils.h"
 #include "Checks.h"
+#include "Manager.h"
 
 int main(int argc, char* argv[]) {
 
@@ -156,6 +157,7 @@ int main(int argc, char* argv[]) {
         
         // START EVENT LOOP
 
+        /*
         auto eff_pt = std::make_unique<TEfficiency>(*h_pt_num, *h_pt_den);
         auto eff_eta = std::make_unique<TEfficiency>(*h_eta_num, *h_eta_den);
 
@@ -170,6 +172,14 @@ int main(int argc, char* argv[]) {
 
         report_bFSR->Print();
         report_aFSR->Print();
+*/
+
+        OutputManager manager;
+
+        manager.AddToPipeline("Efficiency pt", h_pt_den, h_pt_num);
+        manager.AddToPipeline("Efficiency eta", h_eta_den, h_eta_num);
+
+        manager.Run("Risultati.root");
 
         if (visualize) {
             auto canvas = new TCanvas("c_masses", "Invariant Mass Comparison", 1200, 600);

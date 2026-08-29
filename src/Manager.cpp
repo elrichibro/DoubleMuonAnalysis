@@ -12,23 +12,8 @@ void ObjectTH2::Process(TCanvas& canvas, TFile& file) {
     canvas.SaveAs((name_th2 + ".root").c_str());
 }
 
-void ObjectTEff::Process(TCanvas& canvas, TFile& file) {
-    auto eff_pt = std::make_unique<TEfficiency>(*hist_num, *hist_den);
-    eff_pt->Write();
-    eff_pt->Draw();
-    canvas.SaveAs((name_eff + ".root").c_str());
-}
-
 void OutputManager::AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr<TH1D> hist) {
     pipeline.push_back(std::make_unique<ObjectTH1>(name, hist));
-}
-
-void OutputManager::AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr<TH2D> hist) {
-    pipeline.push_back(std::make_unique<ObjectTH2>(name, hist));
-}
-
-void OutputManager::AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr<TH1D> hist1, ROOT::RDF::RResultPtr<TH1D> hist2) {
-    pipeline.push_back(std::make_unique<ObjectTEff>(name, hist1, hist2));
 }
 
 void OutputManager::Run(const std::string& filename) {
@@ -39,6 +24,6 @@ void OutputManager::Run(const std::string& filename) {
         canvas.Clear();
         it->Process(canvas, file);
     }
-
+    
     file.Close();
 }
