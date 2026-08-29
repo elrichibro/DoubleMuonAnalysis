@@ -54,4 +54,29 @@ ROOT::RVec<bool> is_MC_AntiMuon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT:
 bool is_MC_Event(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother_id, const int FSR);
 
 
+struct Results_EffMatrix {
+    std::vector<float> pt_res_gen;// Transverse momentum generated muons.
+    std::vector<float> pt_res_rec;// Transverse momentum of reconstructed muons.
+    std::vector<float> eta_res_gen;// Pseudorapidity of generated muons.
+    std::vector<float> eta_res_rec;// Pseudorapidity of reconstructed muons
+};
+
+struct MuonKinematics_EffMatrix {
+    const ROOT::RVec<float>& pt_gen;
+    const ROOT::RVec<float>& eta_gen;
+    const ROOT::RVec<float>& pt_rec;
+    const ROOT::RVec<float>& eta_rec;
+};
+
+
+struct MuonFlags_EffMatrix {
+    const ROOT::RVec<int>& rec_flav;
+    const ROOT::RVec<int>& rec_gen_idx;
+    const ROOT::RVec<int>& gen_status;
+    const ROOT::RVec<int>& gen_pdg_id;
+};
+
+Results_EffMatrix EffMatrix(const MuonKinematics_EffMatrix& kin, const MuonFlags_EffMatrix& flags);
+
+
 #endif

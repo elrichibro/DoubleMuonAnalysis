@@ -184,3 +184,31 @@ bool is_MC_Event(const ROOT::RVec<int>& pdgId, const ROOT::RVec<int>& flags, con
     }
     return false;
 }
+
+
+Results_EffMatrix EffMatrix(const MuonKinematics_EffMatrix& kin, const MuonFlags_EffMatrix& val) {
+    Results_EffMatrix results;
+
+    const unsigned int n_muons_rec = kin.pt_rec.size();
+    
+    for(int i = 0; i < n_muons_rec; i++) {
+        if (val.rec_flav[i] != 1) {
+            continue;
+        }
+
+        int j = val.rec_gen_idx[i];
+        
+        if ((j < 0) || (j >= kin.pt_gen.size())) {
+            continue;
+        }
+
+        if (std::abs(val.gen_pdg_id[j]) == 13 && val.gen_status[j] == 1) {
+            results.pt_res_rec.push_back(kin.pt_rec[i]);
+            results.pt_res_gen.push_back(kin.pt_gen[j]);
+            results.eta_res_rec.push_back(kin.eta_rec[i]);
+            results.eta_res_gen.push_back(kin.eta_gen[j]);
+        }
+    }
+
+    return results;
+}
