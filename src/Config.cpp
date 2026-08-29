@@ -23,7 +23,8 @@ int Configure(config_struct& value, const std::string& json_path) {
             value.io.in_data_file = json_obj["io"].value("in_data_file", value.io.in_data_file);
             value.io.tree_mc_name = json_obj["io"].value("tree_mc_name", value.io.tree_mc_name);
             value.io.in_mc_file = json_obj["io"].value("in_mc_file", value.io.in_mc_file);
-            value.io.val_file = json_obj["io"].value("", value.io.val_file);
+            value.io.val_file = json_obj["io"].value("val_file", value.io.val_file);
+            value.io.output_file = json_obj["io"].value("output_file", value.io.output_file);
         }
 
         if (json_obj.contains("flag")) {
@@ -50,25 +51,37 @@ int Configure(config_struct& value, const std::string& json_path) {
 
 void Verbose_config(const config_struct& value) {
     std::cout << "Init Verbose -> Loaded Configuration:" << std::endl;
+    
+    std::cout << "" << std::endl;
+    
     std::cout << "Input data file: " << value.io.in_data_file << std::endl;
     std::cout << "Data Tree: " << value.io.tree_data_name << std::endl;
     std::cout << "Input MC file: " << value.io.in_mc_file << std::endl;
     std::cout << "MC Tree: " << value.io.tree_mc_name << std::endl;
-    std::cout << "Validation file: " << value.io.val_file << std::endl;
     
+    std::cout << "" << std::endl;
+
+    std::cout << "Validation file: " << value.io.val_file << std::endl;
+    std::cout << "Output file: " << value.io.output_file << std::endl;
+
+    std::cout << "" << std::endl;
+
     std::cout << "Flags:" << std::endl;
     std::cout << "    Kinematics: " << value.flag.en_kinematics << std::endl;
     std::cout << "    Isolation: " << value.flag.en_isolation << std::endl;
     std::cout << "    Mass window: " << value.flag.en_mass_window << std::endl;
     std::cout << "    Tight muon: " << value.flag.en_tight_muon << std::endl;
 
-    
+    std::cout << "" << std::endl;
+
     std::cout << "Cuts:" << std::endl;
     std::cout << "    p_T cut: " << value.cut.pt_cut << std::endl;
     std::cout << "    Eta cut: " << value.cut.eta_cut << std::endl;
     std::cout << "    Isolation cut: " << value.cut.iso_cut << std::endl;
     std::cout << "    Max mass: " << value.cut.mass_max << std::endl;
     std::cout << "    Min mass: " << value.cut.mass_min << std::endl;
+
+    std::cout << "" << std::endl;
 
     std::cout << "End of Verbose" << std::endl;
 }
