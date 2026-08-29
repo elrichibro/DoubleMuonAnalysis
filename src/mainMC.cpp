@@ -51,6 +51,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    // Verbose JSON configuration
     if (verbose) {
         Verbose_config(cfg);
     }
@@ -69,6 +70,7 @@ int main(int argc, char* argv[]) {
         ROOT::EnableImplicitMT();// MultiThread option: ON
 
         ROOT::RDataFrame data_frame(cfg.io.tree_mc_name, cfg.io.in_mc_file);
+        
         if (verbose){ 
             std::cout << "RDataFrame object created, unpackhing " << cfg.io.tree_mc_name 
             << " from " << cfg.io.in_mc_file << " file, starting analysis ..." << std::endl;

@@ -1,5 +1,9 @@
 #include "Manager.h"
 
+// #################
+// ObjectTH1 Methods
+// #################
+
 void ObjectTH1::Write(TFile& file) {
     if (th1) {
         th1->Write();
@@ -13,6 +17,10 @@ void ObjectTH1::Draw(TCanvas& canvas) {
     canvas.cd();
     th1->Draw("AP");
 }
+
+// #################
+// ObjectTH2 Methods
+// #################
 
 void ObjectTH2::Write(TFile& file) {
     if (th2) {
@@ -28,6 +36,9 @@ void ObjectTH2::Draw(TCanvas& canvas) {
     th2->Draw("AP");
 }
 
+// #####################
+// OutputManager Methods
+// #####################
 
 void OutputManager::AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr<TH1D> hist) {
     pipeline.push_back(std::make_unique<ObjectTH1>(name, hist));
