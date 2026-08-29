@@ -44,31 +44,53 @@ struct GoodMuon_filter {
     ROOT::RVec<bool> operator() (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<bool>& tight_id) const;
 };
 
-
+/**
+ * @brief Defines a new column in the dataset that represents the mask of particles that pass the kinematic cuts.
+ * @param mask_name Name mask.
+ * @param node RDF node.
+ * @param pt Column name for particle transverse momentum.
+ * @param eta Column name for particle pseudorapidity.
+ * @param pt_cut Minimum transverse momentum threshold.
+ * @param eta_cut Pseudorapidity range.
+ * @return Returns the node containing the bool mask.
+*/
 ROOT::RDF::RNode node_Kin_cut(const std::string mask_name, ROOT::RDF::RNode node, const std::string pt, const std::string eta,
 float pt_cut, float eta_cut);
 
+
+/// @brief Transverse momentum and psudorapidity vectors results after T&P
 struct ResultsTagAndProbe {
-    std::vector<float> pt_pass;
-    std::vector<float> pt_all;
-    std::vector<float> eta_pass;
-    std::vector<float> eta_all;
+    std::vector<float> pt_pass;// Transverse momentum of probes that pass the selection.
+    std::vector<float> pt_all;// Transverse momentum of all probes.
+    std::vector<float> eta_pass;// Pseudorapidity of probes that pass the selection.
+    std::vector<float> eta_all;// Pseudorapidity of all probes. 
 };
 
+
+/// @brief Muon kinematics variables for selection
 struct MuonKinematics {
-    const ROOT::RVec<float>& pt;
-    const ROOT::RVec<float>& eta;
-    const ROOT::RVec<float>& phi;
-    const ROOT::RVec<float>& mass;
+    const ROOT::RVec<float>& pt;// Transverse momentum
+    const ROOT::RVec<float>& eta;// Pseudorapidity
+    const ROOT::RVec<float>& phi;// Angular variable
+    const ROOT::RVec<float>& mass;// Reconstructed mass
 };
 
+
+/// @brief Muon flags for TagAndProbe selections
 struct MuonFlags {
-    const ROOT::RVec<bool>& tag;
-    const ROOT::RVec<bool>& probe;
-    const ROOT::RVec<bool>& global;
-    const ROOT::RVec<float>& iso;
+    const ROOT::RVec<bool>& tag;// Muon_tightId flag.
+    const ROOT::RVec<bool>& probe;// Muon_isStandalone flag.
+    const ROOT::RVec<bool>& global;// Muon_isGlobal flag.
+    const ROOT::RVec<float>& iso;// Isolation parameter.
 };
 
+
+/**
+ * @brief TagAndProbe function selection
+ * @param kin Muon kinematic event values.
+ * @param flags Muon event flags.
+ * @return Struct containing vectors of passed and total probe kinematics.
+*/
 ResultsTagAndProbe TagAndProbe(const MuonKinematics& kin, const MuonFlags& flags);
 
 #endif
