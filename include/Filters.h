@@ -44,4 +44,31 @@ struct GoodMuon_filter {
     ROOT::RVec<bool> operator() (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<bool>& tight_id) const;
 };
 
+
+ROOT::RDF::RNode node_Kin_cut(const std::string mask_name, ROOT::RDF::RNode node, const std::string pt, const std::string eta,
+float pt_cut, float eta_cut);
+
+struct ResultsTagAndProbe {
+    std::vector<float> pt_pass;
+    std::vector<float> pt_all;
+    std::vector<float> eta_pass;
+    std::vector<float> eta_all;
+};
+
+struct MuonKinematics {
+    const ROOT::RVec<float>& pt;
+    const ROOT::RVec<float>& eta;
+    const ROOT::RVec<float>& phi;
+    const ROOT::RVec<float>& mass;
+};
+
+struct MuonFlags {
+    const ROOT::RVec<bool>& tag;
+    const ROOT::RVec<bool>& probe;
+    const ROOT::RVec<bool>& global;
+    const ROOT::RVec<float>& iso;
+};
+
+ResultsTagAndProbe TagAndProbe(const MuonKinematics& kin, const MuonFlags& flags);
+
 #endif
