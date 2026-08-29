@@ -33,7 +33,8 @@ void ObjectTH2::Draw(TCanvas& canvas) {
         return;
     }
     canvas.cd();
-    th2->Draw("AP");
+    canvas.SetRightMargin(0.14); 
+    th2->Draw("COLZ");
 }
 
 // #####################
@@ -42,6 +43,10 @@ void ObjectTH2::Draw(TCanvas& canvas) {
 
 void OutputManager::AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr<TH1D> hist) {
     pipeline.push_back(std::make_unique<ObjectTH1>(name, hist));
+}
+
+void OutputManager::AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr<TH2D> hist) {
+    pipeline.push_back(std::make_unique<ObjectTH2>(name, hist));
 }
 
 void OutputManager::Run() {
