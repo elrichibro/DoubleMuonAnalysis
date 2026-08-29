@@ -16,6 +16,7 @@ set(COMMON_SRCS
     src/Config.cpp
     src/Filters.cpp
     src/Checks.cpp
+    src/Manager.cpp
 )
 
 set(COMMON_LIBS
