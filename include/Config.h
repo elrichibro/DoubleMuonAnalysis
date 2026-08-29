@@ -16,6 +16,7 @@ struct io_config {
     std::string tree_mc_name = "";// MonteCarlo tree name.
     std::string in_mc_file = "";// Input MonteCarlo file path.
     std::string val_file = "";// Validation json file path.
+    std::string output_file = "";// Output file path.
 };
 
 /// @brief Flags for enabling/disablig specifics selections cuts.
