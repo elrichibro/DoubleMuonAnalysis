@@ -44,5 +44,56 @@ ROOT::RVec<bool> GoodMuon_filter::operator()(const ROOT::RVec<float>& pt, const 
     return mask;
 }
 
+ROOT::RDF::RNode node_Kin_cut(const std::string mask_name, ROOT::RDF::RNode node, const std::string pt, 
+    const std::string eta, float pt_cut, float eta_cut) {
+    
+    ROOT::RDF::RNode node_kin_cut = node
+    .Define(mask_name, [pt_cut, eta_cut](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta) {
+        return ((pt > pt_cut) && (abs(eta) < eta_cut));
+    }, {pt, eta});
+
+    return node_kin_cut;
+}
+
+ResultsTagAndProbe TagAndProbe(const MuonKinematics& kin, const MuonFlags& flags) {
+    ResultsTagAndProbe results;
+    
+    const unsigned int n_muons = kin.pt.size();
+    
+    for(int i = 0; i < n_muons; i++) {
+        
+        if (!flags.tag[i]) {
+            continue;
+        } else if (flags.tag[i]) {
+
+            for (int j = 0; j < n_muons; j++) {
+                if (i == j || !flags.probe[j]) {
+                    continue;
+                } else if ((j != i) && flags.probe[j]) {
+                    float mass = ROOT::VecOps::InvariantMass(ROOT::RVec<float>{kin.pt[i], kin.pt[j]}, 
+                        ROOT::RVec<float>{kin.eta[i], kin.eta[j]}, ROOT::RVec<float>{kin.phi[i], kin.phi[j]},
+                        ROOT::RVec<float>{kin.mass[i], kin.mass[j]});
+                    
+                    if((mass > 60) && (mass < 120)) {
+                        // probe all
+                        results.pt_all.push_back(kin.pt[j]);
+                        results.eta_all.push_back(kin.eta[j]);
+
+                        if ((flags.global[j]) && (flags.iso[j] < 0.15)) {
+                            // probe all
+                            results.pt_pass.push_back(kin.pt[j]);
+                            results.eta_pass.push_back(kin.eta[j]);
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+    return results;
+}
 
 

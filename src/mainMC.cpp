@@ -87,6 +87,7 @@ int main(int argc, char* argv[]) {
         // Efficiency
         // ----------
 
+        /*
         auto node_GEN_event = node_InvMass_aFSR
             .Filter([](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, float mass) {
                 return (ROOT::VecOps::All(pt > 25.0f) && ROOT::VecOps::All(abs(eta) < 2.4f) && (mass > 60.0f) && (mass < 120.0f));
@@ -119,24 +120,60 @@ int main(int argc, char* argv[]) {
         TCanvas c2("c2", "Efficiency Canvas", 800, 600);
         c2.SetGrid();
         eff_eta->Draw("AP");
+        */
+        //--------------
+        // Tag and Probe
+        //--------------
+
+        ROOT::RDataFrame data_frame2(cfg.io.tree_mc_name, cfg.io.in_mc_file);
+        
+        ROOT::RDF::RNode node_TP = data_frame2.Define("TP_Result",
+            [](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi, const ROOT::RVec<float>& mass,
+            const ROOT::RVec<bool>& tag, const ROOT::RVec<bool>& probe, const ROOT::RVec<bool>& glob, const ROOT::RVec<float>& iso) 
+            {
+                MuonKinematics kin{pt, eta, phi, mass};
+                MuonFlags flags{tag, probe, glob, iso};
+                
+                return TagAndProbe(kin, flags);
+            }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_tightId", "Muon_isStandalone", "Muon_isGlobal", "Muon_pfRelIso04_all"});
+
+        node_TP = node_TP
+            .Define("Probe_Pt_All", [](const ResultsTagAndProbe& res) { return res.pt_all; }, {"TP_Result"})
+            .Define("Probe_Pt_Pass", [](const ResultsTagAndProbe& res) { return res.pt_pass; }, {"TP_Result"})
+            .Define("Probe_Eta_All", [](const ResultsTagAndProbe& res) { return res.eta_all; }, {"TP_Result"})
+            .Define("Probe_Eta_Pass", [](const ResultsTagAndProbe& res) { return res.eta_pass; }, {"TP_Result"});
 
         // ----------
         // HISTOGRAMS
         // ----------
+
+        auto h_pt_den = node_TP.Histo1D({"h_pt_den", "All Probes;p_{T} [GeV];Events", 50, 15, 120}, "Probe_Pt_All");
+        auto h_pt_num = node_TP.Histo1D({"h_pt_num", "Passing Probes;p_{T} [GeV];Events", 50, 15, 120}, "Probe_Pt_Pass");
+
+        // Istogrammi per l'Eta
+        auto h_eta_den = node_TP.Histo1D({"h_eta_den", "All Probes;#eta;Events", 50, -2.4, 2.4}, "Probe_Eta_All");
+        auto h_eta_num = node_TP.Histo1D({"h_eta_num", "Passing Probes;#eta;Events", 50, -2.4, 2.4}, "Probe_Eta_Pass");
         
+        // START EVENT LOOP
+
+        auto eff_pt = std::make_unique<TEfficiency>(*h_pt_num, *h_pt_den);
+        auto eff_eta = std::make_unique<TEfficiency>(*h_eta_num, *h_eta_den);
+
+        eff_pt->SetTitle("p_{T} Efficiency; p_{T} [GeV]; #epsilon_{p_{T}}");
+        eff_eta->SetTitle("#eta Efficiency; #eta; #epsilon_{#eta}");
+
+        TCanvas c1("c1", "Efficiency Canvas", 800, 600);
+        eff_pt->Draw("AP");
+
+        TCanvas c2("c2", "Efficiency Canvas", 800, 600);
+        eff_eta->Draw("AP");
+
         report_bFSR->Print();
         report_aFSR->Print();
 
         if (visualize) {
             auto canvas = new TCanvas("c_masses", "Invariant Mass Comparison", 1200, 600);
             canvas->Divide(2, 1);
-
-            canvas->cd(1);
-            h_mass_ll_bFSR->Draw("E HIST");
-
-            canvas->cd(2);
-            h_mass_ll_aFSR->Draw("E HIST");
-
             canvas->Update();
             canvas->Connect("Closed()", "TApplication", app, "Terminate()");
 
