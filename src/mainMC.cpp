@@ -18,7 +18,8 @@ int main(int argc, char* argv[]) {
     config_struct cfg;
     std::string json_path = "";
     int verbose = 0;
-    int visualize = 0;
+    bool visualize = false;
+    bool save = false;
     
     // ---------
     // INTERFACE
@@ -32,7 +33,9 @@ int main(int argc, char* argv[]) {
         } else if (arg == "--verbose" || arg == "-v") {
             verbose = 1;
         } else if ((arg == "--visualize") || (arg == "-vis")) {
-            visualize = 1;
+            visualize = true;
+        } else if ((arg == "--save") || (arg == "-s")) {
+            save = true;
         } else {
             std::cout << "ERROR: invalid input command, please try again, exinting.\n" << std::endl;
             return 1;
@@ -67,7 +70,7 @@ int main(int argc, char* argv[]) {
 
         ROOT::RDataFrame data_frame(cfg.io.tree_mc_name, cfg.io.in_mc_file);
         if (verbose){ 
-            std::cout << "RDataFrame object created, unpaching" << cfg.io.tree_mc_name 
+            std::cout << "RDataFrame object created, unpackhing " << cfg.io.tree_mc_name 
             << " from " << cfg.io.in_mc_file << " file, starting analysis ..." << std::endl;
         }
 
@@ -122,6 +125,7 @@ int main(int argc, char* argv[]) {
         c2.SetGrid();
         eff_eta->Draw("AP");
         */
+        
         //--------------
         // Tag and Probe
         //--------------
@@ -148,46 +152,33 @@ int main(int argc, char* argv[]) {
         // HISTOGRAMS
         // ----------
 
-        auto h_pt_den = node_TP.Histo1D({"h_pt_den", "All Probes;p_{T} [GeV];Events", 50, 15, 120}, "Probe_Pt_All");
-        auto h_pt_num = node_TP.Histo1D({"h_pt_num", "Passing Probes;p_{T} [GeV];Events", 50, 15, 120}, "Probe_Pt_Pass");
+        auto h_pt_den = node_TP.Histo1D({"h_pt_den", "All Probes;p_{T} [GeV];Events", 100, 15, 120}, "Probe_Pt_All");
+        auto h_pt_num = node_TP.Histo1D({"h_pt_num", "Passing Probes;p_{T} [GeV];Events", 100, 15, 120}, "Probe_Pt_Pass");
 
-        // Istogrammi per l'Eta
-        auto h_eta_den = node_TP.Histo1D({"h_eta_den", "All Probes;#eta;Events", 50, -2.4, 2.4}, "Probe_Eta_All");
-        auto h_eta_num = node_TP.Histo1D({"h_eta_num", "Passing Probes;#eta;Events", 50, -2.4, 2.4}, "Probe_Eta_Pass");
-        
-        // START EVENT LOOP
+        auto h_eta_den = node_TP.Histo1D({"h_eta_den", "All Probes;#eta;Events", 100, -2.4, 2.4}, "Probe_Eta_All");
+        auto h_eta_num = node_TP.Histo1D({"h_eta_num", "Passing Probes;#eta;Events", 100, -2.4, 2.4}, "Probe_Eta_Pass");
 
-        /*
-        auto eff_pt = std::make_unique<TEfficiency>(*h_pt_num, *h_pt_den);
-        auto eff_eta = std::make_unique<TEfficiency>(*h_eta_num, *h_eta_den);
+        ROOT::RDF::TH2DModel model_2D("h2_model", ";#eta; p_{T} [GeV];", 100, -2.4, 2.4, 100, 0, 100);
+        auto h2_den = node_TP.Histo2D(model_2D, "Probe_Eta_All", "Probe_Pt_All");
+        auto h2_num = node_TP.Histo2D(model_2D, "Probe_Eta_Pass", "Probe_Pt_Pass");
 
-        eff_pt->SetTitle("p_{T} Efficiency; p_{T} [GeV]; #epsilon_{p_{T}}");
-        eff_eta->SetTitle("#eta Efficiency; #eta; #epsilon_{#eta}");
+        // ---------------------------------
+        // START EVENT LOOP - OUTPUT MANAGER
+        // ---------------------------------
 
-        TCanvas c1("c1", "Efficiency Canvas", 800, 600);
-        eff_pt->Draw("AP");
+        OutputManager manager(cfg.io.output_file, visualize, save);
 
-        TCanvas c2("c2", "Efficiency Canvas", 800, 600);
-        eff_eta->Draw("AP");
+        manager.AddToPipeline("Efficiency pt", h_pt_num, h_pt_den);
+        manager.AddToPipeline("Efficiency eta", h_eta_num, h_eta_den);
+        manager.AddToPipeline("Efficiency map", h2_num, h2_den);
 
-        report_bFSR->Print();
-        report_aFSR->Print();
-*/
+        manager.Run();
 
-        OutputManager manager;
-
-        manager.AddToPipeline("Efficiency pt", h_pt_den, h_pt_num);
-        manager.AddToPipeline("Efficiency eta", h_eta_den, h_eta_num);
-
-        manager.Run("Risultati.root");
-
-        if (visualize) {
-            auto canvas = new TCanvas("c_masses", "Invariant Mass Comparison", 1200, 600);
-            canvas->Divide(2, 1);
-            canvas->Update();
-            canvas->Connect("Closed()", "TApplication", app, "Terminate()");
-
+        if (visualize && app != nullptr) {
+            std::cout << "Initializing visualization ..." << std::endl;
             app->Run();
+            
+            delete app; 
         } else {
             std::cout << "No visualization booked.\n" << std::endl;
         }
