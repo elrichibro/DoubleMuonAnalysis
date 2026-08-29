@@ -44,6 +44,10 @@ void OutputManager::AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr
     pipeline.push_back(std::make_unique<ObjectTH1>(name, hist));
 }
 
+void OutputManager::AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr<TH2D> hist) {
+    pipeline.push_back(std::make_unique<ObjectTH2>(name, hist));
+}
+
 void OutputManager::Run() {
     std::unique_ptr<TFile> file = nullptr;
     
