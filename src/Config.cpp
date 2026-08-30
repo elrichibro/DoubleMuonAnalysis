@@ -19,42 +19,90 @@ int Configure(config_struct& value, const std::string& json_path) {
         value.mode = json_obj.value("mode", value.mode);
 
         if (json_obj.contains("io")) {
-            value.io.tree_data_name = json_obj["io"].value("tree_data_name", value.io.tree_data_name);
-            value.io.in_data_file = json_obj["io"].value("in_data_file", value.io.in_data_file);
-            value.io.tree_mc_name = json_obj["io"].value("tree_mc_name", value.io.tree_mc_name);
-            value.io.in_mc_file = json_obj["io"].value("in_mc_file", value.io.in_mc_file);
-            value.io.val_file = json_obj["io"].value("val_file", value.io.val_file);
-            value.io.output_file = json_obj["io"].value("output_file", value.io.output_file);
+            const auto& j = json_obj["io"];
+
+            value.io.tree_data_name = j.value("tree_data_name", value.io.tree_data_name);
+            value.io.in_data_file = j.value("in_data_file", value.io.in_data_file);
+            value.io.tree_mc_name = j.value("tree_mc_name", value.io.tree_mc_name);
+            value.io.in_mc_file = j.value("in_mc_file", value.io.in_mc_file);
+            value.io.val_file = j.value("val_file", value.io.val_file);
+            value.io.output_file = j.value("output_file", value.io.output_file);
         }
 
         if (json_obj.contains("flag_TP")) {
-            value.flag_TP.en_kinematics = json_obj["flag_TP"].value("en_kinematics", value.flag_TP.en_kinematics);
-            value.flag_TP.en_isolation = json_obj["flag_TP"].value("en_isolation", value.flag_TP.en_isolation);
-            value.flag_TP.en_mass_window = json_obj["flag_TP"].value("en_mass_window", value.flag_TP.en_mass_window);
-            value.flag_TP.en_tight_muon = json_obj["flag_TP"].value("en_tight_muon", value.flag_TP.en_tight_muon);
+            const auto& j = json_obj["flag_TP"];
+
+            value.flag_TP.en_kinematics = j.value("en_kinematics", value.flag_TP.en_kinematics);
+            value.flag_TP.en_isolation = j.value("en_isolation", value.flag_TP.en_isolation);
+            value.flag_TP.en_mass_window = j.value("en_mass_window", value.flag_TP.en_mass_window);
+            value.flag_TP.en_tight_muon = j.value("en_tight_muon", value.flag_TP.en_tight_muon);
         }
 
         if (json_obj.contains("cut_TP")) {
-            value.cut_TP.pt_cut = json_obj["cut_TP"].value("pt_cut", value.cut_TP.pt_cut);
-            value.cut_TP.eta_cut = json_obj["cut_TP"].value("eta_cut", value.cut_TP.eta_cut);
-            value.cut_TP.iso_cut = json_obj["cut_TP"].value("iso_cut", value.cut_TP.iso_cut);
-            value.cut_TP.mass_min = json_obj["cut_TP"].value("mass_min", value.cut_TP.mass_min);
-            value.cut_TP.mass_max = json_obj["cut_TP"].value("mass_max", value.cut_TP.mass_max);
+            const auto& j = json_obj["cut_TP"];
+
+            value.cut_TP.pt_cut = j.value("pt_cut", value.cut_TP.pt_cut);
+            value.cut_TP.eta_cut = j.value("eta_cut", value.cut_TP.eta_cut);
+            value.cut_TP.iso_cut = j.value("iso_cut", value.cut_TP.iso_cut);
+            value.cut_TP.mass_min = j.value("mass_min", value.cut_TP.mass_min);
+            value.cut_TP.mass_max = j.value("mass_max", value.cut_TP.mass_max);
         }
 
         if (json_obj.contains("flag_RM")) {
-            value.flag_RM.en_kinematics = json_obj["flag_RM"].value("en_kinematics", value.flag_RM.en_kinematics);
-            value.flag_RM.en_isolation = json_obj["flag_RM"].value("en_isolation", value.flag_RM.en_isolation);
-            value.flag_RM.en_mass_window = json_obj["flag_RM"].value("en_mass_window", value.flag_RM.en_mass_window);
-            value.flag_RM.en_tight_muon = json_obj["flag_RM"].value("en_tight_muon", value.flag_RM.en_tight_muon);
+            const auto& j = json_obj["flag_RM"];
+
+            value.flag_RM.en_kinematics = j.value("en_kinematics", value.flag_RM.en_kinematics);
+            value.flag_RM.en_isolation = j.value("en_isolation", value.flag_RM.en_isolation);
+            value.flag_RM.en_mass_window = j.value("en_mass_window", value.flag_RM.en_mass_window);
+            value.flag_RM.en_tight_muon = j.value("en_tight_muon", value.flag_RM.en_tight_muon);
         }
 
         if (json_obj.contains("cut_RM")) {
-            value.cut_RM.pt_cut = json_obj["cut_RM"].value("pt_cut", value.cut_RM.pt_cut);
-            value.cut_RM.eta_cut = json_obj["cut_RM"].value("eta_cut", value.cut_RM.eta_cut);
-            value.cut_RM.iso_cut = json_obj["cut_RM"].value("iso_cut", value.cut_RM.iso_cut);
-            value.cut_RM.mass_min = json_obj["cut_RM"].value("mass_min", value.cut_RM.mass_min);
-            value.cut_RM.mass_max = json_obj["cut_RM"].value("mass_max", value.cut_RM.mass_max);
+            const auto& j = json_obj["cut_RM"];
+
+            value.cut_RM.pt_cut = j.value("pt_cut", value.cut_RM.pt_cut);
+            value.cut_RM.eta_cut = j.value("eta_cut", value.cut_RM.eta_cut);
+            value.cut_RM.iso_cut = j.value("iso_cut", value.cut_RM.iso_cut);
+            value.cut_RM.mass_min = j.value("mass_min", value.cut_RM.mass_min);
+            value.cut_RM.mass_max = j.value("mass_max", value.cut_RM.mass_max);
+        }
+
+        if (json_obj.contains("plot")) {
+            const auto& j = json_obj["plot"];
+
+            if (j.contains("pt")) {
+                const auto& j_p = json_obj["plot"]["pt"];
+                
+                value.pt_plot.title_axis = j_p.value("title_axis", value.pt_plot.title_axis);                
+                value.pt_plot.axis_max = j_p.value("axis_max", value.pt_plot.axis_max);
+                value.pt_plot.axis_min = j_p.value("axis_min", value.pt_plot.axis_min);
+                value.pt_plot.nbins = j_p.value("nbins", value.pt_plot.nbins);
+            }
+
+            if (j.contains("eta")) {
+                const auto& j_e = json_obj["plot"]["eta"];
+                
+                value.eta_plot.title_axis = j_e.value("title_axis", value.eta_plot.title_axis);                
+                value.eta_plot.axis_max = j_e.value("axis_max", value.eta_plot.axis_max);
+                value.eta_plot.axis_min = j_e.value("axis_min", value.eta_plot.axis_min);
+                value.eta_plot.nbins = j_e.value("nbins", value.eta_plot.nbins);
+            }
+
+            if (j.contains("mll")) {
+                const auto& j_m = json_obj["plot"]["mll"];
+                
+                value.mll_plot.title_axis = j_m.value("title_axis", value.mll_plot.title_axis);                
+                value.mll_plot.axis_max = j_m.value("axis_max", value.mll_plot.axis_max);
+                value.mll_plot.axis_min = j_m.value("axis_min", value.mll_plot.axis_min);
+                value.mll_plot.nbins = j_m.value("nbins", value.mll_plot.nbins);
+            }
+
+            if (j.contains("canvas")) {
+                const auto& j_c = json_obj["plot"]["canvas"];
+
+                value.canvas.width  = j_c.value("width", value.canvas.width);
+                value.canvas.height = j_c.value("height", value.canvas.height);
+            }
         }
     } catch (const std::exception& except) {
         std::cout << "ERROR: " << except.what() << std::endl;
@@ -112,6 +160,40 @@ void Verbose_config(const config_struct& value) {
     std::cout << "    Isolation cut: " << value.cut_RM.iso_cut << std::endl;
     std::cout << "    Max mass: " << value.cut_RM.mass_max << std::endl;
     std::cout << "    Min mass: " << value.cut_RM.mass_min << std::endl;
+
+    std::cout << "" << std::endl;
+
+    std::cout << "Plot settings:" << std::endl;
+
+    std::cout << "" << std::endl;
+
+    std::cout << "    Pt plot: " << std::endl;
+    std::cout << "        Axis title: " << value.pt_plot.title_axis << std::endl;
+    std::cout << "        Axis min: " << value.pt_plot.axis_min << std::endl;
+    std::cout << "        Axis max: " << value.pt_plot.axis_max << std::endl;
+    std::cout << "        Number of bins: " << value.pt_plot.nbins << std::endl;
+
+    std::cout << "" << std::endl;
+
+    std::cout << "    Eta plot: " << std::endl;
+    std::cout << "        Axis title: " << value.eta_plot.title_axis << std::endl;
+    std::cout << "        Axis min: " << value.eta_plot.axis_min << std::endl;
+    std::cout << "        Axis max: " << value.eta_plot.axis_max << std::endl;
+    std::cout << "        Number of bins: " << value.eta_plot.nbins << std::endl;
+
+    std::cout << "" << std::endl;
+
+    std::cout << "    Invariant mass plot: " << std::endl;
+    std::cout << "        Axis title: " << value.mll_plot.title_axis << std::endl;
+    std::cout << "        Axis min: " << value.mll_plot.axis_min << std::endl;
+    std::cout << "        Axis max: " << value.mll_plot.axis_max << std::endl;
+    std::cout << "        Number of bins: " << value.mll_plot.nbins << std::endl;
+
+    std::cout << "" << std::endl;
+
+    std::cout << "    Canvas settings: " << std::endl;
+    std::cout << "        Width: " << value.canvas.width << std::endl;
+    std::cout << "        Height: " << value.canvas.height << std::endl;
 
     std::cout << "" << std::endl;
 

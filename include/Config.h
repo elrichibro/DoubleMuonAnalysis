@@ -36,6 +36,18 @@ struct cuts_config {
     float mass_max = 200.0f;// Invariant mass Max value
 };
 
+struct plot_config {
+    std::string title_axis = "";
+    float axis_min = 0.0f;
+    float axis_max = 100.f;
+    int nbins = 50;
+};
+
+struct canvas_config {
+    int width = 800;
+    int height = 600; 
+};
+
 /// @brief Stores the other data structs.
 struct config_struct {
     std::string mode = "data";// Analysis Operation Mode.
@@ -44,6 +56,10 @@ struct config_struct {
     cuts_config cut_TP;
     flags_config flag_RM;
     cuts_config cut_RM;
+    plot_config pt_plot;
+    plot_config eta_plot;
+    plot_config mll_plot;
+    canvas_config canvas;
 };
 
 /**

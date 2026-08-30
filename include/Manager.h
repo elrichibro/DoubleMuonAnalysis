@@ -12,6 +12,8 @@
 #include "TH2D.h"
 #include "TEfficiency.h"
 
+#include "Config.h"
+
 #include <ROOT/RDataFrame.hxx>
 
 /// @brief Is the Pipeline object: TH1D, TH2D, TEfficiency... used by the OutputManager class to book histograms, save or print them.
@@ -151,6 +153,8 @@ class OutputManager {
         
         void Run();
     
+        void BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg, const std::string& mode);
+
         void Clear() {pipeline.clear();}
 };
 
@@ -158,7 +162,6 @@ class OutputManager {
 // ANALYSIS WRAPPER
 // ----------------
 
-//ROOT::RDF:
 
 
 
