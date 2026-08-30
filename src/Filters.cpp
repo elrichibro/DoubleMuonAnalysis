@@ -38,7 +38,7 @@ ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_t
             last_decision = false;
             
             return false;
-        }, {run_name , block_name}, "1. JSON Validation");
+        }, {run_name , block_name}, "JSON Validation");
     
     return node_validation;
 }

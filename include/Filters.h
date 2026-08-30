@@ -15,11 +15,11 @@
 /**
  * @brief Checks the validated runs from the not ones.
  * @param val_map Validation map.
- * @param run Run of the current event.
- * @param lum_block Luminosity block of the current event.
+ * @param run_name Run column name.
+ * @param block_name Luminosity block column name.
  * @return Returns the validated node-dataset.
 */
-ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map);
+ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map, const std::string run_name, const std::string block_name);
 
 
 /**
