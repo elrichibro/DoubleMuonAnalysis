@@ -188,7 +188,7 @@ bool is_MC_Event(const ROOT::RVec<int>& pdgId, const ROOT::RVec<int>& flags, con
 }
 
 
-ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin, const MuonFlags_RM& flags) {
+ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin, const MuonFlags_RM& flags, ) {
     ResultsRespMatrix results;
 
     // Number reconstructed muons
@@ -214,9 +214,42 @@ ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin, const MuonFl
         if ((std::abs(flags.pdg_id_gen[j]) == 13) && (flags.status_gen[j] == 1)) {
             results.pt_gen_RM.push_back(kin.pt_gen[j]);
             results.eta_gen_RM.push_back(kin.eta_gen[j]);
+            
             results.pt_rec_RM.push_back(kin.pt_rec[i]);
             results.eta_rec_RM.push_back(kin.eta_rec[i]);
         }
     }
     return results;
+}
+
+
+ROOT::RDF::RNode ApplyRespMatrixPipelin(ROOT::RDF::RNode node, const config_struct& cfg) {
+    ROOT::RDF::RNode node_RM = node
+    .Define("RespMatrix_mask",
+        [](const ROOT::RVec<float>& pt_gen, const ROOT::RVec<float>& eta_gen, const ROOT::RVec<float>& pt_rec, const ROOT::RVec<float>& eta_rec,
+        const ROOT::RVec<UChar_t>& rec_flav, const ROOT::RVec<Int_t>& rec_gen_idx, const ROOT::RVec<Int_t>& gen_status, const ROOT::RVec<Int_t>& gen_pdg_id) 
+        {
+            MuonKinematics_RM kin{pt_gen, eta_gen, pt_rec, eta_rec};
+            MuonFlags_RM val{rec_flav, rec_gen_idx, gen_status, gen_pdg_id};
+            
+            return CalculateRespMatrix(kin, val);
+        }, {"GenPart_pt", "GenPart_eta", "Muon_pt", "Muon_eta", "Muon_genPartFlav", "Muon_genPartIdx", "GenPart_status", "GenPart_pdgId"});
+
+    node_RM = node_RM
+        .Define("Gen_Pt", [](const ResultsRespMatrix& res) { return res.pt_gen_RM; }, {"RespMatrix_mask"})
+        .Define("Gen_Eta", [](const ResultsRespMatrix& res) { return res.eta_gen_RM; }, {"RespMatrix_mask"})
+        .Define("Rec_Pt", [](const ResultsRespMatrix& res) { return res.pt_rec_RM; }, {"RespMatrix_mask"})
+        .Define("Rec_Eta", [](const ResultsRespMatrix& res) { return res.eta_rec_RM; }, {"RespMatrix_mask"});
+
+    if (cfg.flag_RM.en_kinematics) {
+        node_RM = ApplyKinMuonFilter(node_RM, "Gen_kin_cutted", "Gen_Pt", "Gen_Eta", cfg.cut_RM.pt_cut, cfg.cut_RM.eta_cut);
+        node_RM = ApplyKinMuonFilter(node_RM, "Rec_kin_cutted", "Rec_Pt", "Rec_Eta", cfg.cut_RM.pt_cut, cfg.cut_RM.eta_cut);
+        node_RM = node_RM
+            .Define("Universal_mask", "Gen_kin_cutted && Rec_kin_cutted")
+            .Define("Gen_Pt_cutted", "Gen_Eta[Universal_mask]")
+            .Define("Gen_Eta_cutted", "Gen_Eta[Universal_mask]")
+            .Define("Rec_Pt_cutted", "Rec_Pt[Universal_mask]")
+            .Define("Rec_Eta_cutted", "Rec_Eta[Universal_mask]");
+    }
+    return node_RM;
 }
