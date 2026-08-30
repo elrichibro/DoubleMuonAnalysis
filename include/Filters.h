@@ -70,4 +70,34 @@ struct MuonFlags_TP {
 */
 ResultsTagAndProbe TagAndProbe(const MuonKinematics_TP& kin, const MuonFlags_TP& flags);
 
+
+
+
+/// @brief Results of the Response Matrix calculus.
+struct ResultsRespMatrix {
+    std::vector<float> pt_gen_RM;// Transverse momentum of the selected generated muons.
+    std::vector<float> pt_rec_RM;// Transverse momentum of the selected reconstructed muons.
+    std::vector<float> eta_gen_RM;// Pseudorapidity of the selected generated muons.
+    std::vector<float> eta_rec_RM;// Pseudorapidity of the selected reconstructed muons.
+};
+
+/// @brief Kinematical quantities for Response Matrix calculus -> GENerated and REConstructed muons.
+struct MuonKinematics_RM {
+    const ROOT::RVec<float>& pt_gen;
+    const ROOT::RVec<float>& eta_gen;
+    const ROOT::RVec<float>& pt_rec;
+    const ROOT::RVec<float>& eta_rec;
+};
+
+/// @brief Muon flags for Response Matrix calculus -> REConstructed/GENerated pairing.
+struct MuonFlags_RM {
+    const ROOT::RVec<int>& gen_flav_rec;// 
+    const ROOT::RVec<int>& pair_idx_rec;
+    const ROOT::RVec<int>& status_gen;
+    const ROOT::RVec<int>& pdg_id_gen;
+};
+
+ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin, const MuonFlags_RM& flags, const flags_config cfg_f, 
+const cuts_config cfg_c);
+
 #endif

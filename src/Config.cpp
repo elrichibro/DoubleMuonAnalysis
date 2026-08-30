@@ -119,6 +119,7 @@ void Verbose_config(const config_struct& value) {
 }
 
 
+
 validation_type Validation_load(const std::string& json_path) {    
     validation_type validation_map;
     
