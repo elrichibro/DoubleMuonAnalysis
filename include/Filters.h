@@ -19,7 +19,7 @@
  * @param lum_block Luminosity block of the current event.
  * @return Returns the validated node-dataset.
 */
-ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map, const UInt_t run, const UInt_t lum_block);
+ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map);
 
 
 /**
