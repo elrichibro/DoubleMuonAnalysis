@@ -27,19 +27,34 @@ int Configure(config_struct& value, const std::string& json_path) {
             value.io.output_file = json_obj["io"].value("output_file", value.io.output_file);
         }
 
-        if (json_obj.contains("flag")) {
-            value.flag.en_kinematics = json_obj["flag"].value("en_kinematics", value.flag.en_kinematics);
-            value.flag.en_isolation = json_obj["flag"].value("en_isolation", value.flag.en_isolation);
-            value.flag.en_mass_window = json_obj["flag"].value("en_mass_window", value.flag.en_mass_window);
-            value.flag.en_tight_muon = json_obj["flag"].value("en_tight_muon", value.flag.en_tight_muon);
+        if (json_obj.contains("flag_TP")) {
+            value.flag_TP.en_kinematics = json_obj["flag_TP"].value("en_kinematics", value.flag_TP.en_kinematics);
+            value.flag_TP.en_isolation = json_obj["flag_TP"].value("en_isolation", value.flag_TP.en_isolation);
+            value.flag_TP.en_mass_window = json_obj["flag_TP"].value("en_mass_window", value.flag_TP.en_mass_window);
+            value.flag_TP.en_tight_muon = json_obj["flag_TP"].value("en_tight_muon", value.flag_TP.en_tight_muon);
         }
 
-        if (json_obj.contains("cut")) {
-            value.cut.pt_cut = json_obj["cut"].value("pt_cut", value.cut.pt_cut);
-            value.cut.eta_cut = json_obj["cut"].value("eta_cut", value.cut.eta_cut);
-            value.cut.iso_cut = json_obj["cut"].value("iso_cut", value.cut.iso_cut);
-            value.cut.mass_min = json_obj["cut"].value("mass_min", value.cut.mass_min);
-            value.cut.mass_max = json_obj["cut"].value("mass_max", value.cut.mass_max);
+        if (json_obj.contains("cut_TP")) {
+            value.cut_TP.pt_cut = json_obj["cut_TP"].value("pt_cut", value.cut_TP.pt_cut);
+            value.cut_TP.eta_cut = json_obj["cut_TP"].value("eta_cut", value.cut_TP.eta_cut);
+            value.cut_TP.iso_cut = json_obj["cut_TP"].value("iso_cut", value.cut_TP.iso_cut);
+            value.cut_TP.mass_min = json_obj["cut_TP"].value("mass_min", value.cut_TP.mass_min);
+            value.cut_TP.mass_max = json_obj["cut_TP"].value("mass_max", value.cut_TP.mass_max);
+        }
+
+        if (json_obj.contains("flag_RM")) {
+            value.flag_RM.en_kinematics = json_obj["flag_RM"].value("en_kinematics", value.flag_RM.en_kinematics);
+            value.flag_RM.en_isolation = json_obj["flag_RM"].value("en_isolation", value.flag_RM.en_isolation);
+            value.flag_RM.en_mass_window = json_obj["flag_RM"].value("en_mass_window", value.flag_RM.en_mass_window);
+            value.flag_RM.en_tight_muon = json_obj["flag_RM"].value("en_tight_muon", value.flag_RM.en_tight_muon);
+        }
+
+        if (json_obj.contains("cut_RM")) {
+            value.cut_RM.pt_cut = json_obj["cut_RM"].value("pt_cut", value.cut_RM.pt_cut);
+            value.cut_RM.eta_cut = json_obj["cut_RM"].value("eta_cut", value.cut_RM.eta_cut);
+            value.cut_RM.iso_cut = json_obj["cut_RM"].value("iso_cut", value.cut_RM.iso_cut);
+            value.cut_RM.mass_min = json_obj["cut_RM"].value("mass_min", value.cut_RM.mass_min);
+            value.cut_RM.mass_max = json_obj["cut_RM"].value("mass_max", value.cut_RM.mass_max);
         }
     } catch (const std::exception& except) {
         std::cout << "ERROR: " << except.what() << std::endl;
@@ -66,20 +81,37 @@ void Verbose_config(const config_struct& value) {
 
     std::cout << "" << std::endl;
 
-    std::cout << "Flags:" << std::endl;
-    std::cout << "    Kinematics: " << value.flag.en_kinematics << std::endl;
-    std::cout << "    Isolation: " << value.flag.en_isolation << std::endl;
-    std::cout << "    Mass window: " << value.flag.en_mass_window << std::endl;
-    std::cout << "    Tight muon: " << value.flag.en_tight_muon << std::endl;
+    std::cout << "TagAndProbe flags:" << std::endl;
+    std::cout << "    Kinematics: " << value.flag_TP.en_kinematics << std::endl;
+    std::cout << "    Isolation: " << value.flag_TP.en_isolation << std::endl;
+    std::cout << "    Mass window: " << value.flag_TP.en_mass_window << std::endl;
+    std::cout << "    Tight muon: " << value.flag_TP.en_tight_muon << std::endl;
 
     std::cout << "" << std::endl;
 
-    std::cout << "Cuts:" << std::endl;
-    std::cout << "    p_T cut: " << value.cut.pt_cut << std::endl;
-    std::cout << "    Eta cut: " << value.cut.eta_cut << std::endl;
-    std::cout << "    Isolation cut: " << value.cut.iso_cut << std::endl;
-    std::cout << "    Max mass: " << value.cut.mass_max << std::endl;
-    std::cout << "    Min mass: " << value.cut.mass_min << std::endl;
+    std::cout << "TagAndProbe cuts:" << std::endl;
+    std::cout << "    p_T cut: " << value.cut_TP.pt_cut << std::endl;
+    std::cout << "    Eta cut: " << value.cut_TP.eta_cut << std::endl;
+    std::cout << "    Isolation cut: " << value.cut_TP.iso_cut << std::endl;
+    std::cout << "    Max mass: " << value.cut_TP.mass_max << std::endl;
+    std::cout << "    Min mass: " << value.cut_TP.mass_min << std::endl;
+
+    std::cout << "" << std::endl;
+
+    std::cout << "RespMatrix flags:" << std::endl;
+    std::cout << "    Kinematics: " << value.flag_RM.en_kinematics << std::endl;
+    std::cout << "    Isolation: " << value.flag_RM.en_isolation << std::endl;
+    std::cout << "    Mass window: " << value.flag_RM.en_mass_window << std::endl;
+    std::cout << "    Tight muon: " << value.flag_RM.en_tight_muon << std::endl;
+
+    std::cout << "" << std::endl;
+
+    std::cout << "RespMatrix cuts:" << std::endl;
+    std::cout << "    p_T cut: " << value.cut_RM.pt_cut << std::endl;
+    std::cout << "    Eta cut: " << value.cut_RM.eta_cut << std::endl;
+    std::cout << "    Isolation cut: " << value.cut_RM.iso_cut << std::endl;
+    std::cout << "    Max mass: " << value.cut_RM.mass_max << std::endl;
+    std::cout << "    Min mass: " << value.cut_RM.mass_min << std::endl;
 
     std::cout << "" << std::endl;
 

@@ -40,8 +40,10 @@ struct cuts_config {
 struct config_struct {
     std::string mode = "data";// Analysis Operation Mode.
     io_config io;
-    flags_config flag;
-    cuts_config cut;
+    flags_config flag_TP;
+    cuts_config cut_TP;
+    flags_config flag_RM;
+    cuts_config cut_RM;
 };
 
 /**
