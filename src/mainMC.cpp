@@ -168,8 +168,8 @@ int main(int argc, char* argv[]) {
             [](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi, const ROOT::RVec<float>& mass,
             const ROOT::RVec<bool>& tag, const ROOT::RVec<bool>& probe, const ROOT::RVec<bool>& glob, const ROOT::RVec<float>& iso) 
             {
-                MuonKinematics kin{pt, eta, phi, mass};
-                MuonFlags flags{tag, probe, glob, iso};
+                MuonKinematics_TP kin{pt, eta, phi, mass};
+                MuonFlags_TP flags{tag, probe, glob, iso};
                 
                 return TagAndProbe(kin, flags);
             }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_tightId", "Muon_isStandalone", "Muon_isGlobal", "Muon_pfRelIso04_all"});

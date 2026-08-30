@@ -1,60 +1,34 @@
 #ifndef FILTERS_H
 #define FILTERS_H
 
-#include <map>
-#include <cstdint>
-#include <iostream>
+#include <string>
+#include <vector>
 
-#include <Rtypes.h>
 #include <ROOT/RVec.hxx>
 #include <ROOT/RDataFrame.hxx>
-
 
 #include "Config.h"
 
 /**
- * @brief Functor struct: Checks the validated runs from the not ones.
- * @param init_map Validation map.
- * @param run Run of the current event.
- * @param lum_block Luminosity block of the current event.
- * @return Returns true if the event is validated within che CMS standards, false if not.
+ * @brief Checks the validated runs from the not ones.
+ * @param val_map Validation map.
+ * @param run_name Run column name.
+ * @param block_name Luminosity block column name.
+ * @return Returns the validated node-dataset.
 */
-struct Validation_filter {
-    const validation_type& val_map;
-
-    Validation_filter(const validation_type& init_map) : val_map(init_map) {}
-
-    bool operator() (const UInt_t run, const UInt_t lum_block) const;
-};
-
-
-/**
- * @brief Functor struct: Filters the GoodMuons.
- * @param init_structs Struct containing the physical cuts.
- * @param pt ROOT Vector. Stores the transverse momentum.
- * @param eta Pseudorapidity of the particles.
- * @param tight_id Identification muon flag.
- * @return Returns the mask for GoodMuons.
-*/
-struct GoodMuon_filter {
-    const config_struct& cfg_struct;
-
-    GoodMuon_filter(const config_struct& init_struct) : cfg_struct(init_struct) {}
-
-    ROOT::RVec<bool> operator() (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<bool>& tight_id) const;
-};
+ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map, const std::string& run_name, const std::string& block_name);
 
 /**
  * @brief Defines a new column in the dataset that represents the mask of particles that pass the kinematic cuts.
- * @param mask_name Name mask.
  * @param node RDF node.
- * @param pt Column name for particle transverse momentum.
- * @param eta Column name for particle pseudorapidity.
+ * @param mask_name Name of the new column-mask.
+ * @param pt_name Column name for particle transverse momentum.
+ * @param eta_name Column name for particle pseudorapidity.
  * @param pt_cut Minimum transverse momentum threshold.
  * @param eta_cut Pseudorapidity range.
  * @return Returns the node containing the bool mask.
 */
-ROOT::RDF::RNode node_Kin_cut(const std::string mask_name, ROOT::RDF::RNode node, const std::string pt, const std::string eta,
+ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& mask_name, const std::string& pt_name, const std::string& eta_name,
 float pt_cut, float eta_cut);
 
 
@@ -68,7 +42,7 @@ struct ResultsTagAndProbe {
 
 
 /// @brief Muon kinematics variables for selection
-struct MuonKinematics {
+struct MuonKinematics_TP {
     const ROOT::RVec<float>& pt;// Transverse momentum
     const ROOT::RVec<float>& eta;// Pseudorapidity
     const ROOT::RVec<float>& phi;// Angular variable
@@ -76,10 +50,13 @@ struct MuonKinematics {
 };
 
 
-/// @brief Muon flags for TagAndProbe selections
-struct MuonFlags {
-    const ROOT::RVec<bool>& tag;// Muon_tightId flag.
-    const ROOT::RVec<bool>& probe;// Muon_isStandalone flag.
+/** 
+* @brief Muon flags for TagAndProbe selections.
+* @brief Tag muon is a TightId muon. Probe candidate is a StandaloneId muon. Passed probe is a GlobalId muon + Isolation request.
+*/  
+struct MuonFlags_TP {
+    const ROOT::RVec<bool>& tight;// Muon_tightId flag.
+    const ROOT::RVec<bool>& stand;// Muon_isStandalone flag.
     const ROOT::RVec<bool>& global;// Muon_isGlobal flag.
     const ROOT::RVec<float>& iso;// Isolation parameter.
 };
@@ -91,6 +68,6 @@ struct MuonFlags {
  * @param flags Muon event flags.
  * @return Struct containing vectors of passed and total probe kinematics.
 */
-ResultsTagAndProbe TagAndProbe(const MuonKinematics& kin, const MuonFlags& flags);
+ResultsTagAndProbe TagAndProbe(const MuonKinematics_TP& kin, const MuonFlags_TP& flags);
 
 #endif
