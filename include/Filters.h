@@ -1,14 +1,11 @@
 #ifndef FILTERS_H
 #define FILTERS_H
 
-#include <map>
-#include <cstdint>
-#include <iostream>
+#include <string>
+#include <vector>
 
-#include <Rtypes.h>
 #include <ROOT/RVec.hxx>
 #include <ROOT/RDataFrame.hxx>
-
 
 #include "Config.h"
 
@@ -19,7 +16,7 @@
  * @param block_name Luminosity block column name.
  * @return Returns the validated node-dataset.
 */
-ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map, const std::string run_name, const std::string block_name);
+ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map, const std::string& run_name, const std::string& block_name);
 
 /**
  * @brief Defines a new column in the dataset that represents the mask of particles that pass the kinematic cuts.
@@ -45,7 +42,7 @@ struct ResultsTagAndProbe {
 
 
 /// @brief Muon kinematics variables for selection
-struct MuonKinematics {
+struct MuonKinematics_TP {
     const ROOT::RVec<float>& pt;// Transverse momentum
     const ROOT::RVec<float>& eta;// Pseudorapidity
     const ROOT::RVec<float>& phi;// Angular variable
@@ -53,10 +50,13 @@ struct MuonKinematics {
 };
 
 
-/// @brief Muon flags for TagAndProbe selections
-struct MuonFlags {
-    const ROOT::RVec<bool>& tag;// Muon_tightId flag.
-    const ROOT::RVec<bool>& probe;// Muon_isStandalone flag.
+/** 
+* @brief Muon flags for TagAndProbe selections.
+* @brief Tag muon is a TightId muon. Probe candidate is a StandaloneId muon. Passed probe is a GlobalId muon + Isolation request.
+*/  
+struct MuonFlags_TP {
+    const ROOT::RVec<bool>& tight;// Muon_tightId flag.
+    const ROOT::RVec<bool>& stand;// Muon_isStandalone flag.
     const ROOT::RVec<bool>& global;// Muon_isGlobal flag.
     const ROOT::RVec<float>& iso;// Isolation parameter.
 };
@@ -68,6 +68,6 @@ struct MuonFlags {
  * @param flags Muon event flags.
  * @return Struct containing vectors of passed and total probe kinematics.
 */
-ResultsTagAndProbe TagAndProbe(const MuonKinematics& kin, const MuonFlags& flags);
+ResultsTagAndProbe TagAndProbe(const MuonKinematics_TP& kin, const MuonFlags_TP& flags);
 
 #endif

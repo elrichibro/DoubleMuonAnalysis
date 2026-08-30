@@ -1,5 +1,6 @@
 #include "Filters.h"
-#include "Utils.h"
+
+#include <Rtypes.h>
 
 // #################################################################
 
@@ -46,7 +47,7 @@ ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_t
 // #################################################################
 
 ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& mask_name, const std::string& pt_column, const std::string& eta_column,
-     float pt_cut, float eta_cut) {
+ float pt_cut, float eta_cut) {
     
     ROOT::RDF::RNode node_kin_cut = node
         .Define(mask_name, [pt_cut, eta_cut](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta) {
@@ -61,54 +62,56 @@ ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& ma
 
 // #################################################################
 
-ResultsTagAndProbe TagAndProbe(const MuonKinematics& kin, const MuonFlags& flags) {
+ResultsTagAndProbe TagAndProbe(const MuonKinematics_TP& kin, const MuonFlags_TP& flags) {
     // Results container
     ResultsTagAndProbe results;
-    
+
     // Number of particles in the event
     const unsigned int n_muons = kin.pt.size();
+
+    results.pt_all.reserve(n_muons);
+    results.eta_all.reserve(n_muons);
+    results.pt_pass.reserve(n_muons);
+    results.eta_pass.reserve(n_muons);
     
     for(int i = 0; i < n_muons; i++) {
         // Fast exit
-        if (!flags.tag[i]) {
+        if (!flags.tight[i]) {
             continue;
-        
-        // Good condition
-        } else if (flags.tag[i]) {
+        }
 
-            for (int j = 0; j < n_muons; j++) {
-                // Fast exit
-                if (i == j || !flags.probe[j]) {
-                    continue;
+        for (int j = 0; j < n_muons; j++) {
+            // Fast exit
+            if (i == j || !flags.stand[j]) {
+                continue;
+            }
+            // Loop into good probe muons
 
-                // Loop into good probe muons
-                } else if ((j != i) && flags.probe[j]) {
-                    // Invariant mass (tag + probe)
-                    float mass = ROOT::VecOps::InvariantMass(ROOT::RVec<float>{kin.pt[i], kin.pt[j]}, 
-                        ROOT::RVec<float>{kin.eta[i], kin.eta[j]}, ROOT::RVec<float>{kin.phi[i], kin.phi[j]},
-                        ROOT::RVec<float>{kin.mass[i], kin.mass[j]});
+            // Invariant mass (tag + probe)
+            float mass = ROOT::VecOps::InvariantMass(ROOT::RVec<float>{kin.pt[i], kin.pt[j]}, 
+            ROOT::RVec<float>{kin.eta[i], kin.eta[j]}, ROOT::RVec<float>{kin.phi[i], kin.phi[j]},
+            ROOT::RVec<float>{kin.mass[i], kin.mass[j]});
+            
+            // Invariant mass range
+            if((mass > 60) && (mass < 120)) {
+                
+                // All probes (passed + failed)
+                results.pt_all.push_back(kin.pt[j]);
+                results.eta_all.push_back(kin.eta[j]);
+
+                if ((flags.global[j]) && (flags.iso[j] < 0.15)) {
                     
-                    // Invariant mass range
-                    if((mass > 60) && (mass < 120)) {
-                        
-                        // All probes (passed + failed)
-                        results.pt_all.push_back(kin.pt[j]);
-                        results.eta_all.push_back(kin.eta[j]);
-
-                        if ((flags.global[j]) && (flags.iso[j] < 0.15)) {
-                            // Passed probes
-                            results.pt_pass.push_back(kin.pt[j]);
-                            results.eta_pass.push_back(kin.eta[j]);
-                        } else {
-                            continue;
-                        }
-                    } else {
-                        continue;
-                    }
+                    // Passed probes
+                    results.pt_pass.push_back(kin.pt[j]);
+                    results.eta_pass.push_back(kin.eta[j]);
+                
+                } else {
+                    continue;
                 }
+            } else {
+                continue;
             }
         }
     }
-    
     return results;
 }
