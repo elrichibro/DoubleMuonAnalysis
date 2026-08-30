@@ -3,40 +3,44 @@
 
 // #################################################################
 
-bool Validation_filter::operator()(const UInt_t run, const UInt_t lum_block) const {       
-    // Auto-update variables -> applied to multithread operation mode.
-    thread_local static UInt_t last_run = 0;
-    thread_local static UInt_t last_lum_block = 0;
-    thread_local static bool last_decision = false;// For fast loop
+ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map) {
+    ROOT::RDF::RNode node_validation = node
+        .Filter([&val_map](const UInt_t run, const UInt_t lum_block) {
+            // Auto-update variables -> applied to multithread operation mode.
+            thread_local static UInt_t last_run = 0;
+            thread_local static UInt_t last_lum_block = 0;
+            thread_local static bool last_decision = false;// For fast loop
 
-    // Fast loop
-    if ((run == last_run) && (lum_block == last_lum_block)) {
-        return last_decision;
-    }
-
-    // Updating values
-    last_run = run;
-    last_lum_block = lum_block;
-
-    // Checks the run input within the validation_map
-    auto it = val_map.find(run);
-
-    // if succeds
-    if (it != val_map.end()) {
-        // Checking blocks
-        for (const auto& block : it->second) {
-            // Luminosity block within the range
-            if ((lum_block >= block.first) && (lum_block <= block.second)) {
-                last_decision = true;
-                return true;
+            // Fast loop
+            if ((run == last_run) && (lum_block == last_lum_block)) {
+                return last_decision;
             }
-        }
-    }
 
-    // else option 
-    last_decision = false;
+            // Updating values
+            last_run = run;
+            last_lum_block = lum_block;
+
+            // Checks the run input within the validation_map
+            auto it = val_map.find(run);
+
+            // if succeds
+            if (it != val_map.end()) {
+                // Checking blocks
+                for (const auto& block : it->second) {
+                    // Luminosity block within the range
+                    if ((lum_block >= block.first) && (lum_block <= block.second)) {
+                        last_decision = true;
+                        return true;
+                    }
+                }
+            }
+            // else option 
+            last_decision = false;
+            
+            return false;
+        }, {"run" ,"luminosityBlock"}, "1. JSON Validation");
     
-    return false;
+    return node_validation;
 }
 
 // #################################################################

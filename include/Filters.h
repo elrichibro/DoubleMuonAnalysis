@@ -13,19 +13,13 @@
 #include "Config.h"
 
 /**
- * @brief Functor struct: Checks the validated runs from the not ones.
- * @param init_map Validation map.
+ * @brief Checks the validated runs from the not ones.
+ * @param val_map Validation map.
  * @param run Run of the current event.
  * @param lum_block Luminosity block of the current event.
- * @return Returns true if the event is validated within che CMS standards, false if not.
+ * @return Returns the validated node-dataset.
 */
-struct Validation_filter {
-    const validation_type& val_map;
-
-    Validation_filter(const validation_type& init_map) : val_map(init_map) {}
-
-    bool operator() (const UInt_t run, const UInt_t lum_block) const;
-};
+ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map, const UInt_t run, const UInt_t lum_block);
 
 
 /**
