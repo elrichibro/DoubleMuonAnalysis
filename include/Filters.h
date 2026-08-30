@@ -41,7 +41,7 @@ struct ResultsTagAndProbe {
 };
 
 
-/// @brief Muon kinematics variables for selection
+/// @brief Muon kinematics variables for selection.
 struct MuonKinematics_TP {
     const ROOT::RVec<float>& pt;// Transverse momentum
     const ROOT::RVec<float>& eta;// Pseudorapidity
