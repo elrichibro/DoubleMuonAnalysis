@@ -21,23 +21,6 @@
 */
 ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map, const std::string run_name, const std::string block_name);
 
-
-/**
- * @brief Functor struct: Filters the GoodMuons.
- * @param init_structs Struct containing the physical cuts.
- * @param pt ROOT Vector. Stores the transverse momentum.
- * @param eta Pseudorapidity of the particles.
- * @param tight_id Identification muon flag.
- * @return Returns the mask for GoodMuons.
-*/
-struct GoodMuon_filter {
-    const config_struct& cfg_struct;
-
-    GoodMuon_filter(const config_struct& init_struct) : cfg_struct(init_struct) {}
-
-    ROOT::RVec<bool> operator() (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<bool>& tight_id) const;
-};
-
 /**
  * @brief Defines a new column in the dataset that represents the mask of particles that pass the kinematic cuts.
  * @param mask_name Name mask.
@@ -48,7 +31,7 @@ struct GoodMuon_filter {
  * @param eta_cut Pseudorapidity range.
  * @return Returns the node containing the bool mask.
 */
-ROOT::RDF::RNode node_Kin_cut(const std::string mask_name, ROOT::RDF::RNode node, const std::string pt, const std::string eta,
+ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string mask_name, const std::string pt, const std::string eta,
 float pt_cut, float eta_cut);
 
 

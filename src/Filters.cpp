@@ -45,23 +45,6 @@ ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_t
 
 // #################################################################
 
-ROOT::RVec<bool> GoodMuon_filter::operator()(const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<bool>& tight_id) const {
-    
-    ROOT::RVec<bool> mask(pt.size(), true);
-    
-    if (cfg_struct.flag.en_tight_muon) {
-        mask = mask && tight_id;
-    }
-    
-    if (cfg_struct.flag.en_kinematics) {
-        mask = mask && (pt > cfg_struct.cut.pt_cut) && (abs(eta) < cfg_struct.cut.eta_cut);
-    }
-    
-    return mask;
-}
-
-// #################################################################
-
 ROOT::RDF::RNode node_Kin_cut(const std::string mask_name, ROOT::RDF::RNode node, const std::string pt, 
     const std::string eta, float pt_cut, float eta_cut) {
     
