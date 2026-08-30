@@ -5,6 +5,8 @@
 #include <ROOT/RVec.hxx>
 #include <ROOT/RDataFrame.hxx>
 
+#include "Config.h"
+
 #include <map>
 #include <cstdint>
 #include <iostream>
@@ -95,5 +97,6 @@ struct MuonFlags_RM {
 
 ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin, const MuonFlags_RM& flags);
 
+ROOT::RDF::RNode ApplyRespMatrixPipelin(ROOT::RDF::RNode node, const config_struct& cfg);
 
 #endif
