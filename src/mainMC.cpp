@@ -80,36 +80,34 @@ int main(int argc, char* argv[]) {
         // Invariant Mass
         // --------------
 
-        auto node_InvMass_bFSR = InvMass(data_frame, "bFSR", 1);
-        auto node_InvMass_aFSR = InvMass(data_frame, "aFSR", 2);
+        auto node_InvMass_bFSR = CalculateInvMass(data_frame, "bFSR", 1);
+        auto node_InvMass_aFSR = CalculateInvMass(data_frame, "aFSR", 2);
         
         auto report_bFSR = node_InvMass_bFSR.Report();
         auto report_aFSR = node_InvMass_aFSR.Report();
 
-        auto h_mass_ll_bFSR = node_InvMass_bFSR.Histo1D({"m_ll_bFSR", "Massa invariante dileptoni Before FSR; m_{#mu^{+}#mu^{-}}; Events", 100, 60, 120}, "m_ll_bFSR");        
-        auto h_mass_ll_aFSR = node_InvMass_aFSR.Histo1D({"m_ll_aFSR", "Massa invariante dileptoni After FSR; m_{#mu^{+}#mu^{-}}; Events", 100, 60, 120}, "m_ll_aFSR");
+        auto h_mass_ll_bFSR = node_InvMass_bFSR.Histo1D({"m_ll_bFSR", "Massa invariante dileptoni Before FSR; m_{#mu^{+}#mu^{-}}; Events", 100, 60, 120}, "InvMass_bFSR");        
+        auto h_mass_ll_aFSR = node_InvMass_aFSR.Histo1D({"m_ll_aFSR", "Massa invariante dileptoni After FSR; m_{#mu^{+}#mu^{-}}; Events", 100, 60, 120}, "InvMass_aFSR");
 
         // ----------
         // Efficiency
         // ----------
 
-        ROOT::RDataFrame data_frame2(cfg.io.tree_mc_name, cfg.io.in_mc_file);
-        
-        ROOT::RDF::RNode node_EffM = data_frame2.Define("Eff_Matrix",
+        ROOT::RDF::RNode node_EffM = data_frame.Define("RespMatrix_mask",
             [](const ROOT::RVec<float>& pt_gen, const ROOT::RVec<float>& eta_gen, const ROOT::RVec<float>& pt_rec, const ROOT::RVec<float>& eta_rec,
             const ROOT::RVec<UChar_t>& rec_flav, const ROOT::RVec<Int_t>& rec_gen_idx, const ROOT::RVec<Int_t>& gen_status, const ROOT::RVec<Int_t>& gen_pdg_id) 
             {
-                MuonKinematics_EffMatrix kin{pt_gen, eta_gen, pt_rec, eta_rec};
-                MuonFlags_EffMatrix val{rec_flav, rec_gen_idx, gen_status, gen_pdg_id};
+                MuonKinematics_RM kin{pt_gen, eta_gen, pt_rec, eta_rec};
+                MuonFlags_RM val{rec_flav, rec_gen_idx, gen_status, gen_pdg_id};
                 
-                return EffMatrix(kin, val);
+                return CalculateRespMatrix(kin, val);
             }, {"GenPart_pt", "GenPart_eta", "Muon_pt", "Muon_eta", "Muon_genPartFlav", "Muon_genPartIdx", "GenPart_status", "GenPart_pdgId"});
 
         node_EffM = node_EffM
-            .Define("Gen_Pt", [](const Results_EffMatrix& res) { return res.pt_res_gen; }, {"Eff_Matrix"})
-            .Define("Gen_Eta", [](const Results_EffMatrix& res) { return res.eta_res_gen; }, {"Eff_Matrix"})
-            .Define("Rec_Pt", [](const Results_EffMatrix& res) { return res.pt_res_rec; }, {"Eff_Matrix"})
-            .Define("Rec_Eta", [](const Results_EffMatrix& res) { return res.eta_res_rec; }, {"Eff_Matrix"});
+            .Define("Gen_Pt", [](const ResultsRespMatrix& res) { return res.pt_gen_RM; }, {"RespMatrix_mask"})
+            .Define("Gen_Eta", [](const ResultsRespMatrix& res) { return res.eta_gen_RM; }, {"RespMatrix_mask"})
+            .Define("Rec_Pt", [](const ResultsRespMatrix& res) { return res.pt_rec_RM; }, {"RespMatrix_mask"})
+            .Define("Rec_Eta", [](const ResultsRespMatrix& res) { return res.eta_rec_RM; }, {"RespMatrix_mask"});
 
     /*     
         auto h_pt_gen = node_EffM.Histo1D({"h_pt_gen", "Pt generated;p_{T} [GeV];Events", 100, 0, 120}, "Gen_Pt");
@@ -161,10 +159,8 @@ int main(int argc, char* argv[]) {
         //--------------
         // Tag and Probe
         //--------------
-
-        ROOT::RDataFrame data_frame3(cfg.io.tree_mc_name, cfg.io.in_mc_file);
         
-        ROOT::RDF::RNode node_TP = data_frame3.Define("TP_Result",
+        ROOT::RDF::RNode node_TP = data_frame.Define("TP_Result",
             [](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi, const ROOT::RVec<float>& mass,
             const ROOT::RVec<bool>& tag, const ROOT::RVec<bool>& probe, const ROOT::RVec<bool>& glob, const ROOT::RVec<float>& iso) 
             {

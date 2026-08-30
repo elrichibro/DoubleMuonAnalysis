@@ -3,7 +3,7 @@
 #include "Utils.h"
 #include <cstdint>
 
-/* Flags summary:
+/* Flags summary in MonteCarlo "Generated particles" collection:
     0 : isPrompt                -> SELECTED
     1 : isDecayedLeptonHadron
     2 : isTauDecayProduct
@@ -11,7 +11,7 @@
     4 : isDirectTauDecayProduct
     5 : isDirectPromptTauDecayProduct
     6 : isDirectHadronDecayProduct
-    7 : isHardProcess
+    7 : isHardProcess           -> SELECTED
     8 : fromHardProcess         -> SELECTED
     9 : isHardProcessTauDecayProduct
     10 : isDirectHardProcessTauDecayProduct
@@ -21,24 +21,26 @@
     14 : isLastCopyBeforeFSR
 
 
-    Bitwise mask1: 0, 8, 13 -> 2^13 + 2^8 + 2^0 = 8192 + 256 + 1 = 8449
-    0 x ( 0 0 1 0 )( 0 0 0 1 )( 0 0 0 0 )( 0 0 0 1 ) = 0x2101
-
+    Muon After FSR
     Bitwise mask2: 0, 7, 8 -> 2^8 + 2^7 + 2^0 = 256 + 128 + 1 = 385
     0 x ( 0 0 0 1 )( 1 0 0 0 )( 0 0 0 1 ) = 0x181
+
+    Muon/Z0 Before FSR
+    Bitwise mask1: 0, 8, 13 -> 2^13 + 2^8 + 2^0 = 8192 + 256 + 1 = 8449
+    0 x ( 0 0 1 0 )( 0 0 0 1 )( 0 0 0 0 )( 0 0 0 1 ) = 0x2101
 */
 
-ROOT::RDF::RNode InvMass(ROOT::RDF::RNode node, const std::string& tag, int FSR) {
-    // String construction
-    const std::string mask = "good_mask_" + tag;
+ROOT::RDF::RNode CalculateInvMass(ROOT::RDF::RNode node, const std::string& tag, int FSR) {
+    // Column names construction
+    const std::string mask = "good_Mask_" + tag;
     const std::string pt = "good_Pt_" + tag;
     const std::string eta = "good_Eta_" + tag;
     const std::string phi = "good_Phi_" + tag;
     const std::string mass = "good_Mass_" + tag;
-    const std::string mll = "m_ll_" + tag;
+    const std::string m_ll = "InvMass_" + tag;
 
     // Node definition
-    ROOT::RDF::RNode node_fsr = node
+    ROOT::RDF::RNode node_FSR = node
         .Filter([FSR](const ROOT::RVec<Int_t>& pdg, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother) {
             return is_MC_Event(pdg, flags, mother, FSR);
             },
@@ -54,9 +56,9 @@ ROOT::RDF::RNode InvMass(ROOT::RDF::RNode node, const std::string& tag, int FSR)
         .Define(phi, "GenPart_phi[" + mask + "]")
         .Define(mass, "GenPart_mass[" + mask + "]")
 
-        .Define(mll, mass_leptons<float>, {pt, eta, phi, mass});
+        .Define(m_ll, mass_leptons<float>, {pt, eta, phi, mass});
 
-    return node_fsr;
+    return node_FSR;
 }
 
 
@@ -186,29 +188,35 @@ bool is_MC_Event(const ROOT::RVec<int>& pdgId, const ROOT::RVec<int>& flags, con
 }
 
 
-Results_EffMatrix EffMatrix(const MuonKinematics_EffMatrix& kin, const MuonFlags_EffMatrix& val) {
-    Results_EffMatrix results;
+ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin, const MuonFlags_RM& flags) {
+    ResultsRespMatrix results;
 
+    // Number reconstructed muons
     const unsigned int n_muons_rec = kin.pt_rec.size();
     
+    // Loop on reconstructed muons.
     for(int i = 0; i < n_muons_rec; i++) {
-        if (val.rec_flav[i] != 1) {
+        
+        // gen_flav_rec == 1 -> GenPart muon is : prompt muon. (!= -> fast exit)
+        if (flags.gen_flav_rec[i] != 1) {
             continue;
         }
-
-        int j = val.rec_gen_idx[i];
         
+        // Relative GenPart index for this reconstructed muon "i".
+        int j = flags.pair_idx_rec[i];
+        
+        // Not valid index -> fast exit
         if ((j < 0) || (j >= kin.pt_gen.size())) {
             continue;
         }
 
-        if (std::abs(val.gen_pdg_id[j]) == 13 && val.gen_status[j] == 1) {
-            results.pt_res_rec.push_back(kin.pt_rec[i]);
-            results.pt_res_gen.push_back(kin.pt_gen[j]);
-            results.eta_res_rec.push_back(kin.eta_rec[i]);
-            results.eta_res_gen.push_back(kin.eta_gen[j]);
+        // (Pdg index == 13/-13) + (Stable status of GenPart) 
+        if ((std::abs(flags.pdg_id_gen[j]) == 13) && (flags.status_gen[j] == 1)) {
+            results.pt_gen_RM.push_back(kin.pt_gen[j]);
+            results.eta_gen_RM.push_back(kin.eta_gen[j]);
+            results.pt_rec_RM.push_back(kin.pt_rec[i]);
+            results.eta_rec_RM.push_back(kin.eta_rec[i]);
         }
     }
-
     return results;
 }
