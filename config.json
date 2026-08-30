@@ -9,12 +9,14 @@
     "val_file":"../data/validation_muon_run.json", 
     "output_file":"../output/risultati.root"
   },
+  
   "flag_TP": {
     "en_kinematics":true,
     "en_isolation":true,
     "en_mass_window":false,
     "en_tight_muon":true
   },
+
   "cut_TP": {
     "pt_cut":25.0,
     "eta_cut":2.4,
@@ -22,17 +24,44 @@
     "mass_min":60.0,
     "mass_max":120.0
   },
+
   "flag_RM": {
     "en_kinematics":false,
     "en_isolation":true,
     "en_mass_window":false,
     "en_tight_muon":true
   },
+
   "cut_RM": {
     "pt_cut":25.0,
     "eta_cut":2.4,
     "iso_cut":0.15,
     "mass_min":60.0,
     "mass_max":120.0
+  },
+
+  "plot": {
+    "pt":{
+      "title_axis":"p_t [GeV]",
+      "axis_min":25.0,
+      "axis_max":100.0,
+      "nbins":100
+    },
+    "eta":{
+      "title_axis":"#eta",
+      "axis_min":-2.4,
+      "axis_max":2.4,
+      "nbins":100
+    },
+    "mll": {
+      "title_axis": "m_{#mu#mu} [GeV]",
+      "axis_min": 60.0,
+      "axis_max": 120.0,
+      "nbins": 60
+    },
+    "canvas":{
+      "width":800,
+      "height":600
+    }
   }
 }

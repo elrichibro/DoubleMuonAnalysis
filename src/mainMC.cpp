@@ -179,35 +179,17 @@ int main(int argc, char* argv[]) {
             .Define("Probe_Eta_All", [](const ResultsTagAndProbe& res) { return res.eta_all; }, {"TP_Result"})
             .Define("Probe_Eta_Pass", [](const ResultsTagAndProbe& res) { return res.eta_pass; }, {"TP_Result"});
 
-
-        // ----------
-        // HISTOGRAMS
-        // ----------
-
-        auto h_pt_den = node_TP.Histo1D({"h_pt_den", "All Probes;p_{T} [GeV];Events", 100, 15, 120}, "Probe_Pt_All");
-        auto h_pt_num = node_TP.Histo1D({"h_pt_num", "Passing Probes;p_{T} [GeV];Events", 100, 15, 120}, "Probe_Pt_Pass");
-
-        auto h_eta_den = node_TP.Histo1D({"h_eta_den", "All Probes;#eta;Events", 100, -2.4, 2.4}, "Probe_Eta_All");
-        auto h_eta_num = node_TP.Histo1D({"h_eta_num", "Passing Probes;#eta;Events", 100, -2.4, 2.4}, "Probe_Eta_Pass");
-
-        ROOT::RDF::TH2DModel model_2D("h2_model", ";#eta; p_{T} [GeV];", 100, -2.4, 2.4, 100, 0, 100);
-        auto h2_den = node_TP.Histo2D(model_2D, "Probe_Eta_All", "Probe_Pt_All");
-        auto h2_num = node_TP.Histo2D(model_2D, "Probe_Eta_Pass", "Probe_Pt_Pass");
-
         // ---------------------------------
         // START EVENT LOOP - OUTPUT MANAGER
         // ---------------------------------
 
         OutputManager manager(cfg.io.output_file, visualize, save);
 
-        manager.AddToPipeline("MatrixResp pt", h2_pt);
-        manager.AddToPipeline("MatrixResp eta", h2_eta);
-
-        manager.AddToPipeline("Efficiency pt", h_pt_num, h_pt_den);
-        manager.AddToPipeline("Efficiency eta", h_eta_num, h_eta_den);
-        manager.AddToPipeline("Efficiency map", h2_num, h2_den);
-
-        manager.Run();
+        manager.BookAnalysis(node_TP, cfg, "TagAndProbe");
+        
+        manager.Run();        
+        //manager.AddToPipeline("MatrixResp pt", h2_pt);
+        //manager.AddToPipeline("MatrixResp eta", h2_eta);
 
         if (visualize && app != nullptr) {
             std::cout << "Initializing visualization ..." << std::endl;
