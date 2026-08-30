@@ -23,15 +23,15 @@ ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_t
 
 /**
  * @brief Defines a new column in the dataset that represents the mask of particles that pass the kinematic cuts.
- * @param mask_name Name mask.
  * @param node RDF node.
- * @param pt Column name for particle transverse momentum.
- * @param eta Column name for particle pseudorapidity.
+ * @param mask_name Name of the new column-mask.
+ * @param pt_name Column name for particle transverse momentum.
+ * @param eta_name Column name for particle pseudorapidity.
  * @param pt_cut Minimum transverse momentum threshold.
  * @param eta_cut Pseudorapidity range.
  * @return Returns the node containing the bool mask.
 */
-ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string mask_name, const std::string pt, const std::string eta,
+ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& mask_name, const std::string& pt_name, const std::string& eta_name,
 float pt_cut, float eta_cut);
 
 

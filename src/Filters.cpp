@@ -3,7 +3,7 @@
 
 // #################################################################
 
-ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map, const std::string run_name, const std::string block_name) {
+ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map, const std::string& run_name, const std::string& block_name) {
     ROOT::RDF::RNode node_validation = node
         .Filter([&val_map](const UInt_t run, const UInt_t lum_block) {
             // Auto-update variables -> applied to multithread operation mode.
@@ -45,16 +45,16 @@ ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_t
 
 // #################################################################
 
-ROOT::RDF::RNode node_Kin_cut(const std::string mask_name, ROOT::RDF::RNode node, const std::string pt, 
-    const std::string eta, float pt_cut, float eta_cut) {
+ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& mask_name, const std::string& pt_column, const std::string& eta_column,
+     float pt_cut, float eta_cut) {
     
     ROOT::RDF::RNode node_kin_cut = node
-    .Define(mask_name, [pt_cut, eta_cut](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta) {
-        
-        // Physical cut
-        return ((pt > pt_cut) && (abs(eta) < eta_cut));
+        .Define(mask_name, [pt_cut, eta_cut](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta) {
+            
+            // Physical cut
+            return ((pt > pt_cut) && (abs(eta) < eta_cut));
 
-    }, {pt, eta});
+        }, {pt_column, eta_column});
 
     return node_kin_cut;
 }
