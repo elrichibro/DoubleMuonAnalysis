@@ -27,8 +27,6 @@ ROOT::RDF::RNode node_recMC(ROOT::RDF::RNode node);
 
 
 
-
-
 /**
  * @brief Selects the Z0 events in the MonteCarlo sample.
  * @param pdgId PDG identification index. (23 Z0)
@@ -69,34 +67,5 @@ ROOT::RVec<bool> is_MC_AntiMuon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT:
  * @return Returns true for a Z0 decaying into mu+mu-, else false.
 */
 bool is_MC_Event(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother_id, const int FSR);
-
-
-/// @brief Results of the Response Matrix calculus.
-struct ResultsRespMatrix {
-    std::vector<float> pt_gen_RM;// Transverse momentum of the selected generated muons.
-    std::vector<float> pt_rec_RM;// Transverse momentum of the selected reconstructed muons.
-    std::vector<float> eta_gen_RM;// Pseudorapidity of the selected generated muons.
-    std::vector<float> eta_rec_RM;// Pseudorapidity of the selected reconstructed muons.
-};
-
-/// @brief Kinematical quantities for Response Matrix calculus -> GENerated and REConstructed muons.
-struct MuonKinematics_RM {
-    const ROOT::RVec<float>& pt_gen;
-    const ROOT::RVec<float>& eta_gen;
-    const ROOT::RVec<float>& pt_rec;
-    const ROOT::RVec<float>& eta_rec;
-};
-
-/// @brief Muon flags for Response Matrix calculus -> REConstructed/GENerated pairing.
-struct MuonFlags_RM {
-    const ROOT::RVec<int>& gen_flav_rec;// 
-    const ROOT::RVec<int>& pair_idx_rec;
-    const ROOT::RVec<int>& status_gen;
-    const ROOT::RVec<int>& pdg_id_gen;
-};
-
-ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin, const MuonFlags_RM& flags);
-
-ROOT::RDF::RNode ApplyRespMatrixPipelin(ROOT::RDF::RNode node, const config_struct& cfg);
 
 #endif
