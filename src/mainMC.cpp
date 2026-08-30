@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
         // Efficiency
         // ----------
 
-        ROOT::RDF::RNode node_EffM = data_frame.Define("RespMatrix_mask",
+        ROOT::RDF::RNode node_RM = data_frame.Define("RespMatrix_mask",
             [](const ROOT::RVec<float>& pt_gen, const ROOT::RVec<float>& eta_gen, const ROOT::RVec<float>& pt_rec, const ROOT::RVec<float>& eta_rec,
             const ROOT::RVec<UChar_t>& rec_flav, const ROOT::RVec<Int_t>& rec_gen_idx, const ROOT::RVec<Int_t>& gen_status, const ROOT::RVec<Int_t>& gen_pdg_id) 
             {
@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
                 return CalculateRespMatrix(kin, val);
             }, {"GenPart_pt", "GenPart_eta", "Muon_pt", "Muon_eta", "Muon_genPartFlav", "Muon_genPartIdx", "GenPart_status", "GenPart_pdgId"});
 
-        node_EffM = node_EffM
+        node_RM = node_RM
             .Define("Gen_Pt", [](const ResultsRespMatrix& res) { return res.pt_gen_RM; }, {"RespMatrix_mask"})
             .Define("Gen_Eta", [](const ResultsRespMatrix& res) { return res.eta_gen_RM; }, {"RespMatrix_mask"})
             .Define("Rec_Pt", [](const ResultsRespMatrix& res) { return res.pt_rec_RM; }, {"RespMatrix_mask"})
@@ -118,8 +118,8 @@ int main(int argc, char* argv[]) {
     */
         ROOT::RDF::TH2DModel model_2D_1("h2_model1", "; p_{T} gen [GeV]; p_{T} rec [GeV];", 100, 0, 100, 200, 0, 100);
         ROOT::RDF::TH2DModel model_2D_2("h2_model2", "; #eta gen; #eta rec;", 200, -3.0, 3.0, 200, -3.0, 3.0);
-        auto h2_pt = node_EffM.Histo2D(model_2D_1, "Gen_Pt", "Rec_Pt");
-        auto h2_eta = node_EffM.Histo2D(model_2D_2, "Gen_Eta", "Rec_Eta");
+        auto h2_pt = node_RM.Histo2D(model_2D_1, "Gen_Pt", "Rec_Pt");
+        auto h2_eta = node_RM.Histo2D(model_2D_2, "Gen_Eta", "Rec_Eta");
 
         /*
         auto node_GEN_event = node_InvMass_aFSR
@@ -200,9 +200,9 @@ int main(int argc, char* argv[]) {
         manager.AddToPipeline("MatrixResp pt", h2_pt);
         manager.AddToPipeline("MatrixResp eta", h2_eta);
 
-        //manager.AddToPipeline("Efficiency pt", h_pt_num, h_pt_den);
-        //manager.AddToPipeline("Efficiency eta", h_eta_num, h_eta_den);
-        //manager.AddToPipeline("Efficiency map", h2_num, h2_den);
+        manager.AddToPipeline("Efficiency pt", h_pt_num, h_pt_den);
+        manager.AddToPipeline("Efficiency eta", h_eta_num, h_eta_den);
+        manager.AddToPipeline("Efficiency map", h2_num, h2_den);
 
         manager.Run();
 

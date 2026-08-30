@@ -9,13 +9,26 @@
     "val_file":"../data/validation_muon_run.json", 
     "output_file":"../output/risultati.root"
   },
-  "flag": {
+  "flag_TP": {
     "en_kinematics":true,
     "en_isolation":true,
     "en_mass_window":false,
     "en_tight_muon":true
   },
-  "cut": {
+  "cut_TP": {
+    "pt_cut":25.0,
+    "eta_cut":2.4,
+    "iso_cut":0.15,
+    "mass_min":60.0,
+    "mass_max":120.0
+  },
+  "flag_RM": {
+    "en_kinematics":true,
+    "en_isolation":true,
+    "en_mass_window":false,
+    "en_tight_muon":true
+  },
+  "cut_RM": {
     "pt_cut":25.0,
     "eta_cut":2.4,
     "iso_cut":0.15,
