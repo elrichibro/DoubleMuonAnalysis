@@ -115,3 +115,45 @@ ResultsTagAndProbe TagAndProbe(const MuonKinematics_TP& kin, const MuonFlags_TP&
     }
     return results;
 }
+
+ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin, const MuonFlags_RM& flags, const flags_config cfg_f, 
+const cuts_config cfg_c) {
+    
+    ResultsRespMatrix results;
+
+    // Number reconstructed muons
+    const int n_muons_rec = kin.pt_rec.size();
+    
+    // Loop on reconstructed muons.
+    for(int i = 0; i < n_muons_rec; i++) {
+        
+        // gen_flav_rec == 1 -> GenPart muon is : prompt muon. (!= -> fast exit)
+        if (flags.gen_flav_rec[i] != 1) {
+            continue;
+        }
+        
+        // Relative GenPart index for this reconstructed muon "i".
+        int j = flags.pair_idx_rec[i];
+        
+        // Not valid index -> fast exit
+        if ((j < 0) || (j >= kin.pt_gen.size())) {
+            continue;
+        }
+
+        // (Pdg index == 13/-13) + (Stable status of GenPart) 
+        if ((std::abs(flags.pdg_id_gen[j]) == 13) && (flags.status_gen[j] == 1)) {
+            
+            const bool pass = ((kin.pt_gen[j] > cfg_c.pt_cut) && (kin.pt_rec[i] > cfg_c.pt_cut) && 
+            (std::abs(kin.eta_gen[j]) < cfg_c.eta_cut) && (std::abs(kin.eta_rec[i]) < cfg_c.eta_cut)) || (!(cfg_f.en_kinematics));
+            
+            if (pass) {    
+                results.pt_gen_RM.push_back(kin.pt_gen[j]);
+                results.pt_rec_RM.push_back(kin.pt_rec[i]);
+
+                results.eta_gen_RM.push_back(kin.eta_gen[j]);                
+                results.eta_rec_RM.push_back(kin.eta_rec[i]);
+            }
+        }
+    }
+    return results;
+}

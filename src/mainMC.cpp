@@ -56,6 +56,9 @@ int main(int argc, char* argv[]) {
         Verbose_config(cfg);
     }
 
+    const flags_config flags = cfg.flag_RM;
+    const cuts_config cuts = cfg.cut_RM;
+    
     // --------------------
     // VISUALIZATION OPTION
     // --------------------
@@ -94,13 +97,13 @@ int main(int argc, char* argv[]) {
         // ----------
 
         ROOT::RDF::RNode node_RM = data_frame.Define("RespMatrix_mask",
-            [](const ROOT::RVec<float>& pt_gen, const ROOT::RVec<float>& eta_gen, const ROOT::RVec<float>& pt_rec, const ROOT::RVec<float>& eta_rec,
+            [flags, cuts](const ROOT::RVec<float>& pt_gen, const ROOT::RVec<float>& eta_gen, const ROOT::RVec<float>& pt_rec, const ROOT::RVec<float>& eta_rec,
             const ROOT::RVec<UChar_t>& rec_flav, const ROOT::RVec<Int_t>& rec_gen_idx, const ROOT::RVec<Int_t>& gen_status, const ROOT::RVec<Int_t>& gen_pdg_id) 
             {
                 MuonKinematics_RM kin{pt_gen, eta_gen, pt_rec, eta_rec};
                 MuonFlags_RM val{rec_flav, rec_gen_idx, gen_status, gen_pdg_id};
                 
-                return CalculateRespMatrix(kin, val);
+                return CalculateRespMatrix(kin, val, flags, cuts);
             }, {"GenPart_pt", "GenPart_eta", "Muon_pt", "Muon_eta", "Muon_genPartFlav", "Muon_genPartIdx", "GenPart_status", "GenPart_pdgId"});
 
         node_RM = node_RM

@@ -23,7 +23,7 @@
     "mass_max":120.0
   },
   "flag_RM": {
-    "en_kinematics":true,
+    "en_kinematics":false,
     "en_isolation":true,
     "en_mass_window":false,
     "en_tight_muon":true
