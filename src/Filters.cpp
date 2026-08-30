@@ -3,7 +3,7 @@
 
 // #################################################################
 
-ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map) {
+ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map, const std::string run_name, const std::string block_name) {
     ROOT::RDF::RNode node_validation = node
         .Filter([&val_map](const UInt_t run, const UInt_t lum_block) {
             // Auto-update variables -> applied to multithread operation mode.
@@ -38,7 +38,7 @@ ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_t
             last_decision = false;
             
             return false;
-        }, {"run" ,"luminosityBlock"}, "1. JSON Validation");
+        }, {run_name , block_name}, "1. JSON Validation");
     
     return node_validation;
 }
