@@ -143,12 +143,6 @@ class OutputManager {
         // Overload method: used to add PipelineObjs to the pipe.
         void AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr<TH1D> hist);
         void AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr<TH2D> hist);
-
-        void GetVisualize(bool value) {visualize = value;}
-        bool GetVisualize() {return visualize;}
-
-        void GetSave(bool value) {save = value;}
-        bool GetSave() {return save;}
         
         template <typename T>
         void AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr<T> hist1, ROOT::RDF::RResultPtr<T> hist2) {
@@ -160,6 +154,11 @@ class OutputManager {
         void Clear() {pipeline.clear();}
 };
 
+// ----------------
+// ANALYSIS WRAPPER
+// ----------------
+
+//ROOT::RDF:
 
 
 
