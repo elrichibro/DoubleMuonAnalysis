@@ -3,34 +3,79 @@ This program uses RDataFrame to analyze a CMS OpenData DoubleMuone dataset and e
 
 This is my final project for the Computing Methods for Experimental Physics exam at University of Pisa, started the 15/08/2026.
 
-Usage:
-'''bash
-    ./analyse ../config.json + optional
+-----
 
-    optional:  
-    -v or --verbose -> verbose option  
-    -vis or --visualize -> visualization option thourgh TApplication  
+Usage
 
-'''
+The program is entirely commanded by a JSON configuration file. 
+To run the Monte Carlo analysis pipeline, use the following syntax:
 
-This project will be under active development for the August and September month.
+./analyse_mc <path/to/config.json> [options]
 
-Physics logic:  
--Muon selection:  
-    -Muon track reconstruction: (flag)  
-        -Standalone-muon tracks  
-        -Tracker muon tracks (X)  
-        -Global muon tracks (X)  
-    -Muon identifications: (flag)  
-        -Loose muon ID  
-        -Medium muon ID  
-        -Tight muon ID (X)  
-        -Soft muon ID  
-        -High momentum muon ID  
-    -Muon isolation: (95% efficiency) (cuts)  
-        -PF isolation: DeltaR < 0.4 -> R_iso < 0.15  
-        -Track based isolation: DeltaR < 0.3 -> R_iso < 0.05  
--Event selection: (at generator level) (cuts)  
-    -p_T > 25 GeV  
-    -|eta| < 2.4  
-    -60 GeV < m_{l_+l_-} < 120 GeV  
+Command options:
+
+-v, --verbose : Enable verbose output (prints event loops progress, debug info).
+-s, --save : Save the output (saves booked objects in a .root file).
+-vis, --visualize : Enable visualization through TApplication.
+
+-----
+
+JSON file (config.json)
+
+The config.json file controls all the parameters of the analysis, from I/O paths to physics cuts, allowing the modification the analysis without recompiling the project.
+
+Overview:
+{
+  "mode": "both" 
+  ,
+  "io": {
+    "tree_data_name":"Events",
+    "in_data_file":"../data/dati0.root",
+    "tree_mc_name":"Events",
+    "in_mc_file":"../data/datiMC0.root",
+    "val_file":"../data/validation_muon_run.json", 
+    "output_file":"../output/risultati.root"
+  },
+  "flag": {
+    "en_kinematics":true,
+    "en_isolation":true,
+    "en_mass_window":false,
+    "en_tight_muon":true
+  },
+  "cut": {
+    "pt_cut":25.0,
+    "eta_cut":2.4,
+    "iso_cut":0.15,
+    "mass_min":60.0,
+    "mass_max":120.0
+  }
+}
+
+-----
+
+Physics logic:
+
+- Muon track reconstruction: (flag)
+    - Standalone-muon tracks
+    - Tracker muon tracks (X)
+    - Global muon tracks (X)
+- Muon identification: (flag)
+    - Loose muon ID
+    - Medium muon ID (?)
+    - Tight muon ID (X)
+    - Soft muon ID
+    - High momentum muon ID
+- Muon isolation: (95% efficiency) (cuts)
+    - PF isolation: Delta R < 0.4 -> R_iso < 0.15
+    - Track based isolation: Delta R < 0.3 -> R_iso < 0.05
+
+-----
+
+Event Selection (at generator level)
+
+- p_T > 25 GeV
+- |eta| < 2.4
+- 60 GeV < m_{mu+mu-} < 120 GeV
+
+
+This project will be under active development for the August and September months.

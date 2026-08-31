@@ -1,79 +1,103 @@
 #ifndef FILTERS_H
 #define FILTERS_H
 
-#include <map>
-#include <cstdint>
-#include <iostream>
+#include <string>
+#include <vector>
 
-#include <Rtypes.h>
-#include "ROOT/RVec.hxx"
+#include <ROOT/RVec.hxx>
+#include <ROOT/RDataFrame.hxx>
 
 #include "Config.h"
 
 /**
- * @brief Functor struct used to filter the validated runs from the not ones.
- * @param init_map Is the validation map that contains the json file info about the validations runs and the luminosity blocks.
- * @param run Is the run of the current event.
- * @param lum_block Is the luminosity block of the current event.
- * @return Returns true if the event is validated within che CMS standards, false if not.
+ * @brief Checks the validated runs from the not ones.
+ * @param val_map Validation map.
+ * @param run_name Run column name.
+ * @param block_name Luminosity block column name.
+ * @return Returns the validated node-dataset.
 */
-struct Validation_filter {
-    const validation_type& val_map;
+ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map, const std::string& run_name, const std::string& block_name);
 
-    Validation_filter(const validation_type& init_map) : val_map(init_map) {}
+/**
+ * @brief Defines a new column in the dataset that represents the mask of particles that pass the kinematic cuts.
+ * @param node RDF node.
+ * @param mask_name Name of the new column-mask.
+ * @param pt_name Column name for particle transverse momentum.
+ * @param eta_name Column name for particle pseudorapidity.
+ * @param pt_cut Minimum transverse momentum threshold.
+ * @param eta_cut Pseudorapidity range.
+ * @return Returns the node containing the bool mask.
+*/
+ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& mask_name, const std::string& pt_name, const std::string& eta_name,
+float pt_cut, float eta_cut);
 
-    bool operator() (const UInt_t run, const UInt_t lum_block) const;
+
+/// @brief Transverse momentum and psudorapidity vectors results after T&P
+struct ResultsTagAndProbe {
+    std::vector<float> pt_pass;// Transverse momentum of probes that pass the selection.
+    std::vector<float> pt_all;// Transverse momentum of all probes.
+    std::vector<float> eta_pass;// Pseudorapidity of probes that pass the selection.
+    std::vector<float> eta_all;// Pseudorapidity of all probes. 
 };
 
-/**
- * @brief Functor struct used to filter the GoodMuons. The filter is based on transeverse momentum, pseudorapidity, thight flag identification
- * and isolation selection.
- * @param init_structs Is the struct containing the physical cut values stored in the config.json file.
- * @param pt Is a RVec storing the transverse momentum of the particles in the event.
- * @param eta Is pseudorapidity of the particles of the event.
- * @param tight_id Is the identification muon flag based on the number of hits in the inner tracker and muon stations, a requirement on the fit quality of the muons tracks and the spatial compatibility with the PV.
- * @param iso Is the isolation variable used to identify isolated leptons tracks.
- * @return Returns an RVec<bool> for all muons in the event. True if the event layed in the fiducial region, false if not.
-*/
-struct GoodMuon_filter {
-    const config_struct& cfg_struct;
 
-    GoodMuon_filter(const config_struct& init_struct) : cfg_struct(init_struct) {}
-
-    ROOT::RVec<bool> operator() (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<bool>& tight_id, 
-    const ROOT::RVec<float>& iso) const;
+/// @brief Muon kinematics variables for selection.
+struct MuonKinematics_TP {
+    const ROOT::RVec<float>& pt;// Transverse momentum
+    const ROOT::RVec<float>& eta;// Pseudorapidity
+    const ROOT::RVec<float>& phi;// Angular variable
+    const ROOT::RVec<float>& mass;// Reconstructed mass
 };
 
-/**
- * @brief Function for MonteCarlo Z0 event selection
- * @param pdgId Is the PDG identification index, 23 for the Z0.
- * @param flags Is the status flag stored bitwise. Applied bits are 0, 8 and 13.
- * @return Returns an RVec<bool> for the GenPart collection that is true for a Z0 event generator.
-*/
-ROOT::RVec<bool> is_MC_Z0(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags);
+
+/** 
+* @brief Muon flags for TagAndProbe selections.
+* @brief Tag muon is a TightId muon. Probe candidate is a StandaloneId muon. Passed probe is a GlobalId muon + Isolation request.
+*/  
+struct MuonFlags_TP {
+    const ROOT::RVec<bool>& tight;// Muon_tightId flag.
+    const ROOT::RVec<bool>& stand;// Muon_isStandalone flag.
+    const ROOT::RVec<bool>& global;// Muon_isGlobal flag.
+    const ROOT::RVec<float>& iso;// Isolation parameter.
+};
+
 
 /**
- * @brief Function for MonteCarlo muon selection based on flags requirements.
- * @param pdgId Is the PDG identification index, 13 for the muon.
- * @param flags Is the status flag stored bitwise. Applied bits are 0, 8 and 13.
- * @return Returns an RVec<bool> for the GenPart collection that is true for a muon generated by a Z0 and selected after the FSR.
+ * @brief TagAndProbe function selection
+ * @param kin Muon kinematic event values.
+ * @param flags Muon event flags.
+ * @return Struct containing vectors of passed and total probe kinematics.
 */
-ROOT::RVec<bool> is_MC_Muon(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags);
+ResultsTagAndProbe TagAndProbe(const MuonKinematics_TP& kin, const MuonFlags_TP& flags);
 
-/**
- * @brief Function for MonteCarlo antimuon selection based on flags requirements.
- * @param pdgId Is the PDG identification index, -13 for the antimuon.
- * @param flags Is the status flag stored bitwise. Applied bits are 0, 8 and 13.
- * @return Returns an RVec<bool> for the GenPart collection that is true for an antimuon generated by a Z0 and selected after the FSR.
-*/
-ROOT::RVec<bool> is_MC_AntiMuon(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags);
 
-/**
- * @brief Function for MonteCarlo Event selection based on flags and number of particles requiered.
- * @param pdgId Is the PDG identification index.
- * @param flags Is the status flag stored bitwise.
- * @return Returns a bool at Event level. True for a Z0 decaying into mu+mu-, else false.
-*/
-bool is_MC_Event(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags);
+
+
+/// @brief Results of the Response Matrix calculus.
+struct ResultsRespMatrix {
+    std::vector<float> pt_gen_RM;// Transverse momentum of the selected generated muons.
+    std::vector<float> pt_rec_RM;// Transverse momentum of the selected reconstructed muons.
+    std::vector<float> eta_gen_RM;// Pseudorapidity of the selected generated muons.
+    std::vector<float> eta_rec_RM;// Pseudorapidity of the selected reconstructed muons.
+};
+
+/// @brief Kinematical quantities for Response Matrix calculus -> GENerated and REConstructed muons.
+struct MuonKinematics_RM {
+    const ROOT::RVec<float>& pt_gen;
+    const ROOT::RVec<float>& eta_gen;
+    const ROOT::RVec<float>& pt_rec;
+    const ROOT::RVec<float>& eta_rec;
+};
+
+/// @brief Muon flags for Response Matrix calculus -> REConstructed/GENerated pairing.
+struct MuonFlags_RM {
+    const ROOT::RVec<int>& gen_flav_rec;// 
+    const ROOT::RVec<int>& pair_idx_rec;
+    const ROOT::RVec<int>& status_gen;
+    const ROOT::RVec<int>& pdg_id_gen;
+};
+
+ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin, const MuonFlags_RM& flags, const flags_config cfg_f, 
+const cuts_config cfg_c);
 
 #endif

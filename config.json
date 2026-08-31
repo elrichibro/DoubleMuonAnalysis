@@ -6,26 +6,20 @@
     "save":false
   },
   "io": {
-    "tree_data_name": "Events",
-    "in_data_file": "../data/dati0.root",
-    "tree_mc_name": "Events",
-    "in_mc_file": "../data/datiMC0.root",
-    "val_file": "../data/validation_muon_run.json" 
+    "tree_data_name":"Events",
+    "in_data_file":"../data/dati0.root",
+    "tree_mc_name":"Events",
+    "in_mc_file":"../data/datiMC0.root",
+    "val_file":"../data/validation_muon_run.json", 
+    "output_file":"../output/risultati.root"
   },
-  "flag": {
-    "en_kinematics": true,
-    "en_isolation": true,
-    "en_mass_window": true,
-    "en_tight_muon" : true
+  
+  "flag_TP": {
+    "en_kinematics":true,
+    "en_isolation":true,
+    "en_mass_window":false,
+    "en_tight_muon":true
   },
-<<<<<<< Updated upstream
-  "cut": {
-    "pt_cut": 25.0,
-    "eta_cut": 2.4,
-    "iso_cut": 0.15,
-    "mass_min": 60.0,
-    "mass_max": 120.0
-=======
 
   "cut_TP": {
     "pt_cut":25.0,
@@ -53,7 +47,7 @@
   "plot": {
     "pt":{
       "title_axis":"p_t [GeV]",
-      "axis_min":70.0,
+      "axis_min":25.0,
       "axis_max":100.0,
       "nbins":100
     },
@@ -73,6 +67,5 @@
       "width":800,
       "height":600
     }
->>>>>>> Stashed changes
   }
 }

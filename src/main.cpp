@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
         auto validation_map = Validation_load(cfg.io.val_file);
 
         // Validation run filter
-        auto node_valid_data = data_frame.Filter(Validation_filter(validation_map), {"run" ,"luminosityBlock"}, "1. JSON Validation");
+        auto node_valid_data = ApplyValidationFilter(data_frame, validation_map, "run", "luminosityBlock");
 
         auto node1_good_muon = node_valid_data
             // Defining a bool variable -> GoodMuon: Kinematics + Identification + Isolation

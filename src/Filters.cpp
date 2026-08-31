@@ -1,92 +1,159 @@
 #include "Filters.h"
 
-bool Validation_filter::operator()(const UInt_t run, const UInt_t lum_block) const {       
-    thread_local static UInt_t last_run = 0;
-    thread_local static UInt_t last_lum_block = 0;
-    thread_local static bool last_decision = false;
+#include <Rtypes.h>
 
-    if ((run == last_run) && (lum_block == last_lum_block)) {
-        return last_decision;
-    }
+// #################################################################
 
-    last_run = run;
-    last_lum_block = lum_block;
+ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map, const std::string& run_name, const std::string& block_name) {
+    ROOT::RDF::RNode node_validation = node
+        .Filter([&val_map](const UInt_t run, const UInt_t lum_block) {
+            // Auto-update variables -> applied to multithread operation mode.
+            thread_local static UInt_t last_run = 0;
+            thread_local static UInt_t last_lum_block = 0;
+            thread_local static bool last_decision = false;// For fast loop
 
-    auto it = val_map.find(run);
+            // Fast loop
+            if ((run == last_run) && (lum_block == last_lum_block)) {
+                return last_decision;
+            }
 
-    if (it != val_map.end()) {
-        for (const auto& block : it->second) {
-            if ((lum_block >= block.first) && (lum_block <= block.second)) {
-                last_decision = true;
-                return true;
+            // Updating values
+            last_run = run;
+            last_lum_block = lum_block;
+
+            // Checks the run input within the validation_map
+            auto it = val_map.find(run);
+
+            // if succeds
+            if (it != val_map.end()) {
+                // Checking blocks
+                for (const auto& block : it->second) {
+                    // Luminosity block within the range
+                    if ((lum_block >= block.first) && (lum_block <= block.second)) {
+                        last_decision = true;
+                        return true;
+                    }
+                }
+            }
+            // else option 
+            last_decision = false;
+            
+            return false;
+        }, {run_name , block_name}, "JSON Validation");
+    
+    return node_validation;
+}
+
+// #################################################################
+
+ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& mask_name, const std::string& pt_column, const std::string& eta_column,
+ float pt_cut, float eta_cut) {
+    
+    ROOT::RDF::RNode node_kin_cut = node
+        .Define(mask_name, [pt_cut, eta_cut](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta) {
+            
+            // Physical cut
+            return ((pt > pt_cut) && (abs(eta) < eta_cut));
+
+        }, {pt_column, eta_column});
+
+    return node_kin_cut;
+}
+
+// #################################################################
+
+ResultsTagAndProbe TagAndProbe(const MuonKinematics_TP& kin, const MuonFlags_TP& flags) {
+    // Results container
+    ResultsTagAndProbe results;
+
+    // Number of particles in the event
+    const unsigned int n_muons = kin.pt.size();
+
+    results.pt_all.reserve(n_muons);
+    results.eta_all.reserve(n_muons);
+    results.pt_pass.reserve(n_muons);
+    results.eta_pass.reserve(n_muons);
+    
+    for(int i = 0; i < n_muons; i++) {
+        // Fast exit
+        if (!flags.tight[i]) {
+            continue;
+        }
+
+        for (int j = 0; j < n_muons; j++) {
+            // Fast exit
+            if (i == j || !flags.stand[j]) {
+                continue;
+            }
+            // Loop into good probe muons
+
+            // Invariant mass (tag + probe)
+            float mass = ROOT::VecOps::InvariantMass(ROOT::RVec<float>{kin.pt[i], kin.pt[j]}, 
+            ROOT::RVec<float>{kin.eta[i], kin.eta[j]}, ROOT::RVec<float>{kin.phi[i], kin.phi[j]},
+            ROOT::RVec<float>{kin.mass[i], kin.mass[j]});
+            
+            // Invariant mass range
+            if((mass > 60) && (mass < 120)) {
+                
+                // All probes (passed + failed)
+                results.pt_all.push_back(kin.pt[j]);
+                results.eta_all.push_back(kin.eta[j]);
+
+                if ((flags.global[j]) && (flags.iso[j] < 0.15)) {
+                    
+                    // Passed probes
+                    results.pt_pass.push_back(kin.pt[j]);
+                    results.eta_pass.push_back(kin.eta[j]);
+                
+                } else {
+                    continue;
+                }
+            } else {
+                continue;
             }
         }
     }
-
-    last_decision = false;
-    
-    return false;
+    return results;
 }
 
-ROOT::RVec<bool> GoodMuon_filter::operator()(const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<bool>& tight_id, 
-    const ROOT::RVec<float>& iso) const {
+ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin, const MuonFlags_RM& flags, const flags_config cfg_f, 
+const cuts_config cfg_c) {
     
-    ROOT::RVec<bool> mask(pt.size(), true);
+    ResultsRespMatrix results;
+
+    // Number reconstructed muons
+    const int n_muons_rec = kin.pt_rec.size();
     
-    if (cfg_struct.flag.en_tight_muon) {
-        mask = mask && tight_id;
+    // Loop on reconstructed muons.
+    for(int i = 0; i < n_muons_rec; i++) {
+        
+        // gen_flav_rec == 1 -> GenPart muon is : prompt muon. (!= -> fast exit)
+        if (flags.gen_flav_rec[i] != 1) {
+            continue;
+        }
+        
+        // Relative GenPart index for this reconstructed muon "i".
+        int j = flags.pair_idx_rec[i];
+        
+        // Not valid index -> fast exit
+        if ((j < 0) || (j >= kin.pt_gen.size())) {
+            continue;
+        }
+
+        // (Pdg index == 13/-13) + (Stable status of GenPart) 
+        if ((std::abs(flags.pdg_id_gen[j]) == 13) && (flags.status_gen[j] == 1)) {
+            
+            const bool pass = ((kin.pt_gen[j] > cfg_c.pt_cut) && (kin.pt_rec[i] > cfg_c.pt_cut) && 
+            (std::abs(kin.eta_gen[j]) < cfg_c.eta_cut) && (std::abs(kin.eta_rec[i]) < cfg_c.eta_cut)) || (!(cfg_f.en_kinematics));
+            
+            if (pass) {    
+                results.pt_gen_RM.push_back(kin.pt_gen[j]);
+                results.pt_rec_RM.push_back(kin.pt_rec[i]);
+
+                results.eta_gen_RM.push_back(kin.eta_gen[j]);                
+                results.eta_rec_RM.push_back(kin.eta_rec[i]);
+            }
+        }
     }
-    
-    if (cfg_struct.flag.en_kinematics) {
-        mask = mask && (pt > cfg_struct.cut.pt_cut) && (abs(eta) < cfg_struct.cut.eta_cut);
-    }
-    
-    if (cfg_struct.flag.en_isolation) {
-        mask = mask && (iso < cfg_struct.cut.iso_cut);
-    }
-    
-    return mask;
+    return results;
 }
-
-
-/* Flags summary:
-    0 : isPrompt                -> SELECTED
-    1 : isDecayedLeptonHadron
-    2 : isTauDecayProduct
-    3 : isPromptTauDecayProduct
-    4 : isDirectTauDecayProduct
-    5 : isDirectPromptTauDecayProduct
-    6 : isDirectHadronDecayProduct
-    7 : isHardProcess
-    8 : fromHardProcess         -> SELECTED
-    9 : isHardProcessTauDecayProduct
-    10 : isDirectHardProcessTauDecayProduct
-    11 : fromHardProcessBeforeFSR
-    12 : isFirstCopy
-    13 : isLastCopy             -> SELECTED
-    14 : isLastCopyBeforeFSR
-
-
-    Bitwie mask: 0, 8, 13 -> 2^13 + 2^8 + 2^0 = 8192 + 256 + 1 = 8449           
-    0 x ( 0 0 1 0 )( 0 0 0 1 )( 0 0 0 0 )( 0 0 0 1 ) = 0x2101
-
-*/
-
-ROOT::RVec<bool> is_MC_Z0(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags) {
-    return ((pdgId == 23) && ((flags & 0x2101) == 0x2101));
-}
-
-ROOT::RVec<bool> is_MC_Muon(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags) {
-    return ((pdgId == 13) && ((flags & 0x2101) == 0x2101));
-}
-
-ROOT::RVec<bool> is_MC_AntiMuon(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags) {
-    return ((pdgId == -13) && ((flags & 0x2101) == 0x2101));
-}
-
-bool is_MC_Event(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags) {
-
-    return ((ROOT::VecOps::Sum(is_MC_Z0(pdgId, flags)) == 1) && 
-    (ROOT::VecOps::Sum(is_MC_Muon(pdgId, flags)) == 1) && (ROOT::VecOps::Sum(is_MC_AntiMuon(pdgId, flags)) == 1)); 
-}
-
