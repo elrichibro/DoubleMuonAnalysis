@@ -1,6 +1,10 @@
 {
-  "mode": "both" 
-  ,
+  "general": { 
+    "mode": "ResponseMatrix",
+    "verbose": 1,
+    "visualize":true,
+    "save":false
+  },
   "io": {
     "tree_data_name":"Events",
     "in_data_file":"../data/dati0.root",
@@ -26,15 +30,15 @@
   },
 
   "flag_RM": {
-    "en_kinematics":false,
-    "en_isolation":true,
+    "en_kinematics":true,
+    "en_isolation":false,
     "en_mass_window":false,
-    "en_tight_muon":true
+    "en_tight_muon":false
   },
 
   "cut_RM": {
-    "pt_cut":25.0,
-    "eta_cut":2.4,
+    "pt_cut":70.0,
+    "eta_cut":2.5,
     "iso_cut":0.15,
     "mass_min":60.0,
     "mass_max":120.0
@@ -49,8 +53,8 @@
     },
     "eta":{
       "title_axis":"#eta",
-      "axis_min":-2.4,
-      "axis_max":2.4,
+      "axis_min":-3.0,
+      "axis_max":3.0,
       "nbins":100
     },
     "mll": {
