@@ -62,7 +62,8 @@ ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& ma
 
 // #################################################################
 
-ResultsTagAndProbe TagAndProbe(const MuonKinematics_TP& kin, const MuonFlags_TP& flags) {
+ResultsTagAndProbe TagAndProbe(const MuonKinematics_TP& kin, const MuonFlags_TP& flags, const flags_config cfg_f, 
+const cuts_config cfg_c) {
     // Results container
     ResultsTagAndProbe results;
 
@@ -70,9 +71,13 @@ ResultsTagAndProbe TagAndProbe(const MuonKinematics_TP& kin, const MuonFlags_TP&
     const unsigned int n_muons = kin.pt.size();
 
     results.pt_all.reserve(n_muons);
-    results.eta_all.reserve(n_muons);
     results.pt_pass.reserve(n_muons);
+
+    results.eta_all.reserve(n_muons);
     results.eta_pass.reserve(n_muons);
+
+    results.mll_pass.reserve(n_muons);
+    results.mll_all.reserve(n_muons);
     
     for(int i = 0; i < n_muons; i++) {
         // Fast exit
@@ -86,30 +91,33 @@ ResultsTagAndProbe TagAndProbe(const MuonKinematics_TP& kin, const MuonFlags_TP&
                 continue;
             }
             // Loop into good probe muons
-
+            
+            
+            const bool pass = ((kin.pt[j] > cfg_c.pt_cut) && (std::abs(kin.eta[j]) < cfg_c.eta_cut)) || (!(cfg_f.en_kinematics));
+            
+            if (!pass) {
+                continue;
+            }
             // Invariant mass (tag + probe)
             float mass = ROOT::VecOps::InvariantMass(ROOT::RVec<float>{kin.pt[i], kin.pt[j]}, 
             ROOT::RVec<float>{kin.eta[i], kin.eta[j]}, ROOT::RVec<float>{kin.phi[i], kin.phi[j]},
             ROOT::RVec<float>{kin.mass[i], kin.mass[j]});
             
             // Invariant mass range
-            if((mass > 60) && (mass < 120)) {
+            if (((mass > cfg_c.mass_min) && (mass < cfg_c.mass_max)) || (!cfg_f.en_mass_window)) {
                 
                 // All probes (passed + failed)
                 results.pt_all.push_back(kin.pt[j]);
                 results.eta_all.push_back(kin.eta[j]);
+                results.mll_all.push_back(mass);
 
                 if ((flags.global[j]) && (flags.iso[j] < 0.15)) {
                     
                     // Passed probes
                     results.pt_pass.push_back(kin.pt[j]);
-                    results.eta_pass.push_back(kin.eta[j]);
-                
-                } else {
-                    continue;
+                    results.eta_pass.push_back(kin.eta[j]);   
+                    results.mll_pass.push_back(mass);
                 }
-            } else {
-                continue;
             }
         }
     }

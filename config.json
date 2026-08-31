@@ -1,6 +1,6 @@
 {
   "general": { 
-    "mode": "ResponseMatrix",
+    "mode": "TagAndProbe",
     "verbose": 1,
     "visualize":true,
     "save":false
@@ -16,14 +16,14 @@
   
   "flag_TP": {
     "en_kinematics":true,
-    "en_isolation":true,
-    "en_mass_window":false,
-    "en_tight_muon":true
+    "en_isolation":false,
+    "en_mass_window":true,
+    "en_tight_muon":false
   },
 
   "cut_TP": {
     "pt_cut":25.0,
-    "eta_cut":2.4,
+    "eta_cut":2.5,
     "iso_cut":0.15,
     "mass_min":60.0,
     "mass_max":120.0
@@ -47,7 +47,7 @@
   "plot": {
     "pt":{
       "title_axis":"p_t [GeV]",
-      "axis_min":25.0,
+      "axis_min":0.0,
       "axis_max":100.0,
       "nbins":100
     },
@@ -61,7 +61,7 @@
       "title_axis": "m_{#mu#mu} [GeV]",
       "axis_min": 60.0,
       "axis_max": 120.0,
-      "nbins": 60
+      "nbins": 100
     },
     "canvas":{
       "width":800,

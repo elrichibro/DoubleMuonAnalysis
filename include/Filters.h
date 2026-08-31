@@ -38,6 +38,8 @@ struct ResultsTagAndProbe {
     std::vector<float> pt_all;// Transverse momentum of all probes.
     std::vector<float> eta_pass;// Pseudorapidity of probes that pass the selection.
     std::vector<float> eta_all;// Pseudorapidity of all probes. 
+    std::vector<float> mll_pass;
+    std::vector<float> mll_all;
 };
 
 
@@ -68,7 +70,8 @@ struct MuonFlags_TP {
  * @param flags Muon event flags.
  * @return Struct containing vectors of passed and total probe kinematics.
 */
-ResultsTagAndProbe TagAndProbe(const MuonKinematics_TP& kin, const MuonFlags_TP& flags);
+ResultsTagAndProbe TagAndProbe(const MuonKinematics_TP& kin, const MuonFlags_TP& flags, const flags_config cfg_f, 
+const cuts_config cfg_c);
 
 
 
