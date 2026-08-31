@@ -84,6 +84,7 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
     
     std::string title_pt = ";" + cfg.pt_plot.title_axis + ";Efficiency;";
     std::string title_eta = ";" + cfg.eta_plot.title_axis + ";Efficiency;";
+    std::string title_mll = ";" + cfg.mll_plot.title_axis + ";Efficiency;";
     std::string title = ";" + cfg.eta_plot.title_axis + ";" + cfg.pt_plot.title_axis + ";";
 
     ROOT::RDF::TH1DModel model_1D_pt("p_{T} stats", title_pt.c_str(), cfg.pt_plot.nbins, cfg.pt_plot.axis_min, 
@@ -91,6 +92,9 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
 
     ROOT::RDF::TH1DModel model_1D_eta("#eta stats", title_eta.c_str(), cfg.eta_plot.nbins, cfg.eta_plot.axis_min, 
     cfg.eta_plot.axis_max);
+
+    ROOT::RDF::TH1DModel model_1D_mll("m_{#mu+#mu-} stats", title_mll.c_str(), cfg.mll_plot.nbins, cfg.mll_plot.axis_min, 
+    cfg.mll_plot.axis_max);
 
     ROOT::RDF::TH2DModel model_2D("Stats", title.c_str(), cfg.eta_plot.nbins, cfg.eta_plot.axis_min, cfg.eta_plot.axis_max, 
     cfg.pt_plot.nbins, cfg.pt_plot.axis_min, cfg.pt_plot.axis_max);
@@ -103,7 +107,9 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
 
     if (cfg.general.mode == "TagAndProbe") {
 
+        // ----------
         // Histograms
+        // ----------
 
         auto h1_pt_num = node.Histo1D(model_1D_pt, "Probe_Pt_Pass");
         auto h1_pt_den  = node.Histo1D(model_1D_pt, "Probe_Pt_All");
@@ -111,25 +117,36 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         auto h1_eta_num = node.Histo1D(model_1D_eta, "Probe_Eta_Pass");
         auto h1_eta_den  = node.Histo1D(model_1D_eta, "Probe_Eta_All");
 
+        auto h1_mll_num = node.Histo1D(model_1D_mll, "Probe_Mll_Pass");
+        auto h1_mll_den  = node.Histo1D(model_1D_mll, "Probe_Mll_All");
+
         auto h2_eta_pt_den = node.Histo2D(model_2D, "Probe_Eta_All", "Probe_Pt_All");
         auto h2_eta_pt_num = node.Histo2D(model_2D, "Probe_Eta_Pass", "Probe_Pt_Pass");
 
+        // --------
         // Pipeline
+        // --------
 
-        //AddToPipeline("Pt_Pass", h_pt_num);
-        //AddToPipeline("Pt_Total", h_pt_den);
+        AddToPipeline("Pt_Pass", h1_pt_num);
+        AddToPipeline("Pt_Total", h1_pt_den);
 
-        //AddToPipeline("Eta_Pass", h_eta_num);
-        //AddToPipeline("Eta_Total", h_eta_den);
-        
+        //AddToPipeline("Eta_Pass", h1_eta_num);
+        //AddToPipeline("Eta_Total", h1_eta_den);
+
+        AddToPipeline("InvMass_Total", h1_mll_den);
+        AddToPipeline("InvMass_Pass", h1_mll_num);
+
         AddToPipeline("Efficiency pt", h1_pt_num, h1_pt_den);
         AddToPipeline("Efficiency eta", h1_eta_num, h1_eta_den);
+        
         AddToPipeline("Efficiency map", h2_eta_pt_num, h2_eta_pt_den);
     
     } else if (cfg.general.mode == "ResponseMatrix") {
         
+        // ----------
         // Histograms
-
+        // ----------
+        
         auto h1_pt_gen = node.Histo1D(model_1D_pt, "Gen_Pt");
         auto h1_pt_rec = node.Histo1D(model_1D_pt, "Rec_Pt");
 
@@ -139,7 +156,10 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         auto h2_pt_gen_rec = node.Histo2D(model_2D_1, "Gen_Pt", "Rec_Pt");
         auto h2_eta_gen_rec = node.Histo2D(model_2D_2, "Gen_Eta", "Rec_Eta");
 
+        // --------
         // Pipeline
+        // --------
+
         AddToPipeline("P_{t} Generated distribution", h1_pt_gen);
         AddToPipeline("P_{t} Reconstructed distribution", h1_pt_rec);
 
