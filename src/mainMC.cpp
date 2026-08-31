@@ -51,10 +51,28 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    verbose = cfg.general.verbose;
+    visualize = cfg.general.visualize;
+    save = cfg.general.save;
+
+    std::string mode = cfg.general.mode;
+
+    std::string dataset_tree = "";
+    std::string dataset_file = "";
+
+    if (cfg.general.dataset == "data") {
+        std::string dataset_tree = cfg.io.tree_data_name;
+        std::string dataset_file = cfg.io.in_data_file;
+    } else if (cfg.general.dataset == "mc") {
+        std::string dataset_tree = cfg.io.tree_mc_name;
+        std::string dataset_file = cfg.io.in_mc_file;
+    }
+
     // Verbose JSON configuration
     if (verbose) {
         Verbose_config(cfg);
     }
+
 
     const flags_config flags = cfg.flag_RM;
     const cuts_config cuts = cfg.cut_RM;
@@ -65,7 +83,7 @@ int main(int argc, char* argv[]) {
     
     TApplication* app = nullptr;
     if (visualize) {
-        std::cout << "Visualization inializating ..." << std::endl;
+        std::cout << "TApplication inializating ..." << std::endl;
         app = new TApplication("app", &argc, argv);
     }
 
@@ -111,18 +129,6 @@ int main(int argc, char* argv[]) {
             .Define("Gen_Eta", [](const ResultsRespMatrix& res) { return res.eta_gen_RM; }, {"RespMatrix_mask"})
             .Define("Rec_Pt", [](const ResultsRespMatrix& res) { return res.pt_rec_RM; }, {"RespMatrix_mask"})
             .Define("Rec_Eta", [](const ResultsRespMatrix& res) { return res.eta_rec_RM; }, {"RespMatrix_mask"});
-
-    /*     
-        auto h_pt_gen = node_EffM.Histo1D({"h_pt_gen", "Pt generated;p_{T} [GeV];Events", 100, 0, 120}, "Gen_Pt");
-        auto h_pt_rec = node_EffM.Histo1D({"h_pt_rec", "Pt reconstructed;p_{T} [GeV];Events", 100, 0, 120}, "Rec_Pt");
-
-        auto h_eta_gen = node_EffM.Histo1D({"h_eta_gen", "Eta generated;#eta;Events", 100, -3.0, 3.0}, "Gen_Eta");
-        auto h_eta_rec = node_EffM.Histo1D({"h_eta_rec", "Eta reconstructed;#eta;Events", 100, -3.0, 3.0}, "Rec_Eta");
-    */
-        ROOT::RDF::TH2DModel model_2D_1("h2_model1", "; p_{T} gen [GeV]; p_{T} rec [GeV];", 100, 0, 100, 200, 0, 100);
-        ROOT::RDF::TH2DModel model_2D_2("h2_model2", "; #eta gen; #eta rec;", 200, -3.0, 3.0, 200, -3.0, 3.0);
-        auto h2_pt = node_RM.Histo2D(model_2D_1, "Gen_Pt", "Rec_Pt");
-        auto h2_eta = node_RM.Histo2D(model_2D_2, "Gen_Eta", "Rec_Eta");
 
         /*
         auto node_GEN_event = node_InvMass_aFSR
@@ -183,13 +189,15 @@ int main(int argc, char* argv[]) {
         // START EVENT LOOP - OUTPUT MANAGER
         // ---------------------------------
 
-        OutputManager manager(cfg.io.output_file, visualize, save);
+        OutputManager manager(cfg);
 
-        manager.BookAnalysis(node_TP, cfg, "TagAndProbe");
-        
-        manager.Run();        
-        //manager.AddToPipeline("MatrixResp pt", h2_pt);
-        //manager.AddToPipeline("MatrixResp eta", h2_eta);
+        if (cfg.general.mode == "TagAndProbe") {
+            manager.BookAnalysis(node_TP, cfg);
+        } else if (cfg.general.mode == "ResponseMatrix") {
+            manager.BookAnalysis(node_RM, cfg);
+        }
+
+        manager.Run();
 
         if (visualize && app != nullptr) {
             std::cout << "Initializing visualization ..." << std::endl;

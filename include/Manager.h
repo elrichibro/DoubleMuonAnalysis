@@ -131,7 +131,6 @@ class OutputManager {
         
         bool visualize = false;
         bool save = false;
-    
         std::string output_file = "";
 
     public:
@@ -139,7 +138,7 @@ class OutputManager {
         /// @param output Output file path
         /// @param vis Flag for visualization option.
         /// @param sav Flag for saving the .root file containing all objects booked under request.
-        OutputManager(std::string output, bool vis, bool sav) : output_file(output), visualize(vis), save(sav) {};
+        OutputManager(const config_struct& cfg) : output_file(cfg.io.output_file), visualize(cfg.general.visualize), save(cfg.general.save) {};
         ~OutputManager(){};
     
         // Overload method: used to add PipelineObjs to the pipe.
@@ -153,7 +152,7 @@ class OutputManager {
         
         void Run();
     
-        void BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg, const std::string& mode);
+        void BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg);
 
         void Clear() {pipeline.clear();}
 };
