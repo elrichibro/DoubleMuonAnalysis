@@ -16,7 +16,15 @@ int Configure(config_struct& value, const std::string& json_path) {
         nlohmann::json json_obj;
         file >> json_obj;
 
-        value.mode = json_obj.value("mode", value.mode);
+        if (json_obj.contains("general")) {
+            const auto& j = json_obj["general"];
+
+            value.general.dataset = j.value("dataset", value.general.dataset);
+            value.general.mode = j.value("mode", value.general.mode);
+            value.general.verbose = j.value("verbose", value.general.verbose);
+            value.general.visualize = j.value("visualize", value.general.visualize);
+            value.general.save = j.value("save", value.general.save);
+        }
 
         if (json_obj.contains("io")) {
             value.io.tree_data_name = json_obj["io"].value("tree_data_name", value.io.tree_data_name);
@@ -50,6 +58,7 @@ int Configure(config_struct& value, const std::string& json_path) {
 
 void Verbose_config(const config_struct& value) {
     std::cout << "Init Verbose -> Loaded Configuration:" << std::endl;
+<<<<<<< Updated upstream
     std::cout << "Input data file: " << value.io.in_data_file << std::endl;
     std::cout << "Data Tree: " << value.io.tree_data_name << std::endl;
     std::cout << "Input MC file: " << value.io.in_mc_file << std::endl;
@@ -61,6 +70,98 @@ void Verbose_config(const config_struct& value) {
     std::cout << "    Isolation: " << value.flag.en_isolation << std::endl;
     std::cout << "    Mass window: " << value.flag.en_mass_window << std::endl;
     std::cout << "    Tight muon: " << value.flag.en_tight_muon << std::endl;
+=======
+    
+    std::cout << "" << std::endl;
+
+    std::cout << "General settings:" << std::endl;
+    std::cout << "    Dataset used: " << value.general.dataset << std::endl;
+    std::cout << "    Analysis mode: " << value.general.mode << std::endl;
+    std::cout << "    Verbose mode: " << value.general.verbose << std::endl;
+    std::cout << "    Visualize flag: " << value.general.visualize << std::endl;
+    std::cout << "    Save flag: " << value.general.save << std::endl;
+    
+    std::cout << "" << std::endl;
+    std::cout << "I/O settings:" << std::endl;
+
+    std::cout << "    Input data file: " << value.io.in_data_file << std::endl;
+    std::cout << "    Data Tree: " << value.io.tree_data_name << std::endl;
+    std::cout << "    Input MC file: " << value.io.in_mc_file << std::endl;
+    std::cout << "    MC Tree: " << value.io.tree_mc_name << std::endl;
+    
+    std::cout << "" << std::endl;
+
+    std::cout << "    Validation file: " << value.io.val_file << std::endl;
+    std::cout << "    Output file: " << value.io.output_file << std::endl;
+
+    std::cout << "" << std::endl;
+
+    std::cout << "TagAndProbe flags:" << std::endl;
+    std::cout << "    Kinematics: " << value.flag_TP.en_kinematics << std::endl;
+    std::cout << "    Isolation: " << value.flag_TP.en_isolation << std::endl;
+    std::cout << "    Mass window: " << value.flag_TP.en_mass_window << std::endl;
+    std::cout << "    Tight muon: " << value.flag_TP.en_tight_muon << std::endl;
+
+    std::cout << "" << std::endl;
+
+    std::cout << "TagAndProbe cuts:" << std::endl;
+    std::cout << "    p_T cut: " << value.cut_TP.pt_cut << std::endl;
+    std::cout << "    Eta cut: " << value.cut_TP.eta_cut << std::endl;
+    std::cout << "    Isolation cut: " << value.cut_TP.iso_cut << std::endl;
+    std::cout << "    Max mass: " << value.cut_TP.mass_max << std::endl;
+    std::cout << "    Min mass: " << value.cut_TP.mass_min << std::endl;
+
+    std::cout << "" << std::endl;
+
+    std::cout << "RespMatrix flags:" << std::endl;
+    std::cout << "    Kinematics: " << value.flag_RM.en_kinematics << std::endl;
+    std::cout << "    Isolation: " << value.flag_RM.en_isolation << std::endl;
+    std::cout << "    Mass window: " << value.flag_RM.en_mass_window << std::endl;
+    std::cout << "    Tight muon: " << value.flag_RM.en_tight_muon << std::endl;
+
+    std::cout << "" << std::endl;
+
+    std::cout << "RespMatrix cuts:" << std::endl;
+    std::cout << "    p_T cut: " << value.cut_RM.pt_cut << std::endl;
+    std::cout << "    Eta cut: " << value.cut_RM.eta_cut << std::endl;
+    std::cout << "    Isolation cut: " << value.cut_RM.iso_cut << std::endl;
+    std::cout << "    Max mass: " << value.cut_RM.mass_max << std::endl;
+    std::cout << "    Min mass: " << value.cut_RM.mass_min << std::endl;
+
+    std::cout << "" << std::endl;
+
+    std::cout << "Plot settings:" << std::endl;
+
+    std::cout << "" << std::endl;
+
+    std::cout << "    Pt plot: " << std::endl;
+    std::cout << "        Axis title: " << value.pt_plot.title_axis << std::endl;
+    std::cout << "        Axis min: " << value.pt_plot.axis_min << std::endl;
+    std::cout << "        Axis max: " << value.pt_plot.axis_max << std::endl;
+    std::cout << "        Number of bins: " << value.pt_plot.nbins << std::endl;
+
+    std::cout << "" << std::endl;
+
+    std::cout << "    Eta plot: " << std::endl;
+    std::cout << "        Axis title: " << value.eta_plot.title_axis << std::endl;
+    std::cout << "        Axis min: " << value.eta_plot.axis_min << std::endl;
+    std::cout << "        Axis max: " << value.eta_plot.axis_max << std::endl;
+    std::cout << "        Number of bins: " << value.eta_plot.nbins << std::endl;
+
+    std::cout << "" << std::endl;
+
+    std::cout << "    Invariant mass plot: " << std::endl;
+    std::cout << "        Axis title: " << value.mll_plot.title_axis << std::endl;
+    std::cout << "        Axis min: " << value.mll_plot.axis_min << std::endl;
+    std::cout << "        Axis max: " << value.mll_plot.axis_max << std::endl;
+    std::cout << "        Number of bins: " << value.mll_plot.nbins << std::endl;
+
+    std::cout << "" << std::endl;
+
+    std::cout << "    Canvas settings: " << std::endl;
+    std::cout << "        Width: " << value.canvas.width << std::endl;
+    std::cout << "        Height: " << value.canvas.height << std::endl;
+>>>>>>> Stashed changes
 
     
     std::cout << "Cuts:" << std::endl;

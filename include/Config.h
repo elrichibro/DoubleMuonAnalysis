@@ -8,6 +8,14 @@
 
 #include <cstdint>// uint.._t
 
+/// @brief 
+struct general_config {
+    std::string dataset = "MC";
+    std::string mode = "";
+    int verbose = 1;
+    bool visualize = true;
+    bool save = false; 
+};
 
 /// @brief Stores input/output file paths.
 struct io_config {
@@ -37,7 +45,7 @@ struct cuts_config {
 
 /// @brief Stores the other data structs.
 struct config_struct {
-    std::string mode = "data";// Analysis Operation Mode.
+    general_config general;
     io_config io;
     flags_config flag;
     cuts_config cut;

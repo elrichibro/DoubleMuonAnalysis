@@ -1,6 +1,10 @@
 {
-  "mode": "both" 
-  ,
+  "general": { 
+    "mode": "ResponseMatrix",
+    "verbose": 1,
+    "visualize":true,
+    "save":false
+  },
   "io": {
     "tree_data_name": "Events",
     "in_data_file": "../data/dati0.root",
@@ -14,11 +18,61 @@
     "en_mass_window": true,
     "en_tight_muon" : true
   },
+<<<<<<< Updated upstream
   "cut": {
     "pt_cut": 25.0,
     "eta_cut": 2.4,
     "iso_cut": 0.15,
     "mass_min": 60.0,
     "mass_max": 120.0
+=======
+
+  "cut_TP": {
+    "pt_cut":25.0,
+    "eta_cut":2.4,
+    "iso_cut":0.15,
+    "mass_min":60.0,
+    "mass_max":120.0
+  },
+
+  "flag_RM": {
+    "en_kinematics":true,
+    "en_isolation":false,
+    "en_mass_window":false,
+    "en_tight_muon":false
+  },
+
+  "cut_RM": {
+    "pt_cut":70.0,
+    "eta_cut":2.5,
+    "iso_cut":0.15,
+    "mass_min":60.0,
+    "mass_max":120.0
+  },
+
+  "plot": {
+    "pt":{
+      "title_axis":"p_t [GeV]",
+      "axis_min":70.0,
+      "axis_max":100.0,
+      "nbins":100
+    },
+    "eta":{
+      "title_axis":"#eta",
+      "axis_min":-3.0,
+      "axis_max":3.0,
+      "nbins":100
+    },
+    "mll": {
+      "title_axis": "m_{#mu#mu} [GeV]",
+      "axis_min": 60.0,
+      "axis_max": 120.0,
+      "nbins": 60
+    },
+    "canvas":{
+      "width":800,
+      "height":600
+    }
+>>>>>>> Stashed changes
   }
 }
