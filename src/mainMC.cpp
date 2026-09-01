@@ -19,7 +19,8 @@ int main(int argc, char* argv[]) {
     std::string json_path = "";
     int verbose = 0;
     bool visualize = false;
-    bool save = false;
+    bool save_plots = false;
+    bool save_data = false;
     
     // ---------
     // INTERFACE
@@ -34,17 +35,15 @@ int main(int argc, char* argv[]) {
             verbose = 1;
         } else if ((arg == "--visualize") || (arg == "-vis")) {
             visualize = true;
-        } else if ((arg == "--save") || (arg == "-s")) {
-            save = true;
         } else {
             std::cout << "ERROR: invalid input command, please try again, exinting.\n" << std::endl;
             return 1;
         }
     }
 
-    // ------------------
+    // ------------------------------------------------------------------------------------------------------------------------------------
     // JSON CONFIGURATION
-    // ------------------
+    // ------------------------------------------------------------------------------------------------------------------------------------
 
     if (Configure(cfg, json_path) != 0) {
         std::cout << "Configurations fails, check needed, exiting." << std::endl;
@@ -53,7 +52,9 @@ int main(int argc, char* argv[]) {
 
     verbose = cfg.general.verbose;
     visualize = cfg.general.visualize;
-    save = cfg.general.save;
+
+    //save_plots = cfg.general.save_sel_plots;
+    //save_data = cfg.general.save_sel_data;
 
     std::string mode = cfg.general.mode;
 
@@ -73,16 +74,15 @@ int main(int argc, char* argv[]) {
         Verbose_config(cfg);
     }
 
-
     const flags_config flags_TP = cfg.flag_TP;
     const cuts_config cuts_TP = cfg.cut_TP;
 
     const flags_config flags_RM = cfg.flag_TP;
     const cuts_config cuts_RM = cfg.cut_TP;
     
-    // --------------------
+    // ------------------------------------------------------------------------------------------------------------------------------------
     // VISUALIZATION OPTION
-    // --------------------
+    // ------------------------------------------------------------------------------------------------------------------------------------
     
     TApplication* app = nullptr;
     if (visualize) {
@@ -100,9 +100,9 @@ int main(int argc, char* argv[]) {
             << " from " << cfg.io.in_mc_file << " file, starting analysis ..." << std::endl;
         }
 
-        // --------------
+        // ------------------------------------------------------------------------------------------------------------------------------------
         // Invariant Mass
-        // --------------
+        // ------------------------------------------------------------------------------------------------------------------------------------
 
         auto node_InvMass_bFSR = CalculateInvMass(data_frame, "bFSR", 1);
         auto node_InvMass_aFSR = CalculateInvMass(data_frame, "aFSR", 2);
@@ -113,9 +113,9 @@ int main(int argc, char* argv[]) {
         auto h_mass_ll_bFSR = node_InvMass_bFSR.Histo1D({"m_ll_bFSR", "Massa invariante dileptoni Before FSR; m_{#mu^{+}#mu^{-}}; Events", 100, 60, 120}, "InvMass_bFSR");        
         auto h_mass_ll_aFSR = node_InvMass_aFSR.Histo1D({"m_ll_aFSR", "Massa invariante dileptoni After FSR; m_{#mu^{+}#mu^{-}}; Events", 100, 60, 120}, "InvMass_aFSR");
 
-        // ----------
+        // ------------------------------------------------------------------------------------------------------------------------------------
         // Efficiency
-        // ----------
+        // ------------------------------------------------------------------------------------------------------------------------------------
 
         ROOT::RDF::RNode node_RM = data_frame.Define("RespMatrix_mask",
             [flags_RM, cuts_RM](const ROOT::RVec<float>& pt_gen, const ROOT::RVec<float>& eta_gen, const ROOT::RVec<float>& pt_rec, const ROOT::RVec<float>& eta_rec,
@@ -168,9 +168,10 @@ int main(int argc, char* argv[]) {
         eff_eta->Draw("AP");
         */
         
-        //--------------
+        // ------------------------------------------------------------------------------------------------------------------------------------
         // Tag and Probe
-        //--------------
+        // ------------------------------------------------------------------------------------------------------------------------------------
+
         
         ROOT::RDF::RNode node_TP = data_frame.Define("TP_Result",
             [flags_TP, cuts_TP](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi, const ROOT::RVec<float>& mass,
@@ -179,7 +180,7 @@ int main(int argc, char* argv[]) {
                 MuonKinematics_TP kin{pt, eta, phi, mass};
                 MuonFlags_TP flags{tag, probe, glob, iso};
                 
-                return TagAndProbe(kin, flags, flags_TP, cuts_TP);
+                return CalculateTagAndProbe(kin, flags, flags_TP, cuts_TP);
             }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_tightId", "Muon_isStandalone", "Muon_isGlobal", "Muon_pfRelIso04_all"});
 
         node_TP = node_TP
@@ -190,9 +191,9 @@ int main(int argc, char* argv[]) {
             .Define("Probe_Mll_All", [](const ResultsTagAndProbe& res) { return res.mll_all; }, {"TP_Result"})
             .Define("Probe_Mll_Pass", [](const ResultsTagAndProbe& res) { return res.mll_pass; }, {"TP_Result"});
 
-        // ---------------------------------
-        // START EVENT LOOP - OUTPUT MANAGER
-        // ---------------------------------
+        // ------------------------------------------------------------------------------------------------------------------------------------
+        // Output Manager
+        // ------------------------------------------------------------------------------------------------------------------------------------
 
         OutputManager manager(cfg);
 

@@ -1,8 +1,10 @@
 #include "Manager.h"
 
-// #################
+#include <string>
+#include <vector>
+// ------------------------------------------------------------------------------------------------------------------------------------
 // ObjectTH1 Methods
-// #################
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 void ObjectTH1::Write(TFile& file) {
     if (th1) {
@@ -18,9 +20,9 @@ void ObjectTH1::Draw(TCanvas& canvas) {
     th1->Draw("E HIST");
 }
 
-// #################
+// ------------------------------------------------------------------------------------------------------------------------------------
 // ObjectTH2 Methods
-// #################
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 void ObjectTH2::Write(TFile& file) {
     if (th2) {
@@ -37,9 +39,9 @@ void ObjectTH2::Draw(TCanvas& canvas) {
     th2->Draw("COLZ");
 }
 
-// #####################
+// ------------------------------------------------------------------------------------------------------------------------------------
 // OutputManager Methods
-// #####################
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 void OutputManager::AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr<TH1D> hist) {
     pipeline.push_back(std::make_unique<ObjectTH1>(name, hist));
@@ -50,10 +52,14 @@ void OutputManager::AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr
 }
 
 void OutputManager::Run() {
-    std::unique_ptr<TFile> file = nullptr;
+    for (auto& snap : snapshot_vec) {
+        snap.GetValue(); 
+    }
     
-    if (save) {
-        file = std::make_unique<TFile>(output_file.c_str(), "RECREATE");
+    
+    std::unique_ptr<TFile> file_plots = nullptr;
+    if (save_sel_plots) {
+        file_plots = std::make_unique<TFile>(o_file_plots.c_str(), "RECREATE");
         std::cout << "Save file booked." << std::endl;
     }
 
@@ -61,8 +67,8 @@ void OutputManager::Run() {
         it->Process(); 
 
         // Saving
-        if (save) {
-            it->Write(*file); 
+        if (save_sel_plots) {
+            it->Write(*file_plots); 
         }
 
         // Visualization
@@ -75,8 +81,8 @@ void OutputManager::Run() {
         }
     }
 
-    if (file && file->IsOpen()) {
-        file->Close();
+    if (file_plots && file_plots->IsOpen()) {
+        file_plots->Close();
     }
 }
 
@@ -104,6 +110,8 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
     
     ROOT::RDF::TH2DModel model_2D_2("h2_model2", "; #eta gen; #eta rec;", cfg.eta_plot.nbins, cfg.eta_plot.axis_min, cfg.eta_plot.axis_max,
     cfg.eta_plot.nbins, cfg.eta_plot.axis_min, cfg.eta_plot.axis_max);
+
+    std::vector<std::string> columns;
 
     if (cfg.general.mode == "TagAndProbe") {
 
@@ -141,6 +149,11 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         
         AddToPipeline("Efficiency map", h2_eta_pt_num, h2_eta_pt_den);
     
+        std::vector<std::string> names = {"Probe_Pt_Pass", "Probe_Pt_All", "Probe_Eta_Pass", 
+        "Probe_Eta_All", "Probe_Mll_Pass", "Probe_Mll_All"};
+        
+        columns.insert(columns.end(), names.begin(), names.end());
+
     } else if (cfg.general.mode == "ResponseMatrix") {
         
         // ----------
@@ -168,6 +181,20 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
 
         AddToPipeline("Response Matrix P_{t}", h2_pt_gen_rec);
         AddToPipeline("Response Matrix #eta", h2_eta_gen_rec);
+        
+        std::vector<std::string> names = {"Gen_Pt", "Rec_Pt", "Gen_Eta", "Rec_Eta"};
+        columns.insert(columns.end(), names.begin(), names.end());
+    }
+
+    if (save_sel_data) {
+        ROOT::RDF::RSnapshotOptions snapshot_opts;
+        snapshot_opts.fMode = "UPDATE";
+        snapshot_opts.fLazy = true;
+
+        auto snapshot = node.Snapshot(cfg.general.mode + "_Tree", o_file_data, columns, snapshot_opts);
+        std::cout << "Saving data selected from " << cfg.general.mode << " in file " << o_file_data << std::endl;
+    
+        snapshot_vec.push_back(snapshot);
     }
 }
 

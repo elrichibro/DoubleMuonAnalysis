@@ -14,6 +14,8 @@
 
 #include "Config.h"
 
+#include <any>
+
 #include <ROOT/RDataFrame.hxx>
 
 /// @brief Is the Pipeline object: TH1D, TH2D, TEfficiency... used by the OutputManager class to book histograms, save or print them.
@@ -129,16 +131,25 @@ class OutputManager {
     private: 
         std::vector<std::unique_ptr<PipelineObj>> pipeline;
         
+        using snapshot_type = decltype(std::declval<ROOT::RDF::RNode>().Snapshot("", "", std::vector<std::string>{}, ROOT::RDF::RSnapshotOptions{}));
+        
+        std::vector<snapshot_type> snapshot_vec;
+
         bool visualize = false;
-        bool save = false;
-        std::string output_file = "";
+        
+        bool save_sel_plots = false;
+        bool save_sel_data = false;
+
+        std::string o_file_plots = "";
+        std::string o_file_data = "";
 
     public:
         /// @brief OutputManager class constructor.
         /// @param output Output file path
         /// @param vis Flag for visualization option.
         /// @param sav Flag for saving the .root file containing all objects booked under request.
-        OutputManager(const config_struct& cfg) : output_file(cfg.io.output_file), visualize(cfg.general.visualize), save(cfg.general.save) {};
+        OutputManager(const config_struct& cfg) : o_file_plots(cfg.io.o_file_plots), o_file_data(cfg.io.o_file_data), visualize(cfg.general.visualize), 
+        save_sel_plots(cfg.general.save_sel_plots), save_sel_data(cfg.general.save_sel_data) {};
         ~OutputManager(){};
     
         // Overload method: used to add PipelineObjs to the pipe.
