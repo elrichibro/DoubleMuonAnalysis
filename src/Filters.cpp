@@ -62,7 +62,7 @@ ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& ma
 
 // #################################################################
 
-ResultsTagAndProbe TagAndProbe(const MuonKinematics_TP& kin, const MuonFlags_TP& flags, const flags_config cfg_f, 
+ResultsTagAndProbe CalculateTagAndProbe(const MuonKinematics_TP& kin, const MuonFlags_TP& flags, const flags_config cfg_f, 
 const cuts_config cfg_c) {
     // Results container
     ResultsTagAndProbe results;
