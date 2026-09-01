@@ -2,8 +2,9 @@
   "general": { 
     "mode": "TagAndProbe",
     "verbose": 1,
-    "visualize":true,
-    "save":false
+    "visualize":false,
+    "save_sel_plots":false,
+    "save_sel_data":true
   },
   "io": {
     "tree_data_name":"Events",
@@ -11,7 +12,8 @@
     "tree_mc_name":"Events",
     "in_mc_file":"../data/datiMC0.root",
     "val_file":"../data/validation_muon_run.json", 
-    "output_file":"../output/risultati.root"
+    "o_file_plots":"../output/risultati_plots.root",
+    "o_file_data":"../output/risultati_data.root"
   },
   
   "flag_TP": {

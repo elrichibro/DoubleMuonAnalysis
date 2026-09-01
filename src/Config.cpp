@@ -23,7 +23,8 @@ int Configure(config_struct& value, const std::string& json_path) {
             value.general.mode = j.value("mode", value.general.mode);
             value.general.verbose = j.value("verbose", value.general.verbose);
             value.general.visualize = j.value("visualize", value.general.visualize);
-            value.general.save = j.value("save", value.general.save);
+            value.general.save_sel_plots = j.value("save_sel_plots", value.general.save_sel_plots);
+            value.general.save_sel_data = j.value("save_sel_data", value.general.save_sel_data);
         }
 
         if (json_obj.contains("io")) {
@@ -34,7 +35,8 @@ int Configure(config_struct& value, const std::string& json_path) {
             value.io.tree_mc_name = j.value("tree_mc_name", value.io.tree_mc_name);
             value.io.in_mc_file = j.value("in_mc_file", value.io.in_mc_file);
             value.io.val_file = j.value("val_file", value.io.val_file);
-            value.io.output_file = j.value("output_file", value.io.output_file);
+            value.io.o_file_plots = j.value("o_file_plots", value.io.o_file_plots);
+            value.io.o_file_data = j.value("o_file_data", value.io.o_file_data);
         }
 
         if (json_obj.contains("flag_TP")) {
@@ -130,8 +132,9 @@ void Verbose_config(const config_struct& value) {
     std::cout << "    Analysis mode: " << value.general.mode << std::endl;
     std::cout << "    Verbose mode: " << value.general.verbose << std::endl;
     std::cout << "    Visualize flag: " << value.general.visualize << std::endl;
-    std::cout << "    Save flag: " << value.general.save << std::endl;
-    
+    std::cout << "    Save selection plots flag: " << value.general.save_sel_plots << std::endl;
+    std::cout << "    Save selection data flag: " << value.general.save_sel_data << std::endl;
+
     std::cout << "" << std::endl;
     
     std::cout << "I/O settings:" << std::endl;
@@ -143,7 +146,8 @@ void Verbose_config(const config_struct& value) {
     std::cout << "" << std::endl;
 
     std::cout << "    Validation file: " << value.io.val_file << std::endl;
-    std::cout << "    Output file: " << value.io.output_file << std::endl;
+    std::cout << "    Output file selected plots: " << value.io.o_file_plots << std::endl;
+    std::cout << "    Output file selected data: " << value.io.o_file_data << std::endl;
 
     std::cout << "" << std::endl;
 
