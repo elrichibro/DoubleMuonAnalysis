@@ -14,7 +14,8 @@ struct general_config {
     std::string mode = "";
     int verbose = 1;
     bool visualize = true;
-    bool save = false; 
+    bool save_sel_plots = false;
+    bool save_sel_data = false; 
 };
 
 /// @brief Stores input/output file paths.
@@ -24,7 +25,8 @@ struct io_config {
     std::string tree_mc_name = "";// MonteCarlo tree name.
     std::string in_mc_file = "";// Input MonteCarlo file path.
     std::string val_file = "";// Validation json file path.
-    std::string output_file = "";// Output file path.
+    std::string o_file_plots = "";// Output file path for plots.
+    std::string o_file_data = "";// Output file path for data.
 };
 
 /// @brief Flags for enabling/disablig specifics selections cuts.
