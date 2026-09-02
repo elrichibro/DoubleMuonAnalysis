@@ -123,10 +123,16 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
     ROOT::RDF::TH2DModel model_2D("Stats", title.c_str(), cfg.eta_plot.nbins, cfg.eta_plot.axis_min, cfg.eta_plot.axis_max, 
     cfg.pt_plot.nbins, cfg.pt_plot.axis_min, cfg.pt_plot.axis_max);
 
-    ROOT::RDF::TH2DModel model_2D_1("h2_model1", "; p_{T} gen [GeV]; p_{T} rec [GeV];", cfg.pt_plot.nbins, cfg.pt_plot.axis_min, cfg.pt_plot.axis_max,
+    ROOT::RDF::TH2DModel model_2D_TP_Pt("h2_model_tp_pt", "; p_{T} Probe [GeV]; p_{T} Tag [GeV];", cfg.pt_plot.nbins, cfg.pt_plot.axis_min, cfg.pt_plot.axis_max,
+    cfg.pt_plot.nbins, cfg.pt_plot.axis_min, cfg.pt_plot.axis_max);
+
+    ROOT::RDF::TH2DModel model_2D_TP_Eta("h2_model_tp_eta", "; #eta Probe; #eta Tag;", cfg.eta_plot.nbins, cfg.eta_plot.axis_min, cfg.eta_plot.axis_max,
+    cfg.eta_plot.nbins, cfg.eta_plot.axis_min, cfg.eta_plot.axis_max);
+
+    ROOT::RDF::TH2DModel model_2D_RM_Pt("h2_model1", "; p_{T} gen [GeV]; p_{T} rec [GeV];", cfg.pt_plot.nbins, cfg.pt_plot.axis_min, cfg.pt_plot.axis_max,
     cfg.pt_plot.nbins, cfg.pt_plot.axis_min, cfg.pt_plot.axis_max);
     
-    ROOT::RDF::TH2DModel model_2D_2("h2_model2", "; #eta gen; #eta rec;", cfg.eta_plot.nbins, cfg.eta_plot.axis_min, cfg.eta_plot.axis_max,
+    ROOT::RDF::TH2DModel model_2D_RM_Eta("h2_model2", "; #eta gen; #eta rec;", cfg.eta_plot.nbins, cfg.eta_plot.axis_min, cfg.eta_plot.axis_max,
     cfg.eta_plot.nbins, cfg.eta_plot.axis_min, cfg.eta_plot.axis_max);
 
     std::vector<std::string> columns;
@@ -146,24 +152,42 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         auto h1_mll_num = node.Histo1D(model_1D_mll, "Probe_Mll_Pass");
         auto h1_mll_den  = node.Histo1D(model_1D_mll, "Probe_Mll_All");
 
+        auto h1_pt_tag = node.Histo1D(model_1D_pt, "Tag_Pt_Pass");
+        auto h1_eta_tag = node.Histo1D(model_1D_eta, "Tag_Eta_Pass");
+
         auto h2_eta_pt_den = node.Histo2D(model_2D, "Probe_Eta_All", "Probe_Pt_All");
         auto h2_eta_pt_num = node.Histo2D(model_2D, "Probe_Eta_Pass", "Probe_Pt_Pass");
+
+
+        auto h2_corr_pt_den = node.Histo2D(model_2D_TP_Pt, "Probe_Pt_All", "Tag_Pt_All");
+        auto h2_corr_pt_num = node.Histo2D(model_2D_TP_Pt, "Probe_Pt_Pass", "Tag_Pt_Pass");
+
+        auto h2_corr_eta_den = node.Histo2D(model_2D_TP_Eta, "Probe_Eta_All", "Tag_Eta_All");
+        auto h2_corr_eta_num = node.Histo2D(model_2D_TP_Eta, "Probe_Eta_Pass", "Tag_Eta_Pass");
 
         // --------
         // Pipeline
         // --------
 
-        AddToPipeline("Pt_Pass", h1_pt_num);
-        AddToPipeline("Pt_Total", h1_pt_den);
+        //AddToPipeline("Pt_Pass", h1_pt_num);
+        //AddToPipeline("Pt_Total", h1_pt_den);
 
         //AddToPipeline("Eta_Pass", h1_eta_num);
         //AddToPipeline("Eta_Total", h1_eta_den);
 
-        AddToPipeline("InvMass_Total", h1_mll_den);
-        AddToPipeline("InvMass_Pass", h1_mll_num);
+        //AddToPipeline("InvMass_Total", h1_mll_den);
+        //AddToPipeline("InvMass_Pass", h1_mll_num);
 
-        AddToPipeline("Efficiency pt", h1_pt_num, h1_pt_den);
-        AddToPipeline("Efficiency eta", h1_eta_num, h1_eta_den);
+        AddToPipeline("Tag_Pt_Pass", h1_pt_tag);
+        AddToPipeline("Tag_Eta_Pass", h1_eta_tag);
+
+        //AddToPipeline("Efficiency pt", h1_pt_num, h1_pt_den);
+        //AddToPipeline("Efficiency eta", h1_eta_num, h1_eta_den);
+
+        AddToPipeline("Correlaton Tag/Probe Pt All", h2_corr_pt_den);
+        AddToPipeline("Correlaton Tag/Probe Pt Pass", h2_corr_pt_num);
+        AddToPipeline("Correlaton Tag/Probe Eta All", h2_corr_eta_den);
+        AddToPipeline("Correlaton Tag/Probe Eta Pass", h2_corr_eta_num);
         
         //AddToPipeline("Efficiency map", h2_eta_pt_num, h2_eta_pt_den);
     
@@ -184,8 +208,8 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         auto h1_eta_gen = node.Histo1D(model_1D_eta, "Gen_Eta");
         auto h1_eta_rec = node.Histo1D(model_1D_eta, "Rec_Eta");
 
-        auto h2_pt_gen_rec = node.Histo2D(model_2D_1, "Gen_Pt", "Rec_Pt");
-        auto h2_eta_gen_rec = node.Histo2D(model_2D_2, "Gen_Eta", "Rec_Eta");
+        auto h2_pt_gen_rec = node.Histo2D(model_2D_RM_Pt, "Gen_Pt", "Rec_Pt");
+        auto h2_eta_gen_rec = node.Histo2D(model_2D_RM_Eta, "Gen_Eta", "Rec_Eta");
 
         // --------
         // Pipeline

@@ -4,7 +4,7 @@
     "analysis_mode": "TagAndProbe",
     "verbose": 1,
     "visualize":true,
-    "save_sel_plots":true,
+    "save_sel_plots":false,
     "save_sel_data":false
   },
   "io": {
