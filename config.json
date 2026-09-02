@@ -3,9 +3,9 @@
     "operation_mode":"Selection + Analysis",
     "analysis_mode": "TagAndProbe",
     "verbose": 1,
-    "visualize":false,
-    "save_sel_plots":false,
-    "save_sel_data":true
+    "visualize":true,
+    "save_sel_plots":true,
+    "save_sel_data":false
   },
   "io": {
     "tree_data_name":"Events",
@@ -19,14 +19,12 @@
   
   "flag_TP": {
     "en_kinematics":true,
-    "en_isolation":false,
-    "en_mass_window":true,
-    "en_tight_muon":false
+    "en_mass_window":true
   },
 
   "cut_TP": {
     "pt_cut":25.0,
-    "eta_cut":2.5,
+    "eta_cut":2.4,
     "iso_cut":0.15,
     "mass_min":60.0,
     "mass_max":120.0
@@ -50,14 +48,14 @@
   "plot": {
     "pt":{
       "title_axis":"p_t [GeV]",
-      "axis_min":0.0,
+      "axis_min":25.0,
       "axis_max":100.0,
       "nbins":100
     },
     "eta":{
       "title_axis":"#eta",
-      "axis_min":-3.0,
-      "axis_max":3.0,
+      "axis_min":-2.4,
+      "axis_max":2.4,
       "nbins":100
     },
     "mll": {

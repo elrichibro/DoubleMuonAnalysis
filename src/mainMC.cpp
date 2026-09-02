@@ -189,7 +189,6 @@ int main(int argc, char* argv[]) {
                 .Define("Probe_Eta_Pass", [](const ResultsTagAndProbe& res) { return res.eta_pass; }, {"TP_Result"})
                 .Define("Probe_Mll_All", [](const ResultsTagAndProbe& res) { return res.mll_all; }, {"TP_Result"})
                 .Define("Probe_Mll_Pass", [](const ResultsTagAndProbe& res) { return res.mll_pass; }, {"TP_Result"});
-
             // ------------------------------------------------------------------------------------------------------------------------------------
             // Output Manager
             // ------------------------------------------------------------------------------------------------------------------------------------
@@ -221,7 +220,7 @@ int main(int argc, char* argv[]) {
 
     if (cfg.general.operation_mode.find("Analysis") != std::string::npos) {
         try {        
-            ROOT::EnableImplicitMT();// MultiThread option: ON
+            ROOT::EnableImplicitMT();
 
             ROOT::RDataFrame data_frame(cfg.general.analysis_mode + "_Tree", cfg.io.o_file_data);
             
@@ -229,6 +228,9 @@ int main(int argc, char* argv[]) {
                 std::cout << "RDataFrame object created, unpacking " << cfg.general.analysis_mode
                 << " tree from " <<  cfg.io.o_file_data << " file, starting analysis ..." << std::endl;
             }
+
+            std::vector<double> pt_bins = {25.0, 30.0, 35.0, 40.0, 45.0, 50.0};
+            std::vector<double> eta_bins = {-2.4, -2.1, 50.0, 120.0};
         } catch (const std::exception& except) {
             std::cerr << "Error nature: " << except.what() << std::endl;
             return 1;
