@@ -113,7 +113,7 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
 
     std::vector<std::string> columns;
 
-    if (cfg.general.mode == "TagAndProbe") {
+    if (cfg.general.analysis_mode == "TagAndProbe") {
 
         // ----------
         // Histograms
@@ -154,7 +154,7 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         
         columns.insert(columns.end(), names.begin(), names.end());
 
-    } else if (cfg.general.mode == "ResponseMatrix") {
+    } else if (cfg.general.analysis_mode == "ResponseMatrix") {
         
         // ----------
         // Histograms
@@ -190,9 +190,10 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         ROOT::RDF::RSnapshotOptions snapshot_opts;
         snapshot_opts.fMode = "UPDATE";
         snapshot_opts.fLazy = true;
+        snapshot_opts.fOverwriteIfExists = true;
 
-        auto snapshot = node.Snapshot(cfg.general.mode + "_Tree", o_file_data, columns, snapshot_opts);
-        std::cout << "Saving data selected from " << cfg.general.mode << " in file " << o_file_data << std::endl;
+        auto snapshot = node.Snapshot(cfg.general.analysis_mode + "_Tree", o_file_data, columns, snapshot_opts);
+        std::cout << "Saving data selected from " << cfg.general.analysis_mode << " in file " << o_file_data << std::endl;
     
         snapshot_vec.push_back(snapshot);
     }
