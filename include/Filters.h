@@ -44,6 +44,7 @@ float pt_cut, float eta_cut);
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 /// @brief Transverse momentum, psudorapidity and invariant mass vectors results -> from CalculeteTagAndProbe().
+/*
 struct ResultsTagAndProbe {
     std::vector<float> pt_pass;// Transverse momentum of probes that pass the selection.
     std::vector<float> pt_all;// Transverse momentum of all probes.
@@ -51,6 +52,15 @@ struct ResultsTagAndProbe {
     std::vector<float> eta_all;// Pseudorapidity of all probes. 
     std::vector<float> mll_pass;// Invariant mass of TagAndProbe pairs that pass the selection.
     std::vector<float> mll_all;// Invariant mass of all TagAndProbe pairs 
+};
+*/
+struct ResultsTagAndProbe {
+    ROOT::RVec<float> pt_pass;
+    ROOT::RVec<float> pt_all;
+    ROOT::RVec<float> eta_pass;
+    ROOT::RVec<float> eta_all;
+    ROOT::RVec<float> mll_pass;
+    ROOT::RVec<float> mll_all;
 };
 
 /// @brief Muon kinematics variables for selection.

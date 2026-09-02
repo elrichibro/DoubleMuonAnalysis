@@ -2,6 +2,8 @@
 
 #include <string>
 #include <vector>
+
+#include <chrono>
 // ------------------------------------------------------------------------------------------------------------------------------------
 // ObjectTH1 Methods
 // ------------------------------------------------------------------------------------------------------------------------------------
@@ -52,16 +54,15 @@ void OutputManager::AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr
 }
 
 void OutputManager::Run() {
-    for (auto& snap : snapshot_vec) {
-        snap.GetValue(); 
-    }
-    
+    auto start_time = std::chrono::high_resolution_clock::now();
     
     std::unique_ptr<TFile> file_plots = nullptr;
     if (save_sel_plots) {
         file_plots = std::make_unique<TFile>(o_file_plots.c_str(), "RECREATE");
         std::cout << "Save file booked." << std::endl;
     }
+
+    int i = 0;
 
     for (auto& it : pipeline) {
         it->Process(); 
@@ -79,11 +80,28 @@ void OutputManager::Run() {
             it->Draw(*vis_canvas);
             vis_canvas->Update();
         }
+        auto end_time = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> DeltaT = end_time - start_time;
+
+        std::cout << "PipelineObj number: " << i << ", execution time: " << DeltaT.count() << std::endl;
+        i++;
+    }
+
+    for (auto& snap : snapshot_vec) {
+        snap.GetValue(); 
+        auto end_time = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> DeltaT = end_time - start_time;
+        std::cout << "Snapshot time: " << DeltaT.count() << std::endl;
     }
 
     if (file_plots && file_plots->IsOpen()) {
         file_plots->Close();
+        auto end_time = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> DeltaT = end_time - start_time;
+        std::cout << "Close file time: " << DeltaT.count() << std::endl;
     }
+    
+    std::cout << "Ending of Run" << std::endl;
 }
 
 void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg) {
@@ -147,7 +165,7 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         AddToPipeline("Efficiency pt", h1_pt_num, h1_pt_den);
         AddToPipeline("Efficiency eta", h1_eta_num, h1_eta_den);
         
-        AddToPipeline("Efficiency map", h2_eta_pt_num, h2_eta_pt_den);
+        //AddToPipeline("Efficiency map", h2_eta_pt_num, h2_eta_pt_den);
     
         std::vector<std::string> names = {"Probe_Pt_Pass", "Probe_Pt_All", "Probe_Eta_Pass", 
         "Probe_Eta_All", "Probe_Mll_Pass", "Probe_Mll_All"};
