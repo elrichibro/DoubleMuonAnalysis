@@ -11,7 +11,9 @@
 /// @brief 
 struct general_config {
     std::string dataset = "MC";
-    std::string mode = "";
+    std::string operation_mode = "";
+    std::string analysis_mode = "";
+
     int verbose = 1;
     bool visualize = true;
     bool save_sel_plots = false;

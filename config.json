@@ -1,6 +1,7 @@
 {
   "general": { 
-    "mode": "TagAndProbe",
+    "operation_mode":"Selection + Analysis",
+    "analysis_mode": "TagAndProbe",
     "verbose": 1,
     "visualize":false,
     "save_sel_plots":false,
