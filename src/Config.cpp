@@ -20,7 +20,8 @@ int Configure(config_struct& value, const std::string& json_path) {
             const auto& j = json_obj["general"];
 
             value.general.dataset = j.value("dataset", value.general.dataset);
-            value.general.mode = j.value("mode", value.general.mode);
+            value.general.operation_mode = j.value("operation_mode", value.general.operation_mode);
+            value.general.analysis_mode = j.value("analysis_mode", value.general.analysis_mode);
             value.general.verbose = j.value("verbose", value.general.verbose);
             value.general.visualize = j.value("visualize", value.general.visualize);
             value.general.save_sel_plots = j.value("save_sel_plots", value.general.save_sel_plots);
@@ -129,7 +130,8 @@ void Verbose_config(const config_struct& value) {
 
     std::cout << "General settings:" << std::endl;
     std::cout << "    Dataset used: " << value.general.dataset << std::endl;
-    std::cout << "    Analysis mode: " << value.general.mode << std::endl;
+    std::cout << "    Operation mode: " << value.general.operation_mode << std::endl;
+    std::cout << "    Analysis mode: " << value.general.analysis_mode << std::endl;
     std::cout << "    Verbose mode: " << value.general.verbose << std::endl;
     std::cout << "    Visualize flag: " << value.general.visualize << std::endl;
     std::cout << "    Save selection plots flag: " << value.general.save_sel_plots << std::endl;
