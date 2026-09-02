@@ -7,6 +7,8 @@
 #include <cmath>
 #include <cstdint>
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 /**
  * @brief Calculates the invariant mass of the first two particles in the event.
  * @tparam Template: float, double.
@@ -17,12 +19,14 @@
  * @return Returns the invariant mass.
  */
 template <typename T>
-T mass_leptons(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi, const ROOT::RVec<T>& mass) {
+T CalculateInvariantMAss(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi, const ROOT::RVec<T>& mass) {
     
     return ROOT::VecOps::InvariantMass(ROOT::RVec<T>{pt[0], pt[1]}, ROOT::RVec<T>{eta[0], eta[1]}, ROOT::RVec<T>{phi[0], phi[1]},
         ROOT::RVec<T>{mass[0], mass[1]} );
 
 }
+
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 /**
  * @brief Calculates the special angular variable between the first two particles in the event.
@@ -32,7 +36,7 @@ T mass_leptons(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const ROOT::RV
  * @return Returns special angular variable.
  */
 template <typename T>
-T phi_star(const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi) {
+T CalculatePhiStar(const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi) {
     T delta_phi = std::abs(ROOT::VecOps::DeltaPhi(phi[0], phi[1]));
     T delta_eta = std::abs(eta[0] - eta[1]);
 
@@ -41,5 +45,7 @@ T phi_star(const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi) {
 
     return std::tan((TMath::Pi() - delta_phi) / 2.0) * sin;
 }
+
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 #endif

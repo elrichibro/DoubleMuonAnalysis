@@ -4,6 +4,8 @@
 #include <fstream>
 #include <iostream>
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 int Configure(config_struct& value, const std::string& json_path) {
     std::ifstream file(json_path);
     
@@ -123,6 +125,8 @@ int Configure(config_struct& value, const std::string& json_path) {
     return 0;
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 void Verbose_config(const config_struct& value) {
     std::cout << "Init Verbose -> Loaded Configuration:" << std::endl;
     
@@ -224,7 +228,7 @@ void Verbose_config(const config_struct& value) {
     std::cout << "End of Verbose" << std::endl;
 }
 
-
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 validation_type Validation_load(const std::string& json_path) {    
     validation_type validation_map;
