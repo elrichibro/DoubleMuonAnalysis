@@ -8,6 +8,10 @@
 
 #include <cstdint>// uint.._t
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+// General Configuration struct
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 /// @brief 
 struct general_config {
     std::string dataset = "MC";
@@ -74,6 +78,8 @@ struct config_struct {
     canvas_config canvas;
 };
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 /**
  * @brief Sets the json file information into the system struct.
  * @param value Reference to the configuration struct. 
@@ -82,11 +88,15 @@ struct config_struct {
 */
 int Configure(config_struct& value, const std::string& json_path);
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 /**
  * @brief Prints on terminal the information contained in the struct.
  * @param value Constant reference to the configuration struct.
 */
 void Verbose_config(const config_struct& value);
+
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 /* Alias to define the validation map type.
    Validation architecture should map the run number and the luminosity blocks associated.

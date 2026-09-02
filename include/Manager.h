@@ -18,6 +18,10 @@
 
 #include <ROOT/RDataFrame.hxx>
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+// PipelineObj class
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 /// @brief Is the Pipeline object: TH1D, TH2D, TEfficiency... used by the OutputManager class to book histograms, save or print them.
 class PipelineObj {
     public:
@@ -31,6 +35,10 @@ class PipelineObj {
         
         virtual std::string GetName() const = 0;
 };
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+// ObjectTH1 class
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 /// @brief Child class of PipelineObj -> Histogram 1 dimensional.
 class ObjectTH1 : public PipelineObj {
@@ -49,6 +57,10 @@ class ObjectTH1 : public PipelineObj {
         void Draw(TCanvas& canvas) override;
 };
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+// ObjectTH2 class
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 /// @brief Child class of PipelineObj -> Histogram 2D. 
 class ObjectTH2 : public PipelineObj {
     private:
@@ -66,6 +78,10 @@ class ObjectTH2 : public PipelineObj {
         void Write(TFile& file) override; 
         void Draw(TCanvas& canvas) override;
 };
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+// ObjectTEff class
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 /// @brief Child template class of PipelineObj. TEfficiency can accepts bouth: TH1D or TH2D. Used for complex analysis plots. 
 template <typename T>
@@ -125,6 +141,9 @@ class ObjectTEff : public PipelineObj {
         }
 };
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+// OutputManager class
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 /// @brief OutputManager class -> The instance controls the output of the program -> saves pipeline objects and print plots.
 class OutputManager {

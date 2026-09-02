@@ -2,7 +2,7 @@
 
 #include <Rtypes.h>
 
-// #################################################################
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map, const std::string& run_name, const std::string& block_name) {
     ROOT::RDF::RNode node_validation = node
@@ -44,7 +44,7 @@ ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_t
     return node_validation;
 }
 
-// #################################################################
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& mask_name, const std::string& pt_column, const std::string& eta_column,
  float pt_cut, float eta_cut) {
@@ -60,7 +60,7 @@ ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& ma
     return node_kin_cut;
 }
 
-// #################################################################
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 ResultsTagAndProbe CalculateTagAndProbe(const MuonKinematics_TP& kin, const MuonFlags_TP& flags, const flags_config cfg_f, 
 const cuts_config cfg_c) {
@@ -123,6 +123,8 @@ const cuts_config cfg_c) {
     }
     return results;
 }
+
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin, const MuonFlags_RM& flags, const flags_config cfg_f, 
 const cuts_config cfg_c) {
