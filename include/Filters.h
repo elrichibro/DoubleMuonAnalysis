@@ -61,6 +61,10 @@ struct ResultsTagAndProbe {
     ROOT::RVec<float> eta_all;
     ROOT::RVec<float> mll_pass;
     ROOT::RVec<float> mll_all;
+    ROOT::RVec<float> tag_pt_pass;
+    ROOT::RVec<float> tag_pt_all;
+    ROOT::RVec<float> tag_eta_pass;
+    ROOT::RVec<float> tag_eta_all;
 };
 
 /// @brief Muon kinematics variables for selection.

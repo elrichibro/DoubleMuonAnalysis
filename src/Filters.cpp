@@ -110,6 +110,8 @@ const cuts_config cfg_c) {
                 results.pt_all.push_back(kin.pt[j]);
                 results.eta_all.push_back(kin.eta[j]);
                 results.mll_all.push_back(mass);
+                results.tag_pt_all.push_back(kin.pt[i]);
+                results.tag_eta_all.push_back(kin.eta[i]);
 
                 if ((flags.global[j]) && (flags.iso[j] < 0.15)) {
                     
@@ -117,6 +119,8 @@ const cuts_config cfg_c) {
                     results.pt_pass.push_back(kin.pt[j]);
                     results.eta_pass.push_back(kin.eta[j]);   
                     results.mll_pass.push_back(mass);
+                    results.tag_pt_pass.push_back(kin.pt[i]);
+                    results.tag_eta_pass.push_back(kin.eta[i]);
                 }
             }
         }
