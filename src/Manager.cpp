@@ -89,15 +89,19 @@ void OutputManager::Run() {
 
     for (auto& snap : snapshot_vec) {
         snap.GetValue(); 
+        
         auto end_time = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> DeltaT = end_time - start_time;
+        
         std::cout << "Snapshot time: " << DeltaT.count() << std::endl;
     }
 
     if (file_plots && file_plots->IsOpen()) {
         file_plots->Close();
+        
         auto end_time = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> DeltaT = end_time - start_time;
+        
         std::cout << "Close file time: " << DeltaT.count() << std::endl;
     }
     
