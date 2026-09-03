@@ -229,6 +229,20 @@ int main(int argc, char* argv[]) {
                 std::cout << "RDataFrame object created, unpacking " << cfg.general.analysis_mode
                 << " tree from " <<  cfg.io.o_file_data << " file, starting analysis ..." << std::endl;
             }
+        
+            std::vector<float> pt_bins = {25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 60.0};
+            std::vector<float> eta_bins = {-2.4, -1.8, -1.2, -0.6, 0.0, 0.6, 1.2, 1.8, 2.4};
+            
+            
+        
+        
+        
+        
+        
+        
+        
+        
+        
         } catch (const std::exception& except) {
             std::cerr << "Error nature: " << except.what() << std::endl;
             return 1;

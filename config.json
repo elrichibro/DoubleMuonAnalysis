@@ -3,9 +3,9 @@
     "operation_mode":"Selection + Analysis",
     "analysis_mode": "TagAndProbe",
     "verbose": 1,
-    "visualize":false,
+    "visualize":true,
     "save_sel_plots":false,
-    "save_sel_data":true
+    "save_sel_data":false
   },
   "io": {
     "tree_data_name":"Events",

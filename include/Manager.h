@@ -169,6 +169,7 @@ class OutputManager {
         /// @param sav Flag for saving the .root file containing all objects booked under request.
         OutputManager(const config_struct& cfg) : o_file_plots(cfg.io.o_file_plots), o_file_data(cfg.io.o_file_data), visualize(cfg.general.visualize), 
         save_sel_plots(cfg.general.save_sel_plots), save_sel_data(cfg.general.save_sel_data) {};
+        
         ~OutputManager(){};
     
         // Overload method: used to add PipelineObjs to the pipe.

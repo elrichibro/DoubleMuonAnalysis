@@ -135,19 +135,19 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         // Pipeline
         // --------
 
-        AddToPipeline("Pt_Pass", h1_pt_num);
-        AddToPipeline("Pt_Total", h1_pt_den);
+        //AddToPipeline("Pt_Pass", h1_pt_num);
+        //AddToPipeline("Pt_Total", h1_pt_den);
 
-        //AddToPipeline("Eta_Pass", h1_eta_num);
+        AddToPipeline("Eta_Pass", h1_eta_num);
         //AddToPipeline("Eta_Total", h1_eta_den);
 
-        AddToPipeline("InvMass_Total", h1_mll_den);
-        AddToPipeline("InvMass_Pass", h1_mll_num);
+        //AddToPipeline("InvMass_Total", h1_mll_den);
+        //AddToPipeline("InvMass_Pass", h1_mll_num);
 
-        AddToPipeline("Efficiency pt", h1_pt_num, h1_pt_den);
-        AddToPipeline("Efficiency eta", h1_eta_num, h1_eta_den);
+        //AddToPipeline("Efficiency pt", h1_pt_num, h1_pt_den);
+        //AddToPipeline("Efficiency eta", h1_eta_num, h1_eta_den);
         
-        AddToPipeline("Efficiency map", h2_eta_pt_num, h2_eta_pt_den);
+        //AddToPipeline("Efficiency map", h2_eta_pt_num, h2_eta_pt_den);
     
         std::vector<std::string> names = {"Probe_Pt_Pass", "Probe_Pt_All", "Probe_Eta_Pass", 
         "Probe_Eta_All", "Probe_Mll_Pass", "Probe_Mll_All"};
@@ -192,7 +192,10 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         snapshot_opts.fLazy = true;
         snapshot_opts.fOverwriteIfExists = true;
 
-        auto snapshot = node.Snapshot(cfg.general.analysis_mode + "_Tree", o_file_data, columns, snapshot_opts);
+        std::string snaphot_name = cfg.general.dataset + cfg.general.analysis_mode + "_Tree";
+        
+        auto snapshot = node.Snapshot(snaphot_name, o_file_data, columns, snapshot_opts);
+        
         std::cout << "Saving data selected from " << cfg.general.analysis_mode << " in file " << o_file_data << std::endl;
     
         snapshot_vec.push_back(snapshot);
