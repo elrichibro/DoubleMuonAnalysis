@@ -234,18 +234,18 @@ int main(int argc, char* argv[]) {
                 << " tree from " <<  cfg.io.o_file_data << " file, starting analysis ..." << std::endl;
             }
         
+            // HARDCODED
+
             std::vector<float> pt_bins = {25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 60.0};
             std::vector<float> eta_bins = {-2.4, -1.8, -1.2, -0.6, 0.0, 0.6, 1.2, 1.8, 2.4};
             
-            
+            auto node_pt_pass = ApplyPt_DataDivision(data_frame, pt_bins, "Probe_Pt_Pass");
+            auto node_pt_all = ApplyPt_DataDivision(data_frame, pt_bins, "Probe_Pt_All");
+
+            auto node_eta_pass = ApplyEta_DataDivision(data_frame, eta_bins, "Probe_Eta_Pass");
+            auto node_eta_all = ApplyEta_DataDivision(data_frame, eta_bins, "Probe_Eta_All");
         
-        
-        
-        
-        
-        
-        
-        
+
         
         } catch (const std::exception& except) {
             std::cerr << "Error nature: " << except.what() << std::endl;
