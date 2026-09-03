@@ -161,7 +161,6 @@ class OutputManager {
 
         std::string o_file_plots = "";
         std::string o_file_data = "";
-
     public:
         /// @brief OutputManager class constructor.
         /// @param output Output file path

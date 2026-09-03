@@ -76,23 +76,29 @@ ROOT::RDF::RNode ApplyPt_DataDivision(ROOT::RDF::RNode node, const std::vector<f
 
 ROOT::RDF::RNode ApplyEta_DataDivision(ROOT::RDF::RNode node, const std::vector<float>& eta_bins, const std::string& column_name) {
     ROOT::RDF::RNode div_eta_node = node
-        .Define("Delta1_Pt", [&eta_bins](const ROOT::RVec<float> pt) {
-            return ((pt >= eta_bins[0]) && (pt < eta_bins[1])); 
+        .Define("Delta1_Eta", [&eta_bins](const ROOT::RVec<float> eta) {
+            return ((eta >= eta_bins[0]) && (eta < eta_bins[1])); 
         }, {column_name})
-        .Define("Delta2_Pt", [&eta_bins](const ROOT::RVec<float> pt) {
-            return (pt >= eta_bins[1]) && (pt < eta_bins[2]); 
+        .Define("Delta2_Eta", [&eta_bins](const ROOT::RVec<float> eta) {
+            return (eta >= eta_bins[1]) && (eta < eta_bins[2]); 
         }, {column_name})
-        .Define("Delta3_Pt", [&eta_bins](const ROOT::RVec<float> pt) {
-            return (pt >= eta_bins[2]) && (pt < eta_bins[3]); 
+        .Define("Delta3_Eta", [&eta_bins](const ROOT::RVec<float> eta) {
+            return (eta >= eta_bins[2]) && (eta < eta_bins[3]); 
         }, {column_name})
-        .Define("Delta4_Pt", [&eta_bins](const ROOT::RVec<float> pt) {
-            return (pt >= eta_bins[3]) && (pt < eta_bins[4]); 
+        .Define("Delta4_Eta", [&eta_bins](const ROOT::RVec<float> eta) {
+            return (eta >= eta_bins[3]) && (eta < eta_bins[4]); 
         }, {column_name})
-        .Define("Delta5_Pt", [&eta_bins](const ROOT::RVec<float> pt) {
-            return (pt >= eta_bins[4]) && (pt < eta_bins[5]); 
+        .Define("Delta5_Eta", [&eta_bins](const ROOT::RVec<float> eta) {
+            return (eta >= eta_bins[4]) && (eta < eta_bins[5]); 
         }, {column_name})
-        .Define("Delta6_Pt", [&eta_bins](const ROOT::RVec<float> pt) {
-            return (pt >= eta_bins[5]) && (pt < eta_bins[6]); 
+        .Define("Delta6_Eta", [&eta_bins](const ROOT::RVec<float> eta) {
+            return (eta >= eta_bins[5]) && (eta < eta_bins[6]); 
+        }, {column_name})
+        .Define("Delta7_Eta", [&eta_bins](const ROOT::RVec<float> eta) {
+            return (eta >= eta_bins[6]) && (eta < eta_bins[7]); 
+        }, {column_name})
+        .Define("Delta8_Eta", [&eta_bins](const ROOT::RVec<float> eta) {
+            return (eta >= eta_bins[7]) && (eta < eta_bins[8]); 
         }, {column_name});
 
     return div_eta_node;
