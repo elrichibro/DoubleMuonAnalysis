@@ -188,7 +188,11 @@ int main(int argc, char* argv[]) {
                 .Define("Probe_Eta_All", [](const ResultsTagAndProbe& res) { return res.eta_all; }, {"TP_Result"})
                 .Define("Probe_Eta_Pass", [](const ResultsTagAndProbe& res) { return res.eta_pass; }, {"TP_Result"})
                 .Define("Probe_Mll_All", [](const ResultsTagAndProbe& res) { return res.mll_all; }, {"TP_Result"})
-                .Define("Probe_Mll_Pass", [](const ResultsTagAndProbe& res) { return res.mll_pass; }, {"TP_Result"});
+                .Define("Probe_Mll_Pass", [](const ResultsTagAndProbe& res) { return res.mll_pass; }, {"TP_Result"})
+                .Define("Tag_Pt_All", [](const ResultsTagAndProbe& res) { return res.tag_pt_all; }, {"TP_Result"})
+                .Define("Tag_Pt_Pass", [](const ResultsTagAndProbe& res) { return res.tag_pt_pass; }, {"TP_Result"})
+                .Define("Tag_Eta_All", [](const ResultsTagAndProbe& res) { return res.tag_eta_all; }, {"TP_Result"})
+                .Define("Tag_Eta_Pass", [](const ResultsTagAndProbe& res) { return res.tag_eta_pass; }, {"TP_Result"});
 
             // ------------------------------------------------------------------------------------------------------------------------------------
             // Output Manager
@@ -221,7 +225,7 @@ int main(int argc, char* argv[]) {
 
     if (cfg.general.operation_mode.find("Analysis") != std::string::npos) {
         try {        
-            ROOT::EnableImplicitMT();// MultiThread option: ON
+            ROOT::EnableImplicitMT();
 
             ROOT::RDataFrame data_frame(cfg.general.analysis_mode + "_Tree", cfg.io.o_file_data);
             

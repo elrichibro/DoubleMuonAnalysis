@@ -224,8 +224,8 @@ void Verbose_config(const config_struct& value) {
     std::cout << "        Height: " << value.canvas.height << std::endl;
   
     std::cout << "" << std::endl;
-
     std::cout << "End of Verbose" << std::endl;
+    std::cout << "" << std::endl;
 }
 
 // ------------------------------------------------------------------------------------------------------------------------------------
