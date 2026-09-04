@@ -4,6 +4,7 @@
 #include <vector>
 
 #include <chrono>
+
 // ------------------------------------------------------------------------------------------------------------------------------------
 // ObjectTH1 Methods
 // ------------------------------------------------------------------------------------------------------------------------------------
@@ -141,7 +142,7 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
 
     std::vector<std::string> columns;
 
-    if (cfg.general.analysis_mode == "TagAndProbe") {
+    if ((cfg.general.operation_mode.find("Selection") != std::string::npos) && (cfg.general.analysis_mode == "TagAndProbe")) {
 
         // For TEfficiency -> just visualization -> NOT analysis
         ROOT::RDF::RNode node_eff = node
@@ -156,7 +157,9 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         // Histograms
         // ----------
 
+        
         // Pt/Eta/Mll Pass/Fail
+        /*
         auto h1_probe_pt_pass = node_eff.Histo1D(model_1D_pt, "Probe_Pt_Pass");
         auto h1_probe_pt_fail = node_eff.Histo1D(model_1D_pt, "Probe_Pt_Fail");
 
@@ -165,7 +168,7 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
 
         auto h1_mll_pass = node_eff.Histo1D(model_1D_mll, "Mll_Pass");
         auto h1_mll_fail  = node_eff.Histo1D(model_1D_mll, "Mll_Fail");
-
+        
         // Tag
         auto h1_tag_pt_pass = node_eff.Histo1D(model_1D_pt, "Tag_Pt_Pass");
         auto h1_tag_eta_pass = node_eff.Histo1D(model_1D_eta, "Tag_Eta_Pass");
@@ -183,11 +186,13 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
 
         auto h2_probe_tag_eta_fail = node_eff.Histo2D(model_2D_TP_Eta, "Probe_Eta_Fail", "Tag_Eta_Fail");
         auto h2_probe_tag_eta_pass = node_eff.Histo2D(model_2D_TP_Eta, "Probe_Eta_Pass", "Tag_Eta_Pass");
+        */
 
         // --------
         // Pipeline
         // --------
 
+        /*
         // Probes
         AddToPipeline("Probe_Pt_Pass", h1_probe_pt_pass);
         AddToPipeline("Probe_Pt_Fail", h1_probe_pt_fail);
@@ -211,13 +216,15 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         AddToPipeline("Correlaton Tag/Probe Eta Fail", h2_probe_tag_eta_fail);
 
         AddToPipeline("Efficiency map", h2_eta_pt_pass, h2_eff_eta_pt_all);
-    
+        */
+
         std::vector<std::string> names = {"Probe_Pt_Pass", "Probe_Pt_Fail", "Probe_Eta_Pass", 
         "Probe_Eta_Fail", "Mll_Pass", "Mll_Fail"};
-        
+
         columns.insert(columns.end(), names.begin(), names.end());
 
-    } else if (cfg.general.analysis_mode == "ResponseMatrix") {
+    } else if ((cfg.general.operation_mode.find("Selection") != std::string::npos) && 
+    (cfg.general.analysis_mode == "ResponseMatrix")) {
         
         // ----------
         // Histograms
@@ -247,6 +254,32 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         
         std::vector<std::string> names = {"Gen_Pt", "Rec_Pt", "Gen_Eta", "Rec_Eta"};
         columns.insert(columns.end(), names.begin(), names.end());
+    
+    } else if ((cfg.general.operation_mode.find("Analysis") != std::string::npos) && 
+    (cfg.general.analysis_mode == "TagAndProbe")) {
+        // Efficiency MonteCarlo
+        std::vector<float> pt_bins = cfg.analysis.pt_bins;
+        std::vector<float> eta_bins = cfg.analysis.eta_bins;
+
+        ROOT::RDF::TH1DModel model_Eff_pt("h_Eff_pt", "Pt Efficiency; p_{T} [GeV]; Efficiency", pt_bins.size() - 1, pt_bins.data());
+        ROOT::RDF::TH1DModel model_Eff_eta("h_Eff_eta", "Eta Efficiency; #eta; Efficiency", eta_bins.size() - 1, eta_bins.data());
+
+        ROOT::RDF::RNode node_eff = node
+            .Define("Probe_Pt_All", [](const ROOT::RVec<float>& pass, const ROOT::RVec<float>& fail) {
+                return ROOT::VecOps::Concatenate(pass, fail);
+            }, {"Probe_Pt_Pass", "Probe_Pt_Fail"})
+            .Define("Probe_Eta_All", [](const ROOT::RVec<float>& pass, const ROOT::RVec<float>& fail) {
+                return ROOT::VecOps::Concatenate(pass, fail);
+            }, {"Probe_Eta_Pass", "Probe_Eta_Fail"});
+
+        auto h1_probe_pt_pass = node_eff.Histo1D(model_Eff_pt, "Probe_Pt_Pass");
+        auto h1_eff_probe_pt_all = node_eff.Histo1D(model_Eff_pt, "Probe_Pt_All");
+
+        auto h1_probe_eta_pass = node_eff.Histo1D(model_Eff_eta, "Probe_Eta_Pass");
+        auto h1_eff_probe_eta_all = node_eff.Histo1D(model_Eff_eta, "Probe_Eta_All");
+
+        AddToPipeline("Efficiency pt", h1_probe_pt_pass, h1_eff_probe_pt_all);
+        AddToPipeline("Efficiency eta", h1_probe_eta_pass, h1_eff_probe_eta_all);
     }
 
     if (save_sel_data) {
