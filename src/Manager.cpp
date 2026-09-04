@@ -257,6 +257,7 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
     
     } else if ((cfg.general.operation_mode.find("Analysis") != std::string::npos) && 
     (cfg.general.analysis_mode == "TagAndProbe")) {
+        
         // Efficiency MonteCarlo
         std::vector<float> pt_bins = cfg.analysis.pt_bins;
         std::vector<float> eta_bins = cfg.analysis.eta_bins;

@@ -1,5 +1,7 @@
 #include "Filters.h"
 
+#include "Utils.h"
+
 #include <Rtypes.h>
 
 // ------------------------------------------------------------------------------------------------------------------------------------
@@ -61,10 +63,10 @@ ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& ma
 }
 
 // ------------------------------------------------------------------------------------------------------------------------------------
-// TagAndProbe selection
+// TagAndProbe selection - Data
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-ResultsTagAndProbe CalculateTagAndProbe(const MuonKinematics_TP& kin, const MuonFlags_TP& flags, const flags_config cfg_f, 
+ResultsTagAndProbe CalculateTagAndProbe_DATA(const MuonKinematics_TP& kin, const MuonFlags_TP& flags, const flags_config cfg_f, 
 const cuts_config cfg_c) {
     // Results container
     ResultsTagAndProbe results;
@@ -100,10 +102,132 @@ const cuts_config cfg_c) {
                 continue;
             }
             // Invariant mass (tag + probe)
-            float mass = ROOT::VecOps::InvariantMass(ROOT::RVec<float>{kin.pt[i], kin.pt[j]}, 
-            ROOT::RVec<float>{kin.eta[i], kin.eta[j]}, ROOT::RVec<float>{kin.phi[i], kin.phi[j]},
-            ROOT::RVec<float>{kin.mass[i], kin.mass[j]});
+            float mass = CalculateInvariantMass_Pair<float>(kin.pt[i], kin.pt[j], kin.eta[i], kin.eta[j], kin.phi[i], kin.phi[j],
+            kin.mass[i], kin.mass[j]);
             
+            // Invariant mass range
+            if (((mass > cfg_c.mass_min) && (mass < cfg_c.mass_max)) || (!cfg_f.en_mass_window)) {
+                // All probes (passed + failed)
+                if ((flags.global[j]) && (flags.iso[j] < 0.15)) {
+                    // Passed probes
+                    results.pt_pass.push_back(kin.pt[j]);
+                    results.eta_pass.push_back(kin.eta[j]);   
+                    
+                    results.mll_pass.push_back(mass);
+                    
+                    results.tag_pt_pass.push_back(kin.pt[i]);
+                    results.tag_eta_pass.push_back(kin.eta[i]);
+                } else {
+                    // Failed probes
+                    results.pt_fail.push_back(kin.pt[j]);
+                    results.eta_fail.push_back(kin.eta[j]);
+                    
+                    results.mll_fail.push_back(mass);
+
+                    results.tag_pt_fail.push_back(kin.pt[i]);
+                    results.tag_eta_fail.push_back(kin.eta[i]);
+                }
+            }
+        }
+    }
+    return results;
+}
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+// TagAndProbe selection - MonteCarlo
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+ResultsTagAndProbe CalculateTagAndProbe_MC(const MuonKinematics_TP& kin, const MuonFlags_TP& flags, const flags_config cfg_f, 
+const cuts_config cfg_c, const MuonFlags_RM& DeltaR_flags, const ROOT::RVec<float> gen_eta, const ROOT::RVec<float> gen_phi) {
+    // Results container
+    ResultsTagAndProbe results;
+
+    // Number of particles in the event
+    const unsigned int n_muons = kin.pt.size();
+
+    results.pt_pass.reserve(n_muons);
+    results.pt_fail.reserve(n_muons);
+
+    results.eta_pass.reserve(n_muons);
+    results.eta_fail.reserve(n_muons);
+
+    results.mll_pass.reserve(n_muons);
+    results.mll_fail.reserve(n_muons);
+
+    results.tag_pt_pass.reserve(n_muons);
+    results.tag_pt_fail.reserve(n_muons);
+
+    results.tag_eta_fail.reserve(n_muons);
+    results.tag_eta_pass.reserve(n_muons);
+    
+    for(int i = 0; i < n_muons; i++) {
+        // Fast exit
+        if (!flags.tight[i]) {
+            continue;
+        }
+
+        if (DeltaR_flags.gen_flav_rec[i] != 1) {
+            continue;
+        }
+
+        int l = DeltaR_flags.pair_idx_rec[i];
+        
+        // Not valid index -> fast exit
+        if ((l < 0) || (l >= gen_eta.size())) {
+            continue;
+        }
+
+        const bool pass_gen_tag = ((std::abs(DeltaR_flags.pdg_id_gen[l]) == 13) && (DeltaR_flags.status_gen[l] == 1));
+        if (!pass_gen_tag) {
+            continue;
+        }
+
+        float DeltaR_tag = ROOT::VecOps::DeltaR(kin.eta[i], gen_eta[l], kin.phi[i], gen_phi[l]);
+        
+        if (DeltaR_tag >= 0.3) {
+            continue;
+        }
+
+
+        for (int j = 0; j < n_muons; j++) {
+            // Fast exit
+            if (i == j || !flags.stand[j]) {
+                continue;
+            }
+            // Loop into good probe muons
+
+            if (DeltaR_flags.gen_flav_rec[j] != 1) {
+                continue;
+            }
+        
+            // Relative GenPart index for this reconstructed muon "j".
+            int k = DeltaR_flags.pair_idx_rec[j];
+        
+            if ((k < 0) || (k >= gen_eta.size())) {
+                continue;
+            }
+
+            const bool pass_gen_probe = ((std::abs(DeltaR_flags.pdg_id_gen[k]) == 13) && (DeltaR_flags.status_gen[k] == 1)); 
+            if (!pass_gen_probe) {
+                continue;
+            }
+
+            float DeltaR_probe = ROOT::VecOps::DeltaR(kin.eta[j], gen_eta[k], kin.phi[j], gen_phi[k]);
+        
+            if (DeltaR_probe >= 0.3) {
+                continue;
+            }
+            
+            const bool pass = ((kin.pt[j] > cfg_c.pt_cut) && (std::abs(kin.eta[j]) < cfg_c.eta_cut)) || (!(cfg_f.en_kinematics));
+                
+            if (!pass) {
+                continue;
+            }
+
+            // Invariant mass (tag + probe)
+            float mass = CalculateInvariantMass_Pair<float>(kin.pt[i], kin.pt[j], kin.eta[i], kin.eta[j], kin.phi[i], kin.phi[j],
+            kin.mass[i], kin.mass[j]);
+
             // Invariant mass range
             if (((mass > cfg_c.mass_min) && (mass < cfg_c.mass_max)) || (!cfg_f.en_mass_window)) {
                 // All probes (passed + failed)
@@ -145,7 +269,7 @@ const cuts_config cfg_c) {
     const int n_muons_rec = kin.pt_rec.size();
     
     // Loop on reconstructed muons.
-    for(int i = 0; i < n_muons_rec; i++) {
+    for (int i = 0; i < n_muons_rec; i++) {
         
         // gen_flav_rec == 1 -> GenPart muon is : prompt muon. (!= -> fast exit)
         if (flags.gen_flav_rec[i] != 1) {

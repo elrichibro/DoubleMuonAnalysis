@@ -19,7 +19,7 @@ struct general_config {
     std::string analysis_mode = "";
 
     int verbose = 1;
-    bool visualize = true;
+    bool visualize = false;
     bool save_sel_plots = false;
     bool save_sel_data = false; 
 };
