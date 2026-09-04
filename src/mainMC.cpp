@@ -237,8 +237,8 @@ int main(int argc, char* argv[]) {
         
             // HARDCODED
 
-            std::vector<float> pt_bins = {25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 60.0};
-            std::vector<float> eta_bins = {-2.4, -1.8, -1.2, -0.6, 0.0, 0.6, 1.2, 1.8, 2.4};
+            std::vector<float> pt_bins = cfg.analysis.pt_bins;
+            std::vector<float> eta_bins = cfg.analysis.eta_bins;
             
             ROOT::RDF::RNode node_pt_pass = ApplyPt_DataDivision(data_frame, pt_bins, "Probe_Pt_Pass");
             ROOT::RDF::RNode node_pt_all = ApplyPt_DataDivision(data_frame, pt_bins, "Probe_Pt_All");
