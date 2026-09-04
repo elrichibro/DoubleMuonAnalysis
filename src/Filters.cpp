@@ -61,6 +61,8 @@ ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& ma
 }
 
 // ------------------------------------------------------------------------------------------------------------------------------------
+// TagAndProbe selection
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 ResultsTagAndProbe CalculateTagAndProbe(const MuonKinematics_TP& kin, const MuonFlags_TP& flags, const flags_config cfg_f, 
 const cuts_config cfg_c) {
@@ -70,14 +72,14 @@ const cuts_config cfg_c) {
     // Number of particles in the event
     const unsigned int n_muons = kin.pt.size();
 
-    results.pt_all.reserve(n_muons);
     results.pt_pass.reserve(n_muons);
+    results.pt_fail.reserve(n_muons);
 
-    results.eta_all.reserve(n_muons);
     results.eta_pass.reserve(n_muons);
+    results.eta_fail.reserve(n_muons);
 
     results.mll_pass.reserve(n_muons);
-    results.mll_all.reserve(n_muons);
+    results.mll_fail.reserve(n_muons);
     
     for(int i = 0; i < n_muons; i++) {
         // Fast exit
@@ -92,7 +94,6 @@ const cuts_config cfg_c) {
             }
             // Loop into good probe muons
             
-            
             const bool pass = ((kin.pt[j] > cfg_c.pt_cut) && (std::abs(kin.eta[j]) < cfg_c.eta_cut)) || (!(cfg_f.en_kinematics));
             
             if (!pass) {
@@ -105,22 +106,25 @@ const cuts_config cfg_c) {
             
             // Invariant mass range
             if (((mass > cfg_c.mass_min) && (mass < cfg_c.mass_max)) || (!cfg_f.en_mass_window)) {
-                
                 // All probes (passed + failed)
-                results.pt_all.push_back(kin.pt[j]);
-                results.eta_all.push_back(kin.eta[j]);
-                results.mll_all.push_back(mass);
-                results.tag_pt_all.push_back(kin.pt[i]);
-                results.tag_eta_all.push_back(kin.eta[i]);
-
                 if ((flags.global[j]) && (flags.iso[j] < 0.15)) {
-                    
                     // Passed probes
                     results.pt_pass.push_back(kin.pt[j]);
                     results.eta_pass.push_back(kin.eta[j]);   
+                    
                     results.mll_pass.push_back(mass);
+                    
                     results.tag_pt_pass.push_back(kin.pt[i]);
                     results.tag_eta_pass.push_back(kin.eta[i]);
+                } else {
+                    // Failed probes
+                    results.pt_fail.push_back(kin.pt[j]);
+                    results.eta_fail.push_back(kin.eta[j]);
+                    
+                    results.mll_fail.push_back(mass);
+
+                    results.tag_pt_fail.push_back(kin.pt[i]);
+                    results.tag_eta_fail.push_back(kin.eta[i]);
                 }
             }
         }
@@ -128,6 +132,8 @@ const cuts_config cfg_c) {
     return results;
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+// Response Matrix calculus
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin, const MuonFlags_RM& flags, const flags_config cfg_f, 
@@ -172,6 +178,10 @@ const cuts_config cfg_c) {
     return results;
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+// DataDivision masks maker
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 ROOT::RDF::RNode ApplyPt_DataDivision(ROOT::RDF::RNode node, const std::vector<float>& pt_bins, const std::string& column_name) {
     ROOT::RDF::RNode div_pt_node = node;
     
@@ -195,6 +205,8 @@ ROOT::RDF::RNode ApplyPt_DataDivision(ROOT::RDF::RNode node, const std::vector<f
 
     return div_pt_node;
 }
+
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 ROOT::RDF::RNode ApplyEta_DataDivision(ROOT::RDF::RNode node, const std::vector<float>& eta_bins, const std::string& column_name) {
     ROOT::RDF::RNode div_eta_node = node;
