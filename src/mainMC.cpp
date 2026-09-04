@@ -227,7 +227,8 @@ int main(int argc, char* argv[]) {
         try {        
             ROOT::EnableImplicitMT();
 
-            ROOT::RDataFrame data_frame(cfg.general.analysis_mode + "_Tree", cfg.io.o_file_data);
+            std::string tree = cfg.general.dataset + cfg.general.analysis_mode + "_Tree";
+            ROOT::RDataFrame data_frame(tree, cfg.io.o_file_data);
             
             if (verbose){ 
                 std::cout << "RDataFrame object created, unpacking " << cfg.general.analysis_mode
@@ -245,6 +246,10 @@ int main(int argc, char* argv[]) {
             ROOT::RDF::RNode node_eta_pass = ApplyEta_DataDivision(data_frame, eta_bins, "Probe_Eta_Pass");
             ROOT::RDF::RNode node_eta_all = ApplyEta_DataDivision(data_frame, eta_bins, "Probe_Eta_All");
 
+            if (verbose) {
+                std::cout << "Division applied" << std::endl;
+            }
+            
         } catch (const std::exception& except) {
             std::cerr << "Error nature: " << except.what() << std::endl;
             return 1;
