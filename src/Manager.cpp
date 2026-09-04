@@ -142,6 +142,8 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
 
     std::vector<std::string> columns;
 
+    std::cout << "Defining histograms models..." << std::endl;
+
     if ((cfg.general.operation_mode.find("Selection") != std::string::npos) && (cfg.general.analysis_mode == "TagAndProbe")) {
 
         // For TEfficiency -> just visualization -> NOT analysis
@@ -159,7 +161,7 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
 
         
         // Pt/Eta/Mll Pass/Fail
-        /*
+        
         auto h1_probe_pt_pass = node_eff.Histo1D(model_1D_pt, "Probe_Pt_Pass");
         auto h1_probe_pt_fail = node_eff.Histo1D(model_1D_pt, "Probe_Pt_Fail");
 
@@ -186,13 +188,13 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
 
         auto h2_probe_tag_eta_fail = node_eff.Histo2D(model_2D_TP_Eta, "Probe_Eta_Fail", "Tag_Eta_Fail");
         auto h2_probe_tag_eta_pass = node_eff.Histo2D(model_2D_TP_Eta, "Probe_Eta_Pass", "Tag_Eta_Pass");
-        */
+        
 
         // --------
         // Pipeline
         // --------
 
-        /*
+        
         // Probes
         AddToPipeline("Probe_Pt_Pass", h1_probe_pt_pass);
         AddToPipeline("Probe_Pt_Fail", h1_probe_pt_fail);
@@ -216,7 +218,7 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         AddToPipeline("Correlaton Tag/Probe Eta Fail", h2_probe_tag_eta_fail);
 
         AddToPipeline("Efficiency map", h2_eta_pt_pass, h2_eff_eta_pt_all);
-        */
+        /**/
 
         std::vector<std::string> names = {"Probe_Pt_Pass", "Probe_Pt_Fail", "Probe_Eta_Pass", 
         "Probe_Eta_Fail", "Mll_Pass", "Mll_Fail"};

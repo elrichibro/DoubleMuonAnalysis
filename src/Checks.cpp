@@ -56,7 +56,7 @@ ROOT::RDF::RNode CalculateInvMass(ROOT::RDF::RNode node, const std::string& tag,
         .Define(phi, "GenPart_phi[" + mask + "]")
         .Define(mass, "GenPart_mass[" + mask + "]")
 
-        .Define(m_ll, CalculateInvariantMAss<float>, {pt, eta, phi, mass});
+        .Define(m_ll, CalculateInvariantMass<float>, {pt, eta, phi, mass});
 
     return node_FSR;
 }
@@ -83,7 +83,7 @@ ROOT::RDF::RNode node_recMC(ROOT::RDF::RNode node) {
         .Define("LooseElectron", "Electron_pt > 10.0 && abs(Electron_eta) < 2.5 && Electron_cutBased == 2")
         .Filter("Sum(LooseMuon) + Sum(LooseElectron) == 2", "4. Multiboson background")
 
-        .Define("Muon_inv_mass", CalculateInvariantMAss<float>, {"good_Muon_pt", "good_Muon_eta", "good_Muon_phi", "good_Muon_mass"});
+        .Define("Muon_inv_mass", CalculateInvariantMass<float>, {"good_Muon_pt", "good_Muon_eta", "good_Muon_phi", "good_Muon_mass"});
     return node_rec;
 }
 
