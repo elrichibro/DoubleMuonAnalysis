@@ -1,12 +1,12 @@
 {
   "general": { 
     "dataset": "MC",
-    "operation_mode":"Analysis",
+    "operation_mode":"Selection",
     "analysis_mode": "TagAndProbe",
     "verbose": 1,
-    "visualize":true,
+    "visualize":false,
     "save_sel_plots":false,
-    "save_sel_data":false
+    "save_sel_data":true
   },
   
   "io": {

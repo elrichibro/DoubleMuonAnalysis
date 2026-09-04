@@ -31,18 +31,27 @@ T CalculateInvariantMass(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, cons
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 template <typename T>
-T CalculateInvariantMass_Pair(const float pt1, const float pt2, const float eta1, const float eta2, const float phi1, const float phi2, 
-    const float mass1, const float mass2) {
+T CalculateInvariantMass_Pair(const T pt1, const T pt2, const T eta1, const T eta2, const T phi1, const T phi2, const T mass1, const T mass2) {
     
-    float pt = pt1 - pt2;
-    float phi = phi1 - phi2;
-    float eta = eta1 - eta2;
+    const T px1 = pt1 * std::cos(phi1);
+    const T py1 = pt1 * std::sin(phi1);
+    const T pz1 = pt1 * std::sinh(eta1);
+    const T E1 = std::sqrt((px1 * px1) + (py1 * py1) + (pz1 * pz1) + (mass1 * mass1));
+
+    const T px2 = pt2 * std::cos(phi2);
+    const T py2 = pt2 * std::sin(phi2);
+    const T pz2 = pt2 * std::sinh(eta2);
+    const T E2 = std::sqrt((px2 * px2) + (py2 * py2) + (pz2 * pz2) + (mass2 * mass2));
+
+    const T px = px1 + px2;
+    const T py = py1 + py2;
+    const T pz = pz1 + pz2; 
+    const T E = E1 + E2;
+
+    const T mass_sqr = (E * E) - ((px * px) + (py * py) + (pz * pz));
+    const T inv_mass = (mass_sqr > static_cast<T>(0)) ? std::sqrt(mass_sqr) : 0; 
     
-    float px = pt * std::cos(phi);
-    float py = pt * std::sin(phi);
-    float pz = pt * std::sinh(eta);
-    
-    return std::sqrt((px * px) + (py * py) + (pz * pz) + (mass1 - mass1));
+    return inv_mass;
 }
 
 // ------------------------------------------------------------------------------------------------------------------------------------
