@@ -203,6 +203,22 @@ int main(int argc, char* argv[]) {
                 << " tree from " <<  cfg.io.o_file_data << " file, starting analysis ..." << std::endl;
             }
         
+            OutputManager Amanager(cfg);
+
+            Amanager.BookAnalysis(data_frame, cfg);
+
+            Amanager.Run();
+            
+            if (visualize && app != nullptr) {
+                std::cout << "Initializing visualization ..." << std::endl;
+                app->Run();
+                
+                delete app; 
+            } else {
+                std::cout << "No visualization booked.\n" << std::endl;
+            }
+            
+            /*
             // HARDCODED
 
             std::vector<float> pt_bins = cfg.analysis.pt_bins;
@@ -213,7 +229,8 @@ int main(int argc, char* argv[]) {
 
             ROOT::RDF::RNode node_eta_pass = ApplyEta_DataDivision(data_frame, eta_bins, "Probe_Eta_Pass");
             ROOT::RDF::RNode node_eta_fail = ApplyEta_DataDivision(data_frame, eta_bins, "Probe_Eta_Fail");
-
+            */
+            
             if (verbose) {
                 std::cout << "Division applied" << std::endl;
             }
