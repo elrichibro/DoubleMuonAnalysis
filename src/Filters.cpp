@@ -165,7 +165,7 @@ const cuts_config cfg_c, const MuonFlags_RM& DeltaR_flags, const ROOT::RVec<floa
         if (!flags.tight[i]) {
             continue;
         }
-
+        
         if (DeltaR_flags.gen_flav_rec[i] != 1) {
             continue;
         }
@@ -187,7 +187,7 @@ const cuts_config cfg_c, const MuonFlags_RM& DeltaR_flags, const ROOT::RVec<floa
         if (DeltaR_tag >= 0.3) {
             continue;
         }
-
+        
 
         for (int j = 0; j < n_muons; j++) {
             // Fast exit
@@ -196,6 +196,7 @@ const cuts_config cfg_c, const MuonFlags_RM& DeltaR_flags, const ROOT::RVec<floa
             }
             // Loop into good probe muons
 
+            
             if (DeltaR_flags.gen_flav_rec[j] != 1) {
                 continue;
             }
