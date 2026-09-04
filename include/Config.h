@@ -64,6 +64,11 @@ struct canvas_config {
     int height = 600; 
 };
 
+struct analysis_config {
+    std::vector<float> pt_bins;
+    std::vector<float> eta_bins; 
+};
+
 /// @brief Stores the other data structs.
 struct config_struct {
     general_config general;
@@ -76,6 +81,7 @@ struct config_struct {
     plot_config eta_plot;
     plot_config mll_plot;
     canvas_config canvas;
+    analysis_config analysis;
 };
 
 // ------------------------------------------------------------------------------------------------------------------------------------

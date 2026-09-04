@@ -117,6 +117,16 @@ int Configure(config_struct& value, const std::string& json_path) {
                 value.canvas.height = j_c.value("height", value.canvas.height);
             }
         }
+        if (json_obj.contains("analysis")) {
+            const auto& j = json_obj["analysis"];
+
+            if (j.contains("pt_bins")) {
+                value.analysis.pt_bins = j["pt_bins"].get<std::vector<float>>();
+            }
+            if (j.contains("pt_bins")) {
+                value.analysis.eta_bins = j["eta_bins"].get<std::vector<float>>();
+            }
+        }
     } catch (const std::exception& except) {
         std::cout << "ERROR: " << except.what() << std::endl;
         return -1;
@@ -141,8 +151,10 @@ void Verbose_config(const config_struct& value) {
     std::cout << "    Save selection plots flag: " << value.general.save_sel_plots << std::endl;
     std::cout << "    Save selection data flag: " << value.general.save_sel_data << std::endl;
 
+    std::cout << "" << std::endl;    
+    std::cout << "--------------------------------------------------------------------" << std::endl;
     std::cout << "" << std::endl;
-    
+
     std::cout << "I/O settings:" << std::endl;
     std::cout << "    Input data file: " << value.io.in_data_file << std::endl;
     std::cout << "    Data Tree: " << value.io.tree_data_name << std::endl;
@@ -155,6 +167,8 @@ void Verbose_config(const config_struct& value) {
     std::cout << "    Output file selected plots: " << value.io.o_file_plots << std::endl;
     std::cout << "    Output file selected data: " << value.io.o_file_data << std::endl;
 
+    std::cout << "" << std::endl;
+    std::cout << "--------------------------------------------------------------------" << std::endl;
     std::cout << "" << std::endl;
 
     std::cout << "TagAndProbe flags:" << std::endl;
@@ -190,6 +204,8 @@ void Verbose_config(const config_struct& value) {
     std::cout << "    Min mass: " << value.cut_RM.mass_min << std::endl;
 
     std::cout << "" << std::endl;
+    std::cout << "--------------------------------------------------------------------" << std::endl;
+    std::cout << "" << std::endl;
 
     std::cout << "Plot settings:" << std::endl;
 
@@ -224,6 +240,26 @@ void Verbose_config(const config_struct& value) {
     std::cout << "        Height: " << value.canvas.height << std::endl;
   
     std::cout << "" << std::endl;
+    std::cout << "--------------------------------------------------------------------" << std::endl;
+    std::cout << "" << std::endl;
+
+    std::cout << "Analysis settup:" << std::endl;
+    std::cout << "    Pt bins intervals: ";
+    for (auto it : value.analysis.pt_bins) {
+        std::cout << it << " ";
+    }
+
+    std::cout << std::endl;
+
+    std::cout << "    Eta bins intervals: ";
+    for (auto it : value.analysis.eta_bins) {
+        std::cout << it << " ";
+    }
+
+    std::cout << "" << std::endl;
+    std::cout << "--------------------------------------------------------------------" << std::endl;
+    std::cout << "" << std::endl;
+    
     std::cout << "End of Verbose" << std::endl;
     std::cout << "" << std::endl;
 }
