@@ -171,3 +171,51 @@ const cuts_config cfg_c) {
     }
     return results;
 }
+
+ROOT::RDF::RNode ApplyPt_DataDivision(ROOT::RDF::RNode node, const std::vector<float>& pt_bins, const std::string& column_name) {
+    ROOT::RDF::RNode div_pt_node = node;
+    
+    for (int i = 0; i < pt_bins.size() - 1; i++) {
+        std::string name_mask = column_name + "_DeltaMask" + std::to_string(i);
+        std::string name_column = column_name + "_Delta" + std::to_string(i);
+
+        float min_pt = pt_bins[i];
+        float max_pt = pt_bins[i + 1];
+        
+        div_pt_node = div_pt_node
+            .Define(name_mask, [min_pt, max_pt](const ROOT::RVec<float>& pt) {
+                return ((pt >= min_pt) && (pt < max_pt)); 
+            }, {column_name});
+    
+        div_pt_node = div_pt_node
+            .Define(name_column, [](const ROOT::RVec<float>& pt, const ROOT::RVec<bool>& mask) {
+                return pt[mask];
+            }, {column_name, name_mask} );
+    }
+
+    return div_pt_node;
+}
+
+ROOT::RDF::RNode ApplyEta_DataDivision(ROOT::RDF::RNode node, const std::vector<float>& eta_bins, const std::string& column_name) {
+    ROOT::RDF::RNode div_eta_node = node;
+    
+    for(int i = 0; i < eta_bins.size() - 1; i++) {
+        std::string name_mask = column_name + "_DeltaMask" + std::to_string(i);
+        std::string name_column = column_name + "_Delta" + std::to_string(i);
+
+        float min_eta = eta_bins[i];
+        float max_eta = eta_bins[i + 1];
+        
+        div_eta_node = div_eta_node
+            .Define(name_mask, [min_eta, max_eta](const ROOT::RVec<float>& eta) {
+                return ((eta >= min_eta) && (eta < max_eta)); 
+            }, {column_name});
+    
+        div_eta_node = div_eta_node
+            .Define(name_column, [](const ROOT::RVec<float>& eta, const ROOT::RVec<bool>& mask) {
+                return eta[mask];
+            }, {column_name, name_mask} );
+    }
+
+    return div_eta_node;
+}
