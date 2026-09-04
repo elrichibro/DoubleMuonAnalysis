@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
             auto h_mass_ll_aFSR = node_InvMass_aFSR.Histo1D({"m_ll_aFSR", "Massa invariante dileptoni After FSR; m_{#mu^{+}#mu^{-}}; Events", 100, 60, 120}, "InvMass_aFSR");
 
             // ------------------------------------------------------------------------------------------------------------------------------------
-            // Efficiency
+            // RespMatrix
             // ------------------------------------------------------------------------------------------------------------------------------------
 
             ROOT::RDF::RNode node_RM = data_frame.Define("RespMatrix_mask",
@@ -131,46 +131,10 @@ int main(int argc, char* argv[]) {
                 .Define("Gen_Eta", [](const ResultsRespMatrix& res) { return res.eta_gen_RM; }, {"RespMatrix_mask"})
                 .Define("Rec_Pt", [](const ResultsRespMatrix& res) { return res.pt_rec_RM; }, {"RespMatrix_mask"})
                 .Define("Rec_Eta", [](const ResultsRespMatrix& res) { return res.eta_rec_RM; }, {"RespMatrix_mask"});
-
-            /*
-            auto node_GEN_event = node_InvMass_aFSR
-                .Filter([](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, float mass) {
-                    return (ROOT::VecOps::All(pt > 25.0f) && ROOT::VecOps::All(abs(eta) < 2.4f) && (mass > 60.0f) && (mass < 120.0f));
-                }, {"good_Pt_aFSR", "good_Eta_aFSR", "m_ll_aFSR"}, "Generator Event");
-
-            auto h_pt_gen = node_GEN_event.Histo1D({"h_pt_gen", "Generator; p_{T} [GeV]; Entries", 100, 25, 100}, "good_Pt_aFSR");
-            auto h_eta_gen = node_GEN_event.Histo1D({"h_eta_gen", "Generator; #eta; Entries", 100, -2.4, 2.4}, "good_Eta_aFSR");
-
-            ROOT::RDF::RNode node_REC_event = node_recMC(node_GEN_event);
-            
-            node_REC_event = node_REC_event
-                .Filter([](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, float mass) {
-                    return (ROOT::VecOps::All(pt > 25.0f) && ROOT::VecOps::All(abs(eta) < 2.4f) && (mass > 60.0f) && (mass < 120.0f));
-                }, {"good_Muon_pt", "good_Muon_eta", "Muon_inv_mass"}, "4. Reconstructed Event");
-                
-            auto h_pt_rec = node_REC_event.Histo1D({"h_pt_rec", "Reconstructed; p_{T} [GeV]; Entries", 100, 25, 100}, "good_Pt_aFSR");
-            auto h_eta_rec = node_REC_event.Histo1D({"h_eta_rec", "Reconstructed; #eta; Entries", 100, -2.4, 2.4}, "good_Eta_aFSR");
-
-
-            auto eff_pt = std::make_unique<TEfficiency>(*h_pt_rec, *h_pt_gen);
-            auto eff_eta = std::make_unique<TEfficiency>(*h_eta_rec, *h_eta_gen);
-
-            eff_pt->SetTitle("p_{T} Efficiency; p_{T} [GeV]; #epsilon_{p_{T}}");
-            eff_eta->SetTitle("#eta Efficiency; #eta; #epsilon_{#eta}");
-
-            TCanvas c1("c1", "Efficiency Canvas", 800, 600);
-            c1.SetGrid();
-            eff_pt->Draw("AP");
-
-            TCanvas c2("c2", "Efficiency Canvas", 800, 600);
-            c2.SetGrid();
-            eff_eta->Draw("AP");
-            */
             
             // ------------------------------------------------------------------------------------------------------------------------------------
             // Tag and Probe
             // ------------------------------------------------------------------------------------------------------------------------------------
-
             
             ROOT::RDF::RNode node_TP = data_frame.Define("TP_Result",
                 [flags_TP, cuts_TP](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi, const ROOT::RVec<float>& mass,
@@ -183,15 +147,19 @@ int main(int argc, char* argv[]) {
                 }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_tightId", "Muon_isStandalone", "Muon_isGlobal", "Muon_pfRelIso04_all"});
 
             node_TP = node_TP
-                .Define("Probe_Pt_All", [](const ResultsTagAndProbe& res) { return res.pt_all; }, {"TP_Result"})
+                .Define("Probe_Pt_Fail", [](const ResultsTagAndProbe& res) { return res.pt_fail; }, {"TP_Result"})
                 .Define("Probe_Pt_Pass", [](const ResultsTagAndProbe& res) { return res.pt_pass; }, {"TP_Result"})
-                .Define("Probe_Eta_All", [](const ResultsTagAndProbe& res) { return res.eta_all; }, {"TP_Result"})
+                
+                .Define("Probe_Eta_Fail", [](const ResultsTagAndProbe& res) { return res.eta_fail; }, {"TP_Result"})
                 .Define("Probe_Eta_Pass", [](const ResultsTagAndProbe& res) { return res.eta_pass; }, {"TP_Result"})
-                .Define("Probe_Mll_All", [](const ResultsTagAndProbe& res) { return res.mll_all; }, {"TP_Result"})
-                .Define("Probe_Mll_Pass", [](const ResultsTagAndProbe& res) { return res.mll_pass; }, {"TP_Result"})
-                .Define("Tag_Pt_All", [](const ResultsTagAndProbe& res) { return res.tag_pt_all; }, {"TP_Result"})
+                
+                .Define("Mll_Fail", [](const ResultsTagAndProbe& res) { return res.mll_fail; }, {"TP_Result"})
+                .Define("Mll_Pass", [](const ResultsTagAndProbe& res) { return res.mll_pass; }, {"TP_Result"})
+                
+                .Define("Tag_Pt_Fail", [](const ResultsTagAndProbe& res) { return res.tag_pt_fail; }, {"TP_Result"})
                 .Define("Tag_Pt_Pass", [](const ResultsTagAndProbe& res) { return res.tag_pt_pass; }, {"TP_Result"})
-                .Define("Tag_Eta_All", [](const ResultsTagAndProbe& res) { return res.tag_eta_all; }, {"TP_Result"})
+                
+                .Define("Tag_Eta_Fail", [](const ResultsTagAndProbe& res) { return res.tag_eta_fail; }, {"TP_Result"})
                 .Define("Tag_Eta_Pass", [](const ResultsTagAndProbe& res) { return res.tag_eta_pass; }, {"TP_Result"});
 
             // ------------------------------------------------------------------------------------------------------------------------------------
@@ -241,10 +209,10 @@ int main(int argc, char* argv[]) {
             std::vector<float> eta_bins = cfg.analysis.eta_bins;
             
             ROOT::RDF::RNode node_pt_pass = ApplyPt_DataDivision(data_frame, pt_bins, "Probe_Pt_Pass");
-            ROOT::RDF::RNode node_pt_all = ApplyPt_DataDivision(data_frame, pt_bins, "Probe_Pt_All");
+            ROOT::RDF::RNode node_pt_fail = ApplyPt_DataDivision(data_frame, pt_bins, "Probe_Pt_Fail");
 
             ROOT::RDF::RNode node_eta_pass = ApplyEta_DataDivision(data_frame, eta_bins, "Probe_Eta_Pass");
-            ROOT::RDF::RNode node_eta_all = ApplyEta_DataDivision(data_frame, eta_bins, "Probe_Eta_All");
+            ROOT::RDF::RNode node_eta_fail = ApplyEta_DataDivision(data_frame, eta_bins, "Probe_Eta_Fail");
 
             if (verbose) {
                 std::cout << "Division applied" << std::endl;

@@ -143,60 +143,77 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
 
     if (cfg.general.analysis_mode == "TagAndProbe") {
 
+        // For TEfficiency -> just visualization -> NOT analysis
+        ROOT::RDF::RNode node_eff = node
+            .Define("Probe_Pt_All", [](const ROOT::RVec<float>& pass, const ROOT::RVec<float>& fail) {
+                return ROOT::VecOps::Concatenate(pass, fail);
+            }, {"Probe_Pt_Pass", "Probe_Pt_Fail"})
+            .Define("Probe_Eta_All", [](const ROOT::RVec<float>& pass, const ROOT::RVec<float>& fail) {
+                return ROOT::VecOps::Concatenate(pass, fail);
+            }, {"Probe_Eta_Pass", "Probe_Eta_Fail"});
+
         // ----------
         // Histograms
         // ----------
 
-        auto h1_pt_num = node.Histo1D(model_1D_pt, "Probe_Pt_Pass");
-        auto h1_pt_den  = node.Histo1D(model_1D_pt, "Probe_Pt_All");
+        // Pt/Eta/Mll Pass/Fail
+        auto h1_probe_pt_pass = node_eff.Histo1D(model_1D_pt, "Probe_Pt_Pass");
+        auto h1_probe_pt_fail = node_eff.Histo1D(model_1D_pt, "Probe_Pt_Fail");
 
-        auto h1_eta_num = node.Histo1D(model_1D_eta, "Probe_Eta_Pass");
-        auto h1_eta_den  = node.Histo1D(model_1D_eta, "Probe_Eta_All");
+        auto h1_probe_eta_pass = node_eff.Histo1D(model_1D_eta, "Probe_Eta_Pass");
+        auto h1_probe_eta_fail  = node_eff.Histo1D(model_1D_eta, "Probe_Eta_Fail");
 
-        auto h1_mll_num = node.Histo1D(model_1D_mll, "Probe_Mll_Pass");
-        auto h1_mll_den  = node.Histo1D(model_1D_mll, "Probe_Mll_All");
+        auto h1_mll_pass = node_eff.Histo1D(model_1D_mll, "Mll_Pass");
+        auto h1_mll_fail  = node_eff.Histo1D(model_1D_mll, "Mll_Fail");
 
-        auto h1_pt_tag = node.Histo1D(model_1D_pt, "Tag_Pt_Pass");
-        auto h1_eta_tag = node.Histo1D(model_1D_eta, "Tag_Eta_Pass");
+        // Tag
+        auto h1_tag_pt_pass = node_eff.Histo1D(model_1D_pt, "Tag_Pt_Pass");
+        auto h1_tag_eta_pass = node_eff.Histo1D(model_1D_eta, "Tag_Eta_Pass");
 
-        auto h2_eta_pt_den = node.Histo2D(model_2D, "Probe_Eta_All", "Probe_Pt_All");
-        auto h2_eta_pt_num = node.Histo2D(model_2D, "Probe_Eta_Pass", "Probe_Pt_Pass");
+        // TEff
+        auto h1_eff_probe_pt_all = node_eff.Histo1D(model_1D_pt, "Probe_Pt_All");
+        auto h1_eff_probe_eta_all = node_eff.Histo1D(model_1D_eta, "Probe_Eta_All");
 
+        auto h2_eta_pt_pass = node_eff.Histo2D(model_2D, "Probe_Eta_Pass", "Probe_Pt_Pass");
+        auto h2_eta_pt_fail = node_eff.Histo2D(model_2D, "Probe_Eta_Fail", "Probe_Pt_Fail");
+        auto h2_eff_eta_pt_all = node_eff.Histo2D(model_2D, "Probe_Eta_All", "Probe_Pt_All");        
 
-        auto h2_corr_pt_den = node.Histo2D(model_2D_TP_Pt, "Probe_Pt_All", "Tag_Pt_All");
-        auto h2_corr_pt_num = node.Histo2D(model_2D_TP_Pt, "Probe_Pt_Pass", "Tag_Pt_Pass");
+        auto h2_probe_tag_pt_fail = node_eff.Histo2D(model_2D_TP_Pt, "Probe_Pt_Fail", "Tag_Pt_Fail");
+        auto h2_probe_tag_pt_pass = node_eff.Histo2D(model_2D_TP_Pt, "Probe_Pt_Pass", "Tag_Pt_Pass");
 
-        auto h2_corr_eta_den = node.Histo2D(model_2D_TP_Eta, "Probe_Eta_All", "Tag_Eta_All");
-        auto h2_corr_eta_num = node.Histo2D(model_2D_TP_Eta, "Probe_Eta_Pass", "Tag_Eta_Pass");
+        auto h2_probe_tag_eta_fail = node_eff.Histo2D(model_2D_TP_Eta, "Probe_Eta_Fail", "Tag_Eta_Fail");
+        auto h2_probe_tag_eta_pass = node_eff.Histo2D(model_2D_TP_Eta, "Probe_Eta_Pass", "Tag_Eta_Pass");
 
         // --------
         // Pipeline
         // --------
 
-        //AddToPipeline("Pt_Pass", h1_pt_num);
-        //AddToPipeline("Pt_Total", h1_pt_den);
+        // Probes
+        AddToPipeline("Probe_Pt_Pass", h1_probe_pt_pass);
+        AddToPipeline("Probe_Pt_Fail", h1_probe_pt_fail);
 
-        AddToPipeline("Eta_Pass", h1_eta_num);
-        //AddToPipeline("Eta_Total", h1_eta_den);
+        AddToPipeline("Probe_Eta_Pass", h1_probe_eta_pass);
+        AddToPipeline("Probe_Eta_Fail", h1_probe_eta_fail);
 
-        //AddToPipeline("InvMass_Total", h1_mll_den);
-        //AddToPipeline("InvMass_Pass", h1_mll_num);
+        AddToPipeline("InvMass_Pass", h1_mll_pass);
+        AddToPipeline("InvMass_Fail", h1_mll_fail);
 
-        AddToPipeline("Tag_Pt_Pass", h1_pt_tag);
-        AddToPipeline("Tag_Eta_Pass", h1_eta_tag);
+        // Tag
+        AddToPipeline("Tag_Pt_Pass", h1_tag_pt_pass);
+        AddToPipeline("Tag_Eta_Pass", h1_tag_eta_pass);
 
-        //AddToPipeline("Efficiency pt", h1_pt_num, h1_pt_den);
-        //AddToPipeline("Efficiency eta", h1_eta_num, h1_eta_den);
+        AddToPipeline("Efficiency pt", h1_probe_pt_pass, h1_eff_probe_pt_all);
+        AddToPipeline("Efficiency eta", h1_probe_eta_pass, h1_eff_probe_eta_all);
 
-        AddToPipeline("Correlaton Tag/Probe Pt All", h2_corr_pt_den);
-        AddToPipeline("Correlaton Tag/Probe Pt Pass", h2_corr_pt_num);
-        AddToPipeline("Correlaton Tag/Probe Eta All", h2_corr_eta_den);
-        AddToPipeline("Correlaton Tag/Probe Eta Pass", h2_corr_eta_num);
-        
-        //AddToPipeline("Efficiency map", h2_eta_pt_num, h2_eta_pt_den);
+        AddToPipeline("Correlaton Tag/Probe Pt Pass", h2_probe_tag_pt_pass);
+        AddToPipeline("Correlaton Tag/Probe Pt Fail", h2_probe_tag_pt_fail);
+        AddToPipeline("Correlaton Tag/Probe Eta Pass", h2_probe_tag_eta_pass);
+        AddToPipeline("Correlaton Tag/Probe Eta Fail", h2_probe_tag_eta_fail);
+
+        AddToPipeline("Efficiency map", h2_eta_pt_pass, h2_eff_eta_pt_all);
     
-        std::vector<std::string> names = {"Probe_Pt_Pass", "Probe_Pt_All", "Probe_Eta_Pass", 
-        "Probe_Eta_All", "Probe_Mll_Pass", "Probe_Mll_All"};
+        std::vector<std::string> names = {"Probe_Pt_Pass", "Probe_Pt_Fail", "Probe_Eta_Pass", 
+        "Probe_Eta_Fail", "Mll_Pass", "Mll_Fail"};
         
         columns.insert(columns.end(), names.begin(), names.end());
 
