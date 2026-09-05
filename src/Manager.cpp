@@ -210,8 +210,7 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         std::vector<std::string> names = {"Gen_Pt", "Rec_Pt", "Gen_Eta", "Rec_Eta"};
         columns.insert(columns.end(), names.begin(), names.end());
     
-    } else if ((cfg.general.operation_mode.find("Analysis") != std::string::npos) && 
-    (cfg.general.analysis_mode == "TagAndProbe")) {
+    } else if ((cfg.general.operation_mode.find("Analysis") != std::string::npos) && (cfg.general.analysis_mode == "TagAndProbe")) {
         
         // Efficiency MonteCarlo
         std::vector<float> pt_bins = cfg.analysis.pt_bins;
@@ -220,22 +219,25 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         ROOT::RDF::TH1DModel model_Eff_pt("h_Eff_pt", "Pt Efficiency; p_{T} [GeV]; Efficiency", pt_bins.size() - 1, pt_bins.data());
         ROOT::RDF::TH1DModel model_Eff_eta("h_Eff_eta", "Eta Efficiency; #eta; Efficiency", eta_bins.size() - 1, eta_bins.data());
 
+        ROOT::RDF::TH2DModel model_2D("h2_Eff", "Efficiency map; #eta; p_{T} [GeV]", eta_bins.size() - 1, eta_bins.data(), 
+        pt_bins.size() - 1, pt_bins.data());
+
         ROOT::RDF::RNode node_eff = node
-            .Define("Probe_Pt_All", [](const ROOT::RVec<float>& pass, const ROOT::RVec<float>& fail) {
-                return ROOT::VecOps::Concatenate(pass, fail);
-            }, {"Probe_Pt_Pass", "Probe_Pt_Fail"})
-            .Define("Probe_Eta_All", [](const ROOT::RVec<float>& pass, const ROOT::RVec<float>& fail) {
-                return ROOT::VecOps::Concatenate(pass, fail);
-            }, {"Probe_Eta_Pass", "Probe_Eta_Fail"});
+            .Define(cfg.general.dataset + "_Probe_Pt_Pass", cfg.general.dataset + "_Probe_Pt[" + cfg.general.dataset + "_Mask_Pass]")
+            .Define(cfg.general.dataset + "_Probe_Eta_Pass", cfg.general.dataset + "_Probe_Eta[" + cfg.general.dataset + "_Mask_Pass]");
 
-        auto h1_probe_pt_pass = node_eff.Histo1D(model_Eff_pt, "Probe_Pt_Pass");
-        auto h1_eff_probe_pt_all = node_eff.Histo1D(model_Eff_pt, "Probe_Pt_All");
+        auto h1_probe_pt_pass = node_eff.Histo1D(model_Eff_pt, cfg.general.dataset + "_Probe_Pt_Pass");
+        auto h1_eff_probe_pt_all = node_eff.Histo1D(model_Eff_pt, cfg.general.dataset + "_Probe_Pt");
 
-        auto h1_probe_eta_pass = node_eff.Histo1D(model_Eff_eta, "Probe_Eta_Pass");
-        auto h1_eff_probe_eta_all = node_eff.Histo1D(model_Eff_eta, "Probe_Eta_All");
+        auto h1_probe_eta_pass = node_eff.Histo1D(model_Eff_eta, cfg.general.dataset + "_Probe_Eta_Pass");
+        auto h1_eff_probe_eta_all = node_eff.Histo1D(model_Eff_eta, cfg.general.dataset + "_Probe_Eta");
+
+        auto h2_probe_eta_pt_pass = node_eff.Histo2D(model_2D, cfg.general.dataset + "_Probe_Eta_Pass", cfg.general.dataset + "_Probe_Pt_Pass");
+        auto h2_probe_eta_pt_all = node_eff.Histo2D(model_2D, cfg.general.dataset + "_Probe_Eta", cfg.general.dataset + "_Probe_Pt");
 
         AddToPipeline("Efficiency pt", h1_probe_pt_pass, h1_eff_probe_pt_all);
         AddToPipeline("Efficiency eta", h1_probe_eta_pass, h1_eff_probe_eta_all);
+        AddToPipeline("Efficiency map", h2_probe_eta_pt_pass, h2_probe_eta_pt_all);
     }
 
     if (save_sel_data) {
