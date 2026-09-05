@@ -223,18 +223,17 @@ int main(int argc, char* argv[]) {
         try {        
             ROOT::EnableImplicitMT();
 
-            std::string tree = cfg.general.dataset + cfg.general.analysis_mode + "_Tree";
+            std::string tree = cfg.general.dataset + "_" + cfg.general.analysis_mode + "_Tree";
             ROOT::RDataFrame data_frame(tree, cfg.io.o_file_data);
             
             if (verbose){ 
                 std::cout << "RDataFrame object created, unpacking " << cfg.general.analysis_mode
                 << " tree from " <<  cfg.io.o_file_data << " file, starting analysis ..." << std::endl;
             }
-        
+
             OutputManager Amanager(cfg);
 
             Amanager.BookAnalysis(data_frame, cfg);
-
             Amanager.Run();
             
             if (visualize && app != nullptr) {
@@ -249,7 +248,7 @@ int main(int argc, char* argv[]) {
             if (verbose) {
                 std::cout << "Division applied" << std::endl;
             }
-            
+
         } catch (const std::exception& except) {
             std::cerr << "Error nature: " << except.what() << std::endl;
             return 1;
