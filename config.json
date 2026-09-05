@@ -1,12 +1,12 @@
 {
   "general": { 
     "dataset": "MC",
-    "operation_mode":"Analysis",
+    "operation_mode":"Template",
     "analysis_mode": "TagAndProbe",
     "verbose": 1,
     "visualize":true,
     "save_sel_plots":false,
-    "save_sel_data":false
+    "save_sel_data":true
   },
   
   "io": {
@@ -16,7 +16,8 @@
     "in_mc_file":"../data/datiMC0.root",
     "val_file":"../data/validation_muon_run.json", 
     "o_file_plots":"../output/risultati_plots.root",
-    "o_file_data":"../output/risultati_data.root"
+    "o_file_data":"../output/risultati_data.root",
+    "o_file_template":"../output/risultati_template.root"
   },
   
   "flag_TP": {
@@ -73,6 +74,7 @@
   },
   "analysis": {
     "pt_bins": [25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 60.0, 75.0, 100.0],
-    "eta_bins": [-2.4, -1.8, -1.2, -0.6, 0.0, 0.6, 1.2, 1.8, 2.4]
+    "eta_bins": [-2.4, -1.8, -1.2, -0.6, 0.0, 0.6, 1.2, 1.8, 2.4],
+    "mll_bins": 100.0
   }
 }

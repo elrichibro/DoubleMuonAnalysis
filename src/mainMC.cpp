@@ -219,6 +219,41 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    if (cfg.general.operation_mode.find("Template") != std::string::npos) {
+        ROOT::EnableImplicitMT();
+        
+        if (verbose) {
+            std::cout << "Initilizing template operation mode..." << std::endl;
+        }
+
+        std::string tree = "MC_TagAndProbe_Tree";
+        ROOT::RDataFrame data_frame(tree, cfg.io.o_file_data);
+
+        ROOT::RDF::RNode node_template = data_frame;
+        
+        auto h3_pass = TemplateMaker_MC(node_template, cfg, true);
+        auto h3_fail = TemplateMaker_MC(node_template, cfg, false);
+
+        TFile o_template_file(cfg.io.o_file_template.c_str(), "RECREATE");
+        
+        if (o_template_file.IsZombie()) {
+            std::cout << "ERROR: Cannot find output file: " << cfg.io.o_file_template << std::endl;
+            return 1;
+        }
+
+        o_template_file.cd();
+
+        h3_pass->Write();
+        h3_fail->Write();
+
+        o_template_file.Close();
+
+        if (verbose) {
+            std::cout << "Templates successfully been written to: " << cfg.io.o_file_template << std::endl;
+        }
+
+    }
+
     if (cfg.general.operation_mode.find("Analysis") != std::string::npos) {
         try {        
             ROOT::EnableImplicitMT();
