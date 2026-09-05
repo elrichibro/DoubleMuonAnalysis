@@ -156,4 +156,10 @@ ROOT::RDF::RNode ApplyPt_DataDivision(ROOT::RDF::RNode node, const std::vector<f
 
 ROOT::RDF::RNode ApplyEta_DataDivision(ROOT::RDF::RNode node, const std::vector<float>& eta_bins, const std::string& column_name);
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+// MC Template Maker
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+ROOT::RDF::RResultPtr<TH3D> TemplateMaker_MC(ROOT::RDF::RNode node, const config_struct& cfg, const bool mask);
+
 #endif

@@ -340,3 +340,42 @@ ROOT::RDF::RNode ApplyEta_DataDivision(ROOT::RDF::RNode node, const std::vector<
 
     return div_eta_node;
 }
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+// MC Template Maker
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+ROOT::RDF::RResultPtr<TH3D> TemplateMaker_MC(ROOT::RDF::RNode node, const config_struct& cfg, const bool mask) {
+    ROOT::RDF::RNode node_hist = node;
+
+    std::vector<float> pt_bins = cfg.analysis.pt_bins;
+    std::vector<float> eta_bins = cfg.analysis.eta_bins;
+    std::vector<float> mll_bins(100);
+
+    float step = (120.0 - 60.0) / 99.0;
+    for (int i = 0; i < 100; i++) {
+        mll_bins[i] = 60.0 + (i * step);
+    }
+
+    ROOT::RDF::TH3DModel model("h3", "3D Histogram MC", eta_bins.size() - 1, eta_bins.data(), 
+    pt_bins.size() - 1, pt_bins.data(), mll_bins.size() - 1, mll_bins.data() );
+
+    
+    if (mask) {
+        node_hist = node_hist
+            .Define("MC_Probe_Pt_Pass", "MC_Pt[MC_Mask_Pass]")
+            .Define("MC_Probe_Eta_Pass", "MC_Eta[MC_Mask_Pass]")
+            .Define("MC_Mll_Pass", "MC_Eta[MC_Mask_Pass]");
+
+        auto h3 = node_hist.Histo3D(model, "MC_Probe_Eta_Pass", "MC_Probe_Pt_Pass", "MC_Mll_Pass");
+        return h3;
+    } else {
+        node_hist = node_hist
+            .Define("MC_Probe_Pt_Fail", "MC_Pt[!MC_Mask_Pass]")
+            .Define("MC_Probe_Eta_Fail", "MC_Eta[!MC_Mask_Pass]")
+            .Define("MC_Mll_Fail", "MC_Eta[!MC_Mask_Pass]");
+
+        auto h3 = node_hist.Histo3D(model, "MC_Probe_Eta_Fail", "MC_Probe_Pt_Fail", "MC_Mll_Fail");
+        return h3;
+    }
+}

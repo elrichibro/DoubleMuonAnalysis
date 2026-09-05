@@ -124,7 +124,7 @@ class ObjectTEff : public PipelineObj {
             // Checked at runtime -> template usage to determinate the histogram dimension.
             if constexpr (std::is_same<T, TH2D>::value) {
                 canvas.SetRightMargin(0.15);
-                eff_obj->Draw("COLZ");
+                eff_obj->Draw("TEXT COLZ");
             } else {
                 eff_obj->Draw("AP");
             }
