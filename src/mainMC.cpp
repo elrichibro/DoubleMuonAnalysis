@@ -12,6 +12,7 @@
 #include "Utils.h"
 #include "Checks.h"
 #include "Manager.h"
+#include "AnalysisTools.h"
 
 int main(int argc, char* argv[]) {
 
@@ -258,6 +259,8 @@ int main(int argc, char* argv[]) {
         try {        
             ROOT::EnableImplicitMT();
 
+            
+            /*
             std::string tree = cfg.general.dataset + "_" + cfg.general.analysis_mode + "_Tree";
             ROOT::RDataFrame data_frame(tree, cfg.io.o_file_data);
             
@@ -279,11 +282,7 @@ int main(int argc, char* argv[]) {
             } else {
                 std::cout << "No visualization booked.\n" << std::endl;
             }
-            
-            if (verbose) {
-                std::cout << "Division applied" << std::endl;
-            }
-
+            */
         } catch (const std::exception& except) {
             std::cerr << "Error nature: " << except.what() << std::endl;
             return 1;
