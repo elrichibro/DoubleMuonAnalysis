@@ -93,8 +93,8 @@ int main(int argc, char* argv[]) {
             ROOT::RDataFrame data_frame(dataset_tree, dataset_file);
             
             if (verbose){ 
-                std::cout << "RDataFrame object created, unpacking " << dataset_tree << " tree from " << 
-                dataset_file << " file, starting selection ..." << std::endl;
+                std::cout << "RDataFrame object created, unpacking " << dataset_tree 
+                << " tree from " << dataset_file << " file, starting selection ..." << std::endl;
             }
 
             /*
