@@ -373,7 +373,7 @@ ROOT::RDF::RResultPtr<TH3D> TemplateMaker_MC(ROOT::RDF::RNode node, const config
         node_hist = node_hist
             .Define("MC_Probe_Pt_Fail", "MC_Pt[!MC_Mask_Pass]")
             .Define("MC_Probe_Eta_Fail", "MC_Eta[!MC_Mask_Pass]")
-            .Define("MC_Mll_Fail", "MC_Eta[!MC_Mask_Pass]");
+            .Define("MC_Mll_Fail", "MC_Mll[!MC_Mask_Pass]");
 
         auto h3 = node_hist.Histo3D(model, "MC_Probe_Eta_Fail", "MC_Probe_Pt_Fail", "MC_Mll_Fail");
         return h3;

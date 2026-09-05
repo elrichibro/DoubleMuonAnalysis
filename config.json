@@ -16,7 +16,8 @@
     "in_mc_file":"../data/datiMC0.root",
     "val_file":"../data/validation_muon_run.json", 
     "o_file_plots":"../output/risultati_plots.root",
-    "o_file_data":"../output/risultati_data.root"
+    "o_file_data":"../output/risultati_data.root",
+    "o_file_template":"../output/risultati_data.root"
   },
   
   "flag_TP": {
