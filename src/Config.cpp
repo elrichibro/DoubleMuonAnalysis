@@ -40,6 +40,7 @@ int Configure(config_struct& value, const std::string& json_path) {
             value.io.val_file = j.value("val_file", value.io.val_file);
             value.io.o_file_plots = j.value("o_file_plots", value.io.o_file_plots);
             value.io.o_file_data = j.value("o_file_data", value.io.o_file_data);
+            value.io.o_file_template = j.value("o_file_template", value.io.o_file_template);
         }
 
         if (json_obj.contains("flag_TP")) {
@@ -85,7 +86,7 @@ int Configure(config_struct& value, const std::string& json_path) {
 
             if (j.contains("pt")) {
                 const auto& j_p = json_obj["plot"]["pt"];
-                
+
                 value.pt_plot.title_axis = j_p.value("title_axis", value.pt_plot.title_axis);                
                 value.pt_plot.axis_max = j_p.value("axis_max", value.pt_plot.axis_max);
                 value.pt_plot.axis_min = j_p.value("axis_min", value.pt_plot.axis_min);
@@ -126,6 +127,8 @@ int Configure(config_struct& value, const std::string& json_path) {
             if (j.contains("pt_bins")) {
                 value.analysis.eta_bins = j["eta_bins"].get<std::vector<float>>();
             }
+
+            value.analysis.mll_bins = j.value("mll_bins", value.analysis.mll_bins);
         }
     } catch (const std::exception& except) {
         std::cout << "ERROR: " << except.what() << std::endl;
@@ -166,6 +169,7 @@ void Verbose_config(const config_struct& value) {
     std::cout << "    Validation file: " << value.io.val_file << std::endl;
     std::cout << "    Output file selected plots: " << value.io.o_file_plots << std::endl;
     std::cout << "    Output file selected data: " << value.io.o_file_data << std::endl;
+    std::cout << "    Output file template analysis data: " << value.io.o_file_template << std::endl;
 
     std::cout << "" << std::endl;
     std::cout << "--------------------------------------------------------------------" << std::endl;
@@ -255,6 +259,8 @@ void Verbose_config(const config_struct& value) {
     for (auto it : value.analysis.eta_bins) {
         std::cout << it << " ";
     }
+    std::cout << std::endl;
+    std::cout << "    Invariant mass bins number: " << value.analysis.mll_bins << std::endl;
 
     std::cout << "" << std::endl;
     std::cout << "--------------------------------------------------------------------" << std::endl;

@@ -350,10 +350,10 @@ ROOT::RDF::RResultPtr<TH3D> TemplateMaker_MC(ROOT::RDF::RNode node, const config
 
     std::vector<float> pt_bins = cfg.analysis.pt_bins;
     std::vector<float> eta_bins = cfg.analysis.eta_bins;
-    std::vector<float> mll_bins(100);
+    std::vector<float> mll_bins(cfg.analysis.mll_bins);
 
-    float step = (120.0 - 60.0) / 99.0;
-    for (int i = 0; i < 100; i++) {
+    float step = (120.0 - 60.0) / (cfg.analysis.mll_bins - 1.0);
+    for (int i = 0; i < cfg.analysis.mll_bins; i++) {
         mll_bins[i] = 60.0 + (i * step);
     }
 
@@ -363,16 +363,16 @@ ROOT::RDF::RResultPtr<TH3D> TemplateMaker_MC(ROOT::RDF::RNode node, const config
     
     if (mask) {
         node_hist = node_hist
-            .Define("MC_Probe_Pt_Pass", "MC_Pt[MC_Mask_Pass]")
-            .Define("MC_Probe_Eta_Pass", "MC_Eta[MC_Mask_Pass]")
-            .Define("MC_Mll_Pass", "MC_Eta[MC_Mask_Pass]");
+            .Define("MC_Probe_Pt_Pass", "MC_Probe_Pt[MC_Mask_Pass]")
+            .Define("MC_Probe_Eta_Pass", "MC_Probe_Eta[MC_Mask_Pass]")
+            .Define("MC_Mll_Pass", "MC_Mll[MC_Mask_Pass]");
 
         auto h3 = node_hist.Histo3D(model, "MC_Probe_Eta_Pass", "MC_Probe_Pt_Pass", "MC_Mll_Pass");
         return h3;
     } else {
         node_hist = node_hist
-            .Define("MC_Probe_Pt_Fail", "MC_Pt[!MC_Mask_Pass]")
-            .Define("MC_Probe_Eta_Fail", "MC_Eta[!MC_Mask_Pass]")
+            .Define("MC_Probe_Pt_Fail", "MC_Probe_Pt[!MC_Mask_Pass]")
+            .Define("MC_Probe_Eta_Fail", "MC_Probe_Eta[!MC_Mask_Pass]")
             .Define("MC_Mll_Fail", "MC_Mll[!MC_Mask_Pass]");
 
         auto h3 = node_hist.Histo3D(model, "MC_Probe_Eta_Fail", "MC_Probe_Pt_Fail", "MC_Mll_Fail");

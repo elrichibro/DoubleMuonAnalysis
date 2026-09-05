@@ -33,6 +33,7 @@ struct io_config {
     std::string val_file = "";// Validation json file path.
     std::string o_file_plots = "";// Output file path for plots.
     std::string o_file_data = "";// Output file path for data.
+    std::string o_file_template = "";// Output file path for template analysis.
 };
 
 /// @brief Flags for enabling/disablig specifics selections cuts.
@@ -66,7 +67,8 @@ struct canvas_config {
 
 struct analysis_config {
     std::vector<float> pt_bins;
-    std::vector<float> eta_bins; 
+    std::vector<float> eta_bins;
+    float mll_bins = 0;
 };
 
 /// @brief Stores the other data structs.
