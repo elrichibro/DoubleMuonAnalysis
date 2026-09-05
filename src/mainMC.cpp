@@ -17,6 +17,7 @@ int main(int argc, char* argv[]) {
 
     config_struct cfg;
     std::string json_path = "";
+    
     int verbose = 0;
     bool visualize = false;
     bool save_plots = false;
@@ -53,18 +54,15 @@ int main(int argc, char* argv[]) {
     verbose = cfg.general.verbose;
     visualize = cfg.general.visualize;
 
-    //save_plots = cfg.general.save_sel_plots;
-    //save_data = cfg.general.save_sel_data;
-
     std::string dataset_tree = "";
     std::string dataset_file = "";
 
     if (cfg.general.dataset == "DATA") {
-        std::string dataset_tree = cfg.io.tree_data_name;
-        std::string dataset_file = cfg.io.in_data_file;
+        dataset_tree = cfg.io.tree_data_name;
+        dataset_file = cfg.io.in_data_file;
     } else if (cfg.general.dataset == "MC") {
-        std::string dataset_tree = cfg.io.tree_mc_name;
-        std::string dataset_file = cfg.io.in_mc_file;
+        dataset_tree = cfg.io.tree_mc_name;
+        dataset_file = cfg.io.in_mc_file;
     }
 
     // Verbose JSON configuration
@@ -92,13 +90,14 @@ int main(int argc, char* argv[]) {
         try {
             ROOT::EnableImplicitMT();// MultiThread option: ON
 
-            ROOT::RDataFrame data_frame(cfg.io.tree_mc_name, cfg.io.in_mc_file);
+            ROOT::RDataFrame data_frame(dataset_tree, dataset_file);
             
             if (verbose){ 
-                std::cout << "RDataFrame object created, unpacking " << cfg.io.tree_mc_name 
-                << " tree from " << cfg.io.in_mc_file << " file, starting selection ..." << std::endl;
+                std::cout << "RDataFrame object created, unpacking " << dataset_tree << " tree from " << 
+                dataset_file << " file, starting selection ..." << std::endl;
             }
 
+            /*
             // ------------------------------------------------------------------------------------------------------------------------------------
             // Invariant Mass
             // ------------------------------------------------------------------------------------------------------------------------------------
@@ -111,7 +110,8 @@ int main(int argc, char* argv[]) {
 
             auto h_mass_ll_bFSR = node_InvMass_bFSR.Histo1D({"m_ll_bFSR", "Massa invariante dileptoni Before FSR; m_{#mu^{+}#mu^{-}}; Events", 100, 60, 120}, "InvMass_bFSR");        
             auto h_mass_ll_aFSR = node_InvMass_aFSR.Histo1D({"m_ll_aFSR", "Massa invariante dileptoni After FSR; m_{#mu^{+}#mu^{-}}; Events", 100, 60, 120}, "InvMass_aFSR");
-
+            */
+            
             // ------------------------------------------------------------------------------------------------------------------------------------
             // RespMatrix
             // ------------------------------------------------------------------------------------------------------------------------------------
@@ -145,7 +145,9 @@ int main(int argc, char* argv[]) {
             ROOT::RDF::RNode node_TP = data_frame;
             
             if (cfg.general.analysis_mode.find("TagAndProbe") != std::string::npos) {
+
                 if (cfg.general.dataset == "MC") {    
+                    
                     node_TP = node_TP
                         .Define("TP_Result",
                         [flags_TP, cuts_TP](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
@@ -162,7 +164,9 @@ int main(int argc, char* argv[]) {
 
                         }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_tightId", "Muon_isStandalone", "Muon_isGlobal", "Muon_pfRelIso04_all",
                             "Muon_genPartFlav", "Muon_genPartIdx", "GenPart_status", "GenPart_pdgId", "GenPart_eta", "GenPart_phi"});
+                
                 } else if (cfg.general.dataset == "DATA") {
+
                     node_TP = node_TP
                         .Define("TP_Result",
                         [flags_TP, cuts_TP](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
@@ -178,21 +182,14 @@ int main(int argc, char* argv[]) {
             }
 
             node_TP = node_TP
-                .Define("Probe_Pt_Fail", [](const ResultsTagAndProbe& res) { return res.pt_fail; }, {"TP_Result"})
-                .Define("Probe_Pt_Pass", [](const ResultsTagAndProbe& res) { return res.pt_pass; }, {"TP_Result"})
+                .Define(cfg.general.dataset + "_Probe_Pt", [](const ResultsTagAndProbe& res) { return res.pt; }, {"TP_Result"})
+                .Define(cfg.general.dataset + "_Probe_Eta", [](const ResultsTagAndProbe& res) { return res.eta; }, {"TP_Result"})
+                .Define(cfg.general.dataset + "_Mll", [](const ResultsTagAndProbe& res) { return res.mll; }, {"TP_Result"})
                 
-                .Define("Probe_Eta_Fail", [](const ResultsTagAndProbe& res) { return res.eta_fail; }, {"TP_Result"})
-                .Define("Probe_Eta_Pass", [](const ResultsTagAndProbe& res) { return res.eta_pass; }, {"TP_Result"})
-                
-                .Define("Mll_Fail", [](const ResultsTagAndProbe& res) { return res.mll_fail; }, {"TP_Result"})
-                .Define("Mll_Pass", [](const ResultsTagAndProbe& res) { return res.mll_pass; }, {"TP_Result"})
-                
-                .Define("Tag_Pt_Fail", [](const ResultsTagAndProbe& res) { return res.tag_pt_fail; }, {"TP_Result"})
-                .Define("Tag_Pt_Pass", [](const ResultsTagAndProbe& res) { return res.tag_pt_pass; }, {"TP_Result"})
-                
-                .Define("Tag_Eta_Fail", [](const ResultsTagAndProbe& res) { return res.tag_eta_fail; }, {"TP_Result"})
-                .Define("Tag_Eta_Pass", [](const ResultsTagAndProbe& res) { return res.tag_eta_pass; }, {"TP_Result"});
-
+                //.Define(cfg.general.dataset + "_Tag_Pt", [](const ResultsTagAndProbe& res) { return res.tag_pt_pass; }, {"TP_Result"})
+                //.Define(cfg.general.dataset + "_Tag_Eta", [](const ResultsTagAndProbe& res) { return res.tag_eta_pass; }, {"TP_Result"})
+                .Define(cfg.general.dataset + "_Mask_Pass", [](const ResultsTagAndProbe& res) { return res.mask_pass; }, {"TP_Result"});
+            
             // ------------------------------------------------------------------------------------------------------------------------------------
             // Output Manager
             // ------------------------------------------------------------------------------------------------------------------------------------
@@ -248,18 +245,6 @@ int main(int argc, char* argv[]) {
             } else {
                 std::cout << "No visualization booked.\n" << std::endl;
             }
-            
-            /*
-            // HARDCODED
-            std::vector<float> pt_bins = cfg.analysis.pt_bins;
-            std::vector<float> eta_bins = cfg.analysis.eta_bins;
-            
-            ROOT::RDF::RNode node_pt_pass = ApplyPt_DataDivision(data_frame, pt_bins, "Probe_Pt_Pass");
-            ROOT::RDF::RNode node_pt_fail = ApplyPt_DataDivision(data_frame, pt_bins, "Probe_Pt_Fail");
-
-            ROOT::RDF::RNode node_eta_pass = ApplyEta_DataDivision(data_frame, eta_bins, "Probe_Eta_Pass");
-            ROOT::RDF::RNode node_eta_fail = ApplyEta_DataDivision(data_frame, eta_bins, "Probe_Eta_Fail");
-            */
             
             if (verbose) {
                 std::cout << "Division applied" << std::endl;

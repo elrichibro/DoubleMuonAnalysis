@@ -72,17 +72,16 @@ const cuts_config cfg_c) {
     ResultsTagAndProbe results;
 
     // Number of particles in the event
-    const unsigned int n_muons = kin.pt.size();
+    const int n_muons = kin.pt.size();
 
-    results.pt_pass.reserve(n_muons);
-    results.pt_fail.reserve(n_muons);
-
-    results.eta_pass.reserve(n_muons);
-    results.eta_fail.reserve(n_muons);
-
-    results.mll_pass.reserve(n_muons);
-    results.mll_fail.reserve(n_muons);
+    results.mask_pass.reserve(n_muons);
+    results.pt.reserve(n_muons);
+    results.eta.reserve(n_muons);
+    results.mll.reserve(n_muons);
     
+    //results.tag_pt.reserve(n_muons);
+    //results.tag_eta.reserve(n_muons);
+     
     for(int i = 0; i < n_muons; i++) {
         // Fast exit
         if (!flags.tight[i]) {
@@ -94,38 +93,35 @@ const cuts_config cfg_c) {
             if (i == j || !flags.stand[j]) {
                 continue;
             }
+
             // Loop into good probe muons
-            
             const bool pass = ((kin.pt[j] > cfg_c.pt_cut) && (std::abs(kin.eta[j]) < cfg_c.eta_cut)) || (!(cfg_f.en_kinematics));
-            
             if (!pass) {
                 continue;
             }
+
             // Invariant mass (tag + probe)
             float mass = CalculateInvariantMass_Pair<float>(kin.pt[i], kin.pt[j], kin.eta[i], kin.eta[j], kin.phi[i], kin.phi[j],
             kin.mass[i], kin.mass[j]);
             
             // Invariant mass range
             if (((mass > cfg_c.mass_min) && (mass < cfg_c.mass_max)) || (!cfg_f.en_mass_window)) {
+                    
+                    results.pt.push_back(kin.pt[j]);
+                    results.eta.push_back(kin.eta[j]);   
+                    
+                    results.mll.push_back(mass);
+                    
+                    //results.tag_pt.push_back(kin.pt[i]);
+                    //results.tag_eta.push_back(kin.eta[i]);         
+                
                 // All probes (passed + failed)
                 if ((flags.global[j]) && (flags.iso[j] < 0.15)) {
                     // Passed probes
-                    results.pt_pass.push_back(kin.pt[j]);
-                    results.eta_pass.push_back(kin.eta[j]);   
-                    
-                    results.mll_pass.push_back(mass);
-                    
-                    results.tag_pt_pass.push_back(kin.pt[i]);
-                    results.tag_eta_pass.push_back(kin.eta[i]);
+                    results.mask_pass.push_back(true);
                 } else {
                     // Failed probes
-                    results.pt_fail.push_back(kin.pt[j]);
-                    results.eta_fail.push_back(kin.eta[j]);
-                    
-                    results.mll_fail.push_back(mass);
-
-                    results.tag_pt_fail.push_back(kin.pt[i]);
-                    results.tag_eta_fail.push_back(kin.eta[i]);
+                    results.mask_pass.push_back(false);
                 }
             }
         }
@@ -143,22 +139,15 @@ const cuts_config cfg_c, const MuonFlags_RM& DeltaR_flags, const ROOT::RVec<floa
     ResultsTagAndProbe results;
 
     // Number of particles in the event
-    const unsigned int n_muons = kin.pt.size();
+    const int n_muons = kin.pt.size();
 
-    results.pt_pass.reserve(n_muons);
-    results.pt_fail.reserve(n_muons);
-
-    results.eta_pass.reserve(n_muons);
-    results.eta_fail.reserve(n_muons);
-
-    results.mll_pass.reserve(n_muons);
-    results.mll_fail.reserve(n_muons);
-
-    results.tag_pt_pass.reserve(n_muons);
-    results.tag_pt_fail.reserve(n_muons);
-
-    results.tag_eta_fail.reserve(n_muons);
-    results.tag_eta_pass.reserve(n_muons);
+    results.mask_pass.reserve(n_muons);
+    results.pt.reserve(n_muons);
+    results.eta.reserve(n_muons);
+    results.mll.reserve(n_muons);
+    
+    //results.tag_pt.reserve(n_muons);
+    //results.tag_eta.reserve(n_muons);
     
     for(int i = 0; i < n_muons; i++) {
         // Fast exit
@@ -214,13 +203,11 @@ const cuts_config cfg_c, const MuonFlags_RM& DeltaR_flags, const ROOT::RVec<floa
             }
 
             float DeltaR_probe = ROOT::VecOps::DeltaR(kin.eta[j], gen_eta[k], kin.phi[j], gen_phi[k]);
-        
             if (DeltaR_probe >= 0.3) {
                 continue;
             }
             
             const bool pass = ((kin.pt[j] > cfg_c.pt_cut) && (std::abs(kin.eta[j]) < cfg_c.eta_cut)) || (!(cfg_f.en_kinematics));
-                
             if (!pass) {
                 continue;
             }
@@ -231,25 +218,22 @@ const cuts_config cfg_c, const MuonFlags_RM& DeltaR_flags, const ROOT::RVec<floa
 
             // Invariant mass range
             if (((mass > cfg_c.mass_min) && (mass < cfg_c.mass_max)) || (!cfg_f.en_mass_window)) {
+                
                 // All probes (passed + failed)
+                results.pt.push_back(kin.pt[j]);
+                results.eta.push_back(kin.eta[j]);   
+                
+                results.mll.push_back(mass);
+                
+                //results.tag_pt.push_back(kin.pt[i]);
+                //results.tag_eta.push_back(kin.eta[i]); 
+                
                 if ((flags.global[j]) && (flags.iso[j] < 0.15)) {
                     // Passed probes
-                    results.pt_pass.push_back(kin.pt[j]);
-                    results.eta_pass.push_back(kin.eta[j]);   
-                    
-                    results.mll_pass.push_back(mass);
-                    
-                    results.tag_pt_pass.push_back(kin.pt[i]);
-                    results.tag_eta_pass.push_back(kin.eta[i]);
+                    results.mask_pass.push_back(true);
                 } else {
                     // Failed probes
-                    results.pt_fail.push_back(kin.pt[j]);
-                    results.eta_fail.push_back(kin.eta[j]);
-                    
-                    results.mll_fail.push_back(mass);
-
-                    results.tag_pt_fail.push_back(kin.pt[i]);
-                    results.tag_eta_fail.push_back(kin.eta[i]);
+                    results.mask_pass.push_back(false);
                 }
             }
         }
