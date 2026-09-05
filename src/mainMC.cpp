@@ -60,11 +60,11 @@ int main(int argc, char* argv[]) {
     std::string dataset_file = "";
 
     if (cfg.general.dataset == "DATA") {
-        std::string dataset_tree = cfg.io.tree_data_name;
-        std::string dataset_file = cfg.io.in_data_file;
+        dataset_tree = cfg.io.tree_data_name;
+        dataset_file = cfg.io.in_data_file;
     } else if (cfg.general.dataset == "MC") {
-        std::string dataset_tree = cfg.io.tree_mc_name;
-        std::string dataset_file = cfg.io.in_mc_file;
+        dataset_tree = cfg.io.tree_mc_name;
+        dataset_file = cfg.io.in_mc_file;
     }
 
     // Verbose JSON configuration
@@ -92,13 +92,14 @@ int main(int argc, char* argv[]) {
         try {
             ROOT::EnableImplicitMT();// MultiThread option: ON
 
-            ROOT::RDataFrame data_frame(cfg.io.tree_mc_name, cfg.io.in_mc_file);
+            ROOT::RDataFrame data_frame(dataset_tree, dataset_file);
             
             if (verbose){ 
-                std::cout << "RDataFrame object created, unpacking " << cfg.io.tree_mc_name 
-                << " tree from " << cfg.io.in_mc_file << " file, starting selection ..." << std::endl;
+                std::cout << "RDataFrame object created, unpacking " << dataset_tree 
+                << " tree from " << dataset_file << " file, starting selection ..." << std::endl;
             }
 
+            /*
             // ------------------------------------------------------------------------------------------------------------------------------------
             // Invariant Mass
             // ------------------------------------------------------------------------------------------------------------------------------------
@@ -111,7 +112,8 @@ int main(int argc, char* argv[]) {
 
             auto h_mass_ll_bFSR = node_InvMass_bFSR.Histo1D({"m_ll_bFSR", "Massa invariante dileptoni Before FSR; m_{#mu^{+}#mu^{-}}; Events", 100, 60, 120}, "InvMass_bFSR");        
             auto h_mass_ll_aFSR = node_InvMass_aFSR.Histo1D({"m_ll_aFSR", "Massa invariante dileptoni After FSR; m_{#mu^{+}#mu^{-}}; Events", 100, 60, 120}, "InvMass_aFSR");
-
+            */
+            
             // ------------------------------------------------------------------------------------------------------------------------------------
             // RespMatrix
             // ------------------------------------------------------------------------------------------------------------------------------------
