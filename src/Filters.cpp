@@ -357,9 +357,9 @@ ROOT::RDF::RResultPtr<TH3D> TemplateMaker_MC(ROOT::RDF::RNode node, const config
         mll_bins[i] = 60.0 + (i * step);
     }
 
-    ROOT::RDF::TH3DModel model("h3", "3D Histogram MC", eta_bins.size() - 1, eta_bins.data(), 
-    pt_bins.size() - 1, pt_bins.data(), mll_bins.size() - 1, mll_bins.data() );
-
+    std::string name = (mask) ? "h3_pass" : "h3_fail";
+    ROOT::RDF::TH3DModel model(name.c_str(), "3D Histogram MC", eta_bins.size() - 1, eta_bins.data(), pt_bins.size() - 1, pt_bins.data(), 
+    mll_bins.size() - 1, mll_bins.data() );
     
     if (mask) {
         node_hist = node_hist
