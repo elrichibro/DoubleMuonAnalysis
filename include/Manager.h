@@ -151,7 +151,6 @@ class OutputManager {
         std::vector<std::unique_ptr<PipelineObj>> pipeline;
         
         using snapshot_type = decltype(std::declval<ROOT::RDF::RNode>().Snapshot("", "", std::vector<std::string>{}, ROOT::RDF::RSnapshotOptions{}));
-        
         std::vector<snapshot_type> snapshot_vec;
 
         bool visualize = false;
