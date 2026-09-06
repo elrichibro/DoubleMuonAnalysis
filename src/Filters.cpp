@@ -1,9 +1,10 @@
 #include "Filters.h"
-
 #include "Utils.h"
 
 #include <Rtypes.h>
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+// Run validation filter
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map, const std::string& run_name, const std::string& block_name) {
@@ -39,13 +40,15 @@ ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_t
             }
             // else option 
             last_decision = false;
-            
             return false;
+
         }, {run_name , block_name}, "JSON Validation");
     
     return node_validation;
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+// Kinematic muon filter
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& mask_name, const std::string& pt_column, const std::string& eta_column,
@@ -89,7 +92,7 @@ const cuts_config cfg_c) {
         }
 
         for (int j = 0; j < n_muons; j++) {
-            // Fast exit
+            // Fast exit -> same particle
             if (i == j || !flags.stand[j]) {
                 continue;
             }
@@ -106,16 +109,15 @@ const cuts_config cfg_c) {
             
             // Invariant mass range
             if (((mass > cfg_c.mass_min) && (mass < cfg_c.mass_max)) || (!cfg_f.en_mass_window)) {
-                    
-                    results.pt.push_back(kin.pt[j]);
-                    results.eta.push_back(kin.eta[j]);   
-                    
-                    results.mll.push_back(mass);
-                    
-                    //results.tag_pt.push_back(kin.pt[i]);
-                    //results.tag_eta.push_back(kin.eta[i]);         
-                
                 // All probes (passed + failed)
+                    
+                results.pt.push_back(kin.pt[j]);
+                results.eta.push_back(kin.eta[j]);   
+                results.mll.push_back(mass);
+                
+                //results.tag_pt.push_back(kin.pt[i]);
+                //results.tag_eta.push_back(kin.eta[i]);         
+                
                 if ((flags.global[j]) && (flags.iso[j] < 0.15)) {
                     // Passed probes
                     results.mask_pass.push_back(true);
@@ -171,6 +173,7 @@ const cuts_config cfg_c, const MuonFlags_RM& DeltaR_flags, const ROOT::RVec<floa
             continue;
         }
 
+        // DeltaR filter -> Only for MC
         float DeltaR_tag = ROOT::VecOps::DeltaR(kin.eta[i], gen_eta[l], kin.phi[i], gen_phi[l]);
         
         if (DeltaR_tag >= 0.3) {
@@ -179,13 +182,12 @@ const cuts_config cfg_c, const MuonFlags_RM& DeltaR_flags, const ROOT::RVec<floa
         
 
         for (int j = 0; j < n_muons; j++) {
-            // Fast exit
+            // Fast exit -> same particle
             if (i == j || !flags.stand[j]) {
                 continue;
             }
-            // Loop into good probe muons
-
             
+            // Matching with the generated muon
             if (DeltaR_flags.gen_flav_rec[j] != 1) {
                 continue;
             }
@@ -202,6 +204,7 @@ const cuts_config cfg_c, const MuonFlags_RM& DeltaR_flags, const ROOT::RVec<floa
                 continue;
             }
 
+            // DeltaR filter.
             float DeltaR_probe = ROOT::VecOps::DeltaR(kin.eta[j], gen_eta[k], kin.phi[j], gen_phi[k]);
             if (DeltaR_probe >= 0.3) {
                 continue;
@@ -218,11 +221,10 @@ const cuts_config cfg_c, const MuonFlags_RM& DeltaR_flags, const ROOT::RVec<floa
 
             // Invariant mass range
             if (((mass > cfg_c.mass_min) && (mass < cfg_c.mass_max)) || (!cfg_f.en_mass_window)) {
-                
                 // All probes (passed + failed)
+
                 results.pt.push_back(kin.pt[j]);
-                results.eta.push_back(kin.eta[j]);   
-                
+                results.eta.push_back(kin.eta[j]);
                 results.mll.push_back(mass);
                 
                 //results.tag_pt.push_back(kin.pt[i]);
@@ -272,6 +274,7 @@ const cuts_config cfg_c) {
         // (Pdg index == 13/-13) + (Stable status of GenPart) 
         if ((std::abs(flags.pdg_id_gen[j]) == 13) && (flags.status_gen[j] == 1)) {
             
+            // Kinematical cut
             const bool pass = ((kin.pt_gen[j] > cfg_c.pt_cut) && (kin.pt_rec[i] > cfg_c.pt_cut) && 
             (std::abs(kin.eta_gen[j]) < cfg_c.eta_cut) && (std::abs(kin.eta_rec[i]) < cfg_c.eta_cut)) || (!(cfg_f.en_kinematics));
             
@@ -284,59 +287,6 @@ const cuts_config cfg_c) {
             }
         }
     }
+    
     return results;
-}
-
-// ------------------------------------------------------------------------------------------------------------------------------------
-// DataDivision masks maker
-// ------------------------------------------------------------------------------------------------------------------------------------
-
-ROOT::RDF::RNode ApplyPt_DataDivision(ROOT::RDF::RNode node, const std::vector<float>& pt_bins, const std::string& column_name) {
-    ROOT::RDF::RNode div_pt_node = node;
-    
-    for (int i = 0; i < pt_bins.size() - 1; i++) {
-        std::string name_mask = column_name + "_DeltaMask" + std::to_string(i);
-        std::string name_column = column_name + "_Delta" + std::to_string(i);
-
-        float min_pt = pt_bins[i];
-        float max_pt = pt_bins[i + 1];
-        
-        div_pt_node = div_pt_node
-            .Define(name_mask, [min_pt, max_pt](const ROOT::RVec<float>& pt) {
-                return ((pt >= min_pt) && (pt < max_pt)); 
-            }, {column_name});
-    
-        div_pt_node = div_pt_node
-            .Define(name_column, [](const ROOT::RVec<float>& pt, const ROOT::RVec<bool>& mask) {
-                return pt[mask];
-            }, {column_name, name_mask} );
-    }
-
-    return div_pt_node;
-}
-
-// ------------------------------------------------------------------------------------------------------------------------------------
-
-ROOT::RDF::RNode ApplyEta_DataDivision(ROOT::RDF::RNode node, const std::vector<float>& eta_bins, const std::string& column_name) {
-    ROOT::RDF::RNode div_eta_node = node;
-    
-    for(int i = 0; i < eta_bins.size() - 1; i++) {
-        std::string name_mask = column_name + "_DeltaMask" + std::to_string(i);
-        std::string name_column = column_name + "_Delta" + std::to_string(i);
-
-        float min_eta = eta_bins[i];
-        float max_eta = eta_bins[i + 1];
-        
-        div_eta_node = div_eta_node
-            .Define(name_mask, [min_eta, max_eta](const ROOT::RVec<float>& eta) {
-                return ((eta >= min_eta) && (eta < max_eta)); 
-            }, {column_name});
-    
-        div_eta_node = div_eta_node
-            .Define(name_column, [](const ROOT::RVec<float>& eta, const ROOT::RVec<bool>& mask) {
-                return eta[mask];
-            }, {column_name, name_mask} );
-    }
-
-    return div_eta_node;
 }

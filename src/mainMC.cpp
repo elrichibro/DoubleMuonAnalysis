@@ -259,6 +259,12 @@ int main(int argc, char* argv[]) {
         try {        
             ROOT::EnableImplicitMT();
 
+            std::vector<MC_Template_RooF> template_container;
+
+            if (!LoadMCTemplate(cfg, template_container)) {
+                std::cout << "ERROR: Load operations fails, exiting." << std::endl;
+                return 1;
+            }
             
             /*
             std::string tree = cfg.general.dataset + "_" + cfg.general.analysis_mode + "_Tree";
