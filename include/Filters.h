@@ -44,22 +44,12 @@ float pt_cut, float eta_cut);
 // -------
 
 /// @brief Transverse momentum, psudorapidity and invariant mass vectors results -> from CalculeteTagAndProbe().
-/*
 struct ResultsTagAndProbe {
-    std::vector<float> pt_pass;// Transverse momentum of probes that pass the selection.
-    std::vector<float> pt_all;// Transverse momentum of all probes.
-    std::vector<float> eta_pass;// Pseudorapidity of probes that pass the selection.
-    std::vector<float> eta_all;// Pseudorapidity of all probes. 
-    std::vector<float> mll_pass;// Invariant mass of TagAndProbe pairs that pass the selection.
-    std::vector<float> mll_all;// Invariant mass of all TagAndProbe pairs 
-};
-*/
-struct ResultsTagAndProbe {
-    ROOT::RVec<bool> mask_pass;
-    ROOT::RVec<float> pt;
-    ROOT::RVec<float> eta;
-    ROOT::RVec<float> mll;
-    //ROOT::RVec<float> tag_pt;  
+    ROOT::RVec<bool> mask_pass;// Bool mask of probes that pass the selection.
+    ROOT::RVec<float> pt;// Transverse momentum of all probes.
+    ROOT::RVec<float> eta;// Pseudorapidity of all probes. 
+    ROOT::RVec<float> mll;// Invariant mass of all Tag/Probe pairs. 
+    //ROOT::RVec<float> tag_pt;
     //ROOT::RVec<float> tag_eta;
 };
 
@@ -89,18 +79,18 @@ struct ResultsRespMatrix {
 
 /// @brief Kinematical quantities for Response Matrix calculus -> GENerated and REConstructed muons.
 struct MuonKinematics_RM {
-    const ROOT::RVec<float>& pt_gen;
-    const ROOT::RVec<float>& eta_gen;
-    const ROOT::RVec<float>& pt_rec;
-    const ROOT::RVec<float>& eta_rec;
+    const ROOT::RVec<float>& pt_gen;// Transeverse momentum of generated level muons.
+    const ROOT::RVec<float>& eta_gen;// Pseudorapidity of generated level muons.
+    const ROOT::RVec<float>& pt_rec;// Transeverse momentum of reconstructed level muons.
+    const ROOT::RVec<float>& eta_rec;// Pseudorapidity of reconstructed level muons.
 };
 
 /// @brief Muon flags for Response Matrix calculus -> REConstructed/GENerated pairing.
 struct MuonFlags_RM {
-    const ROOT::RVec<int>& gen_flav_rec;// 
-    const ROOT::RVec<int>& pair_idx_rec;
-    const ROOT::RVec<int>& status_gen;
-    const ROOT::RVec<int>& pdg_id_gen;
+    const ROOT::RVec<int>& gen_flav_rec;// Flavour of genParticle for MC matching to status==1 muons.
+    const ROOT::RVec<int>& pair_idx_rec;// Index into genParticle list for MC matching to status==1 muons
+    const ROOT::RVec<int>& status_gen;// Generated particle status -> stable = 1.
+    const ROOT::RVec<int>& pdg_id_gen;// PDG id of the particle.
 };
 
 // -------
@@ -112,23 +102,26 @@ struct MuonFlags_RM {
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 /**
- * @brief TagAndProbe function selection
+ * @brief TagAndProbe function selection for MonteCarlo sample (by adding a DeltaR selection)
  * @param kin Muon kinematic event values.
  * @param flags Muon event flags.
  * @param cfg_f Contains the kinematical flags. Passed by value -> small struct -> L1/L2 catche
  * @param cfg_c Stores the cuts values.
- * @return Struct containing vectors of passed and total probe kinematics.
+ * @param DeltaR_flags Flags for Generated/Reconstructed muons pairing.
+ * @param gen_eta Pseudorapidity of Generated muon used for DeltaR calculus.
+ * @param gen_phi Phi angle of Generated muon used for DeltaR calculus.
+ * @return Struct containing probe muons kinematical variables.
 */
 ResultsTagAndProbe CalculateTagAndProbe_MC(const MuonKinematics_TP& kin, const MuonFlags_TP& flags, const flags_config cfg_f, 
 const cuts_config cfg_c, const MuonFlags_RM& DeltaR_flags, const ROOT::RVec<float> gen_eta, const ROOT::RVec<float> gen_phi);
 
 /**
- * @brief TagAndProbe function selection
+ * @brief TagAndProbe function selection for data sample.
  * @param kin Muon kinematic event values.
  * @param flags Muon event flags.
  * @param cfg_f Contains the kinematical flags. Passed by value -> small struct -> L1/L2 catche
  * @param cfg_c Stores the cuts values.
- * @return Struct containing vectors of passed and total probe kinematics.
+ * @return Struct containing probe muons kinematical variables.
 */
 ResultsTagAndProbe CalculateTagAndProbe_DATA(const MuonKinematics_TP& kin, const MuonFlags_TP& flags, const flags_config cfg_f, 
 const cuts_config cfg_c);
@@ -138,22 +131,14 @@ const cuts_config cfg_c);
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 /**
- * @brief TagAndProbe function selection
- * @param kin Muon kinematic event values.
+ * @brief Calculates the Response Matrix between Generated and Reconstructed muons in MonteCarlo sample.
+ * @param kin Muon kinematical variables.
  * @param flags Muon event flags.
- * @param cfg_f
- * @param cfg_c
- * @return Struct containing vectors of passed and total probe kinematics.
+ * @param cfg_f Contains the kinematical flags. Passed by value -> small struct -> L1/L2 catche
+ * @param cfg_c Stores the cuts values.
+ * @return Struct containing the transverse momentum and pseudorapidity of muons that pass the selection. 
 */
 ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin, const MuonFlags_RM& flags, const flags_config cfg_f, 
 const cuts_config cfg_c);
-
-// ------------------------------------------------------------------------------------------------------------------------------------
-// Bin division
-// ------------------------------------------------------------------------------------------------------------------------------------
-
-ROOT::RDF::RNode ApplyPt_DataDivision(ROOT::RDF::RNode node, const std::vector<float>& pt_bins, const std::string& column_name);
-
-ROOT::RDF::RNode ApplyEta_DataDivision(ROOT::RDF::RNode node, const std::vector<float>& eta_bins, const std::string& column_name);
 
 #endif
