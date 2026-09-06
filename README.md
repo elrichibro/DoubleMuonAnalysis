@@ -27,6 +27,22 @@ To run the analysis, use the following syntax:
 
 ---
 
+# Analysis procedure
+If the output directory is empty follow this steps. 
+
+First you need to create the Selection samples for efficiency calculus so the settings(JSON) are:
+- "dataset": "", -> (Both: DATA/MC)
+- "operation_mode":"Selection",
+- "analysis_mode": "TagAndProbe",
+- "save_sel_data": true
+
+Second, when you obtain the selection output stored in the o_file_data -> then you create the 3D Histogram. The settup is:
+- "dataset": "", -> (Both: DATA/MC)
+- "operation_mode":"Template",
+- "analysis_mode": "TagAndProbe",(Not relevant)
+- "save_sel_data": true (Not relevant)
+
+
 ## JSON file (config.json)
 
 The config.json file controls all the parameters of the analysis, from I/O paths to physics cuts, allowing the modification the analysis without recompiling the project.
