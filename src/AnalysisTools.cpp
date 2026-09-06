@@ -1,11 +1,10 @@
 #include "AnalysisTools.h"
-#include <string>
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 // MC Template Maker
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-ROOT::RDF::RResultPtr<TH3D> TemplateMaker_MC(ROOT::RDF::RNode node, const config_struct& cfg, const bool mask) {
+ROOT::RDF::RResultPtr<TH3D> TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const bool mask) {
     ROOT::RDF::RNode node_hist = node;
 
     std::vector<float> pt_bins = cfg.analysis.pt_bins;
@@ -17,25 +16,31 @@ ROOT::RDF::RResultPtr<TH3D> TemplateMaker_MC(ROOT::RDF::RNode node, const config
         mll_bins[i] = 60.0 + (i * step);
     }
 
+    std::string sample = cfg.general.dataset; 
+
     std::string name = (mask) ? "h3_pass" : "h3_fail";
-    ROOT::RDF::TH3DModel model(name.c_str(), "3D Histogram MC", eta_bins.size() - 1, eta_bins.data(), pt_bins.size() - 1, pt_bins.data(), 
-    mll_bins.size() - 1, mll_bins.data() );
+    name = sample + "_" + name;
+
+    std::string title = "3D Histogram_" + sample;
+
+    ROOT::RDF::TH3DModel model(name.c_str(), title.c_str(), eta_bins.size() - 1, eta_bins.data(), pt_bins.size() - 1, pt_bins.data(),
+     mll_bins.size() - 1, mll_bins.data() );
     
     if (mask) {
         node_hist = node_hist
-            .Define("MC_Probe_Pt_Pass", "MC_Probe_Pt[MC_Mask_Pass]")
-            .Define("MC_Probe_Eta_Pass", "MC_Probe_Eta[MC_Mask_Pass]")
-            .Define("MC_Mll_Pass", "MC_Mll[MC_Mask_Pass]");
+            .Define(sample + "_Probe_Pt_Pass", sample + "_Probe_Pt[" + sample + "_Mask_Pass]")
+            .Define(sample + "_Probe_Eta_Pass", sample + "_Probe_Eta[" + sample + "_Mask_Pass]")
+            .Define(sample + "_Mll_Pass", sample + "_Mll[" + sample + "_Mask_Pass]");
 
-        auto h3 = node_hist.Histo3D(model, "MC_Probe_Eta_Pass", "MC_Probe_Pt_Pass", "MC_Mll_Pass");
+        auto h3 = node_hist.Histo3D(model, sample + "_Probe_Eta_Pass", sample + "_Probe_Pt_Pass", sample + "_Mll_Pass");
         return h3;
     } else {
         node_hist = node_hist
-            .Define("MC_Probe_Pt_Fail", "MC_Probe_Pt[!MC_Mask_Pass]")
-            .Define("MC_Probe_Eta_Fail", "MC_Probe_Eta[!MC_Mask_Pass]")
-            .Define("MC_Mll_Fail", "MC_Mll[!MC_Mask_Pass]");
+            .Define(sample + "_Probe_Pt_Fail", sample + "_Probe_Pt[!" + sample + "_Mask_Pass]")
+            .Define(sample + "_Probe_Eta_Fail", sample + "_Probe_Eta[!" + sample + "_Mask_Pass]")
+            .Define(sample + "_Mll_Fail", sample + "_Mll[!" + sample + "_Mask_Pass]");
 
-        auto h3 = node_hist.Histo3D(model, "MC_Probe_Eta_Fail", "MC_Probe_Pt_Fail", "MC_Mll_Fail");
+        auto h3 = node_hist.Histo3D(model, sample + "_Probe_Eta_Fail", sample + "_Probe_Pt_Fail", sample + "_Mll_Fail");
         return h3;
     }
 }

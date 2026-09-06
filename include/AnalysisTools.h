@@ -5,6 +5,8 @@
 #include "Config.h"
 #include <ROOT/RDataFrame.hxx>
 
+#include <string>
+
 
 struct MC_Template_RooF{
     int pt_bin_idx;
@@ -19,16 +21,13 @@ struct MC_Template_RooF{
 };
 
 
-
-
-
 int LoadMCTemplate(const config_struct& cfg, std::vector<MC_Template_RooF>& container);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 // MC Template Maker
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-ROOT::RDF::RResultPtr<TH3D> TemplateMaker_MC(ROOT::RDF::RNode node, const config_struct& cfg, const bool mask);
+ROOT::RDF::RResultPtr<TH3D> TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const bool mask);
 
 
 #endif

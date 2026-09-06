@@ -227,15 +227,15 @@ int main(int argc, char* argv[]) {
             std::cout << "Initilizing template operation mode..." << std::endl;
         }
 
-        std::string tree = "MC_TagAndProbe_Tree";
+        std::string tree = cfg.general.dataset + "_TagAndProbe_Tree";
         ROOT::RDataFrame data_frame(tree, cfg.io.o_file_data);
 
         ROOT::RDF::RNode node_template = data_frame;
         
-        auto h3_pass = TemplateMaker_MC(node_template, cfg, true);
-        auto h3_fail = TemplateMaker_MC(node_template, cfg, false);
+        auto h3_pass = TemplateMaker(node_template, cfg, true);
+        auto h3_fail = TemplateMaker(node_template, cfg, false);
 
-        TFile o_template_file(cfg.io.o_file_template.c_str(), "RECREATE");
+        TFile o_template_file(cfg.io.o_file_template.c_str(), "UPDATE");
         
         if (o_template_file.IsZombie()) {
             std::cout << "ERROR: Cannot find output file: " << cfg.io.o_file_template << std::endl;
@@ -252,7 +252,6 @@ int main(int argc, char* argv[]) {
         if (verbose) {
             std::cout << "Templates successfully been written to: " << cfg.io.o_file_template << std::endl;
         }
-
     }
 
     if (cfg.general.operation_mode.find("Analysis") != std::string::npos) {
