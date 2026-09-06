@@ -33,7 +33,7 @@ class PipelineObj {
         
         virtual void Process(){};// Used now only by ObjectTEff
         
-        virtual std::string GetName() const = 0;
+        virtual std::string GetName() const = 0;// Pure virtual
 };
 
 // ------------------------------------------------------------------------------------------------------------------------------------
@@ -43,8 +43,8 @@ class PipelineObj {
 /// @brief Child class of PipelineObj -> Histogram 1 dimensional.
 class ObjectTH1 : public PipelineObj {
     private:
-        std::string name_th1;
-        ROOT::RDF::RResultPtr<TH1D> th1;
+        std::string name_th1;// Object name
+        ROOT::RDF::RResultPtr<TH1D> th1;// Object
     public:
         /// @brief ObjectTH1 class constructor.  
         /// @param name Name of the booked object.
@@ -64,8 +64,8 @@ class ObjectTH1 : public PipelineObj {
 /// @brief Child class of PipelineObj -> Histogram 2D. 
 class ObjectTH2 : public PipelineObj {
     private:
-        std::string name_th2;
-        ROOT::RDF::RResultPtr<TH2D> th2;
+        std::string name_th2;// Object name
+        ROOT::RDF::RResultPtr<TH2D> th2;// Object
 
     public:
         /// @brief ObjectTH2 constructor.
@@ -87,11 +87,11 @@ class ObjectTH2 : public PipelineObj {
 template <typename T>
 class ObjectTEff : public PipelineObj {
     private:
-        std::string name_eff;
+        std::string name_eff;// TEfficiency name
         ROOT::RDF::RResultPtr<T> hist_num;// Numerator histogram.
         ROOT::RDF::RResultPtr<T> hist_den;// Denominator histogram.
 
-        std::unique_ptr<TEfficiency> eff_obj;// Efficiency pointer -> needed for write and draw operation. Is not a smar pointer -> starts the event loop !!!.
+        std::unique_ptr<TEfficiency> eff_obj;// Efficiency pointer -> needed for write and draw operations. Is not a smart Result pointer -> starts the event loop !!!.
 
     public:
         /// @brief Constructor of ObjectTEff class
@@ -101,13 +101,13 @@ class ObjectTEff : public PipelineObj {
         ObjectTEff(std::string name, ROOT::RDF::RResultPtr<T> ptr1, ROOT::RDF::RResultPtr<T> ptr2) : name_eff(name), 
         hist_num(ptr1), hist_den(ptr2) {}
         
-        std::string GetName() const override {return name_eff;};
+        std::string GetName() const override {return name_eff;};// Name getter
         
         /// @brief Write method for ObjectTEff
         /// @param file Output file path
         void Write(TFile& file) override {
             if (eff_obj) {
-                file.cd();
+                file.cd();// Fixes the write directory
                 eff_obj->Write();
             }
         }
@@ -115,7 +115,7 @@ class ObjectTEff : public PipelineObj {
         /// @brief Prints the TEfficiency object.
         /// @param canvas Canvas pointer used.
         void Draw(TCanvas& canvas) override {
-            // Check
+            // Check null pointer
             if (!eff_obj) {
                 return;
             }
@@ -148,25 +148,26 @@ class ObjectTEff : public PipelineObj {
 /// @brief OutputManager class -> The instance controls the output of the program -> saves pipeline objects and print plots.
 class OutputManager {
     private: 
-        std::vector<std::unique_ptr<PipelineObj>> pipeline;
+        std::vector<std::unique_ptr<PipelineObj>> pipeline;// Pipe container
         
+        // Deducing the Snapshot pointer type
         using snapshot_type = decltype(std::declval<ROOT::RDF::RNode>().Snapshot("", "", std::vector<std::string>{}, ROOT::RDF::RSnapshotOptions{}));
-        std::vector<snapshot_type> snapshot_vec;
+        std::vector<snapshot_type> snapshot_vec;// Snapshot vector -> needed for scope visibility.
 
         bool visualize = false;
-        
+
         bool save_sel_plots = false;
         bool save_sel_data = false;
 
-        std::string o_file_plots = "";
-        std::string o_file_data = "";
+        std::string o_file_plots = "";// Output plots file
+        std::string o_file_data = "";// Output Snapshot file
+
+        canvas_config canv;
     public:
         /// @brief OutputManager class constructor.
-        /// @param output Output file path
-        /// @param vis Flag for visualization option.
-        /// @param sav Flag for saving the .root file containing all objects booked under request.
+        /// @param cfg Main configuration struct.
         OutputManager(const config_struct& cfg) : o_file_plots(cfg.io.o_file_plots), o_file_data(cfg.io.o_file_data), visualize(cfg.general.visualize), 
-        save_sel_plots(cfg.general.save_sel_plots), save_sel_data(cfg.general.save_sel_data) {};
+        save_sel_plots(cfg.general.save_sel_plots), save_sel_data(cfg.general.save_sel_data), canv(cfg.canvas) {};
         
         ~OutputManager(){};
     
@@ -174,16 +175,26 @@ class OutputManager {
         void AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr<TH1D> hist);
         void AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr<TH2D> hist);
         
+        /// @brief Adds a TEfficiency object to the output pipeline without starting the event loop.
+        /// @tparam T 
+        /// @param name 
+        /// @param hist1 
+        /// @param hist2 
         template <typename T>
         void AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr<T> hist1, ROOT::RDF::RResultPtr<T> hist2) {
             pipeline.push_back(std::make_unique<ObjectTEff<T>>(name, hist1, hist2));
         }
         
+        /// @brief Starts the Pipe operations: write, draw and save.
         void Run();
     
+        /// @brief Takes the node and based on the dataset, the operation mode and the analysis mode it add to the Pipeline the interest objects(hardcoded). 
+        /// @param node Analysis/Selection node.
+        /// @param cfg Main configuration struct.
         void BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg);
 
-        void Clear() {pipeline.clear();}
+        /// @brief Clears the pipeline vector.
+        void Clear() { pipeline.clear(); }
 };
 
 // ----------------

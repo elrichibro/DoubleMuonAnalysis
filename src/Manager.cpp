@@ -5,6 +5,15 @@
 
 #include <chrono>
 
+/*
+Classes:
+    - ObjectTH1
+    - ObjectTH2
+    - ObjectTEff
+
+    - OutputManager
+*/
+
 // ------------------------------------------------------------------------------------------------------------------------------------
 // ObjectTH1 Methods
 // ------------------------------------------------------------------------------------------------------------------------------------
@@ -55,11 +64,14 @@ void OutputManager::AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr
 }
 
 void OutputManager::Run() {
+    // Check execution time - START
     auto start_time = std::chrono::high_resolution_clock::now();
     
     for (auto& snap : snapshot_vec) {
+        // if snapshot is enabled starts the Event Loop
         snap.GetValue(); 
         
+        // Check execution time - STOP
         auto end_time = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> DeltaT = end_time - start_time;
         
@@ -75,21 +87,25 @@ void OutputManager::Run() {
     int i = 0;
 
     for (auto& it : pipeline) {
-        it->Process(); 
+        // if the First PipelineObj is a TEfficiency obj -> starts the Event Loop
+        it->Process();
 
-        // Saving
+        // Saving plots
         if (save_sel_plots) {
-            it->Write(*file_plots); 
+            // if save plots is enabled starts the Event Loop
+            it->Write(*file_plots);
         }
 
-        // Visualization
+        // Visualization option
         if (visualize) {
             std::string c_name = "c_" + it->GetName();
-            TCanvas* vis_canvas = new TCanvas(c_name.c_str(), it->GetName().c_str(), 800, 600);
+            TCanvas* vis_canvas = new TCanvas(c_name.c_str(), it->GetName().c_str(), canv.width, canv.height);
             
             it->Draw(*vis_canvas);
             vis_canvas->Update();
         }
+
+        // Check execution time - STOP
         auto end_time = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> DeltaT = end_time - start_time;
 
@@ -100,17 +116,22 @@ void OutputManager::Run() {
     if (file_plots && file_plots->IsOpen()) {
         file_plots->Close();
         
+        // Check execution time - STOP
         auto end_time = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> DeltaT = end_time - start_time;
         
-        std::cout << "Close file time: " << DeltaT.count() << std::endl;
+        std::cout << "Output plots file closed at: " << DeltaT.count() << std::endl;
     }
     
-    std::cout << "Ending of Run" << std::endl;
+    std::cout << "Ending of OutputManager::Run()" << std::endl;
 }
 
 void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg) {
     
+    // -------------------------
+    // Defining histogram models
+    // -------------------------
+
     std::string title_pt = ";" + cfg.pt_plot.title_axis + ";Efficiency;";
     std::string name_pt = cfg.general.dataset + "_p_{T}";
     ROOT::RDF::TH1DModel model_1D_pt(name_pt.c_str(), title_pt.c_str(), cfg.pt_plot.nbins, cfg.pt_plot.axis_min, 
@@ -144,6 +165,7 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
     ROOT::RDF::TH2DModel model_2D_RM_Eta("h2_model2", "; #eta gen; #eta rec;", cfg.eta_plot.nbins, cfg.eta_plot.axis_min, cfg.eta_plot.axis_max,
     cfg.eta_plot.nbins, cfg.eta_plot.axis_min, cfg.eta_plot.axis_max);
 */
+    // vector needed for Snapshot operation
     std::vector<std::string> columns;
 
     if ((cfg.general.operation_mode.find("Selection") != std::string::npos) && (cfg.general.analysis_mode == "TagAndProbe")) {
@@ -240,6 +262,10 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         AddToPipeline("Efficiency map", h2_probe_eta_pt_pass, h2_probe_eta_pt_all);
     }
 
+    // ---------------
+    // Snapshot option
+    // ---------------
+
     if (save_sel_data) {
 
         ROOT::RDF::RSnapshotOptions snapshot_opts;
@@ -253,7 +279,7 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         
         std::cout << "Saving data selected from " << cfg.general.analysis_mode << " in file " << o_file_data << std::endl;
     
-        snapshot_vec.push_back(snapshot);
+        snapshot_vec.push_back(snapshot);// Needed for scope visibility -> Smart pointer for Event Loop action
     }
 }
 
