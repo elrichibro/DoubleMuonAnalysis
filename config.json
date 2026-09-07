@@ -1,7 +1,7 @@
 {
   "general": { 
     "dataset": "MC",
-    "operation_mode":"Template",
+    "operation_mode":"Analysis",
     "analysis_mode": "TagAndProbe",
     "verbose": 1,
     "visualize":false,
