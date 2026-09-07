@@ -42,7 +42,7 @@ struct FitResult {
 // ------------------------------------------------------------------------------------------------------------------------------------
 // Template Maker
 // ------------------------------------------------------------------------------------------------------------------------------------
-ROOT::RDF::RResultPtr<TH3D> TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const bool mask);
+std::vector<ROOT::RDF::RResultPtr<TH3D>> TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, std::vector<ROOT::RDF::RResultPtr<TH2D>>& entry_map);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 // Load Template
