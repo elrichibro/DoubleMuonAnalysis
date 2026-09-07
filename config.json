@@ -1,7 +1,7 @@
 {
   "general": { 
     "dataset": "DATA",
-    "operation_mode":"Analysis",
+    "operation_mode":"Template",
     "verbose": 1,
     "visualize":false
   },
@@ -24,9 +24,9 @@
   },
 
   "analysis": {
-    "bins_settup":"Set0_Pt_25_50_Eta_2.4",
+    "bins_settup":"Settup_1_Pt5_Eta8",
     "o_template_file_data":"../output/risultati_template.root",
-    "pt_bins": [25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 60.0, 70.0, 100.0],
+    "pt_bins": [25.0, 30.0, 35.0, 40.0, 45.0, 50.0],
     "eta_bins": [-2.4, -1.8, -1.2, -0.6, 0.0, 0.6, 1.2, 1.8, 2.4],
     "mll_bins": 100.0
   },
