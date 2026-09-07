@@ -86,10 +86,10 @@ std::vector<ROOT::RDF::RResultPtr<TH3D>> TemplateMaker(ROOT::RDF::RNode node, co
 
 
 int LoadTemplate(const config_struct& cfg, std::vector<Template_RooF>& container) {
-    std::unique_ptr<TFile> file(TFile::Open(cfg.io.o_file_template.c_str(), "READ"));
+    std::unique_ptr<TFile> file(TFile::Open(cfg.analysis.o_template_file_data.c_str(), "READ"));
     
     if (!file || file->IsZombie()) {
-        std::cout << "ERROR: Cannot open the template output file: " << cfg.io.o_file_template << std::endl;
+        std::cout << "ERROR: Cannot open the template output file: " << cfg.analysis.o_template_file_data << std::endl;
         return 1;
     }
 

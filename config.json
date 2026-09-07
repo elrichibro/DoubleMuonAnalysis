@@ -1,12 +1,9 @@
 {
   "general": { 
-    "dataset": "MC",
+    "dataset": "DATA",
     "operation_mode":"Analysis",
-    "analysis_mode": "TagAndProbe",
     "verbose": 1,
-    "visualize":false,
-    "save_sel_plots":false,
-    "save_sel_data":false
+    "visualize":false
   },
   
   "io": {
@@ -14,12 +11,26 @@
     "in_data_file":"../data/dati0.root",
     "tree_mc_name":"Events",
     "in_mc_file":"../data/datiMC0.root",
-    "val_file":"../data/validation_muon_run.json", 
-    "o_file_plots":"../output/risultati_plots.root",
-    "o_file_data":"../output/risultati_data.root",
-    "o_file_template":"../output/risultati_template.root"
+    "val_file":"../data/validation_muon_run.json"
   },
-  
+
+  "selection": {
+    "selection_mode": "TagAndProbe",
+    "save_sel_plots":false,
+    "save_sel_data":false,
+    "visual_sel":false,
+    "o_sel_file_plots":"../output/risultati_plots.root",
+    "o_sel_file_data":"../output/risultati_data.root"
+  },
+
+  "analysis": {
+    "bins_settup":"Set0_Pt_25_50_Eta_2.4",
+    "o_template_file_data":"../output/risultati_template.root",
+    "pt_bins": [25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 60.0, 70.0, 100.0],
+    "eta_bins": [-2.4, -1.8, -1.2, -0.6, 0.0, 0.6, 1.2, 1.8, 2.4],
+    "mll_bins": 100.0
+  },
+
   "flag_TP": {
     "en_kinematics":true,
     "en_mass_window":true
@@ -41,7 +52,7 @@
   },
 
   "cut_RM": {
-    "pt_cut":70.0,
+    "pt_cut":25.0,
     "eta_cut":2.5,
     "iso_cut":0.15,
     "mass_min":60.0,
@@ -71,10 +82,5 @@
       "width":800,
       "height":600
     }
-  },
-  "analysis": {
-    "pt_bins": [25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 60.0, 75.0, 100.0],
-    "eta_bins": [-2.4, -1.8, -1.2, -0.6, 0.0, 0.6, 1.2, 1.8, 2.4],
-    "mll_bins": 100.0
   }
 }

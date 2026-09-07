@@ -168,7 +168,7 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
     // vector needed for Snapshot operation
     std::vector<std::string> columns;
 
-    if ((cfg.general.operation_mode.find("Selection") != std::string::npos) && (cfg.general.analysis_mode == "TagAndProbe")) {
+    if ((cfg.general.operation_mode.find("Selection") != std::string::npos) && (cfg.selection.selection_mode == "TagAndProbe")) {
 
         // ----------
         // Histograms
@@ -200,8 +200,7 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
 
         columns.insert(columns.end(), names.begin(), names.end());
 
-    } else if ((cfg.general.operation_mode.find("Selection") != std::string::npos) && 
-    (cfg.general.analysis_mode == "ResponseMatrix")) {
+    } else if ((cfg.general.operation_mode.find("Selection") != std::string::npos) && (cfg.selection.selection_mode == "ResponseMatrix")) {
         
         // ----------
         // Histograms
@@ -232,7 +231,7 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         std::vector<std::string> names = {"Gen_Pt", "Rec_Pt", "Gen_Eta", "Rec_Eta"};
         columns.insert(columns.end(), names.begin(), names.end());
     
-    } else if ((cfg.general.operation_mode.find("Analysis") != std::string::npos) && (cfg.general.analysis_mode == "TagAndProbe")) {
+    } else if ((cfg.general.operation_mode.find("Analysis") != std::string::npos) && (cfg.selection.selection_mode == "TagAndProbe")) {
         
         // Efficiency MonteCarlo
         std::vector<float> pt_bins = cfg.analysis.pt_bins;
@@ -273,11 +272,11 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         snapshot_opts.fLazy = true;
         snapshot_opts.fOverwriteIfExists = true;
 
-        std::string snaphot_name = cfg.general.dataset + "_" + cfg.general.analysis_mode + "_Tree";
+        std::string snaphot_name = cfg.general.dataset + "_" + cfg.selection.selection_mode + "_Tree";
         
         auto snapshot = node.Snapshot(snaphot_name, o_file_data, columns, snapshot_opts);
         
-        std::cout << "Saving data selected from " << cfg.general.analysis_mode << " in file " << o_file_data << std::endl;
+        std::cout << "Saving data selected from " << cfg.selection.selection_mode << " in file " << o_file_data << std::endl;
     
         snapshot_vec.push_back(snapshot);// Needed for scope visibility -> Smart pointer for Event Loop action
     }

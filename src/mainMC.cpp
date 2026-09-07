@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
             
             ROOT::RDF::RNode node_RM = data_frame;
             
-            if (cfg.general.analysis_mode.find("RespMatrix") != std::string::npos) {
+            if (cfg.selection.selection_mode.find("RespMatrix") != std::string::npos) {
                 node_RM = node_RM
                     .Define("RespMatrix_mask", [flags_RM, cuts_RM](const ROOT::RVec<float>& pt_gen, const ROOT::RVec<float>& eta_gen, 
                     const ROOT::RVec<float>& pt_rec, const ROOT::RVec<float>& eta_rec, const ROOT::RVec<UChar_t>& rec_flav,
@@ -145,7 +145,7 @@ int main(int argc, char* argv[]) {
             
             ROOT::RDF::RNode node_TP = data_frame;
             
-            if (cfg.general.analysis_mode.find("TagAndProbe") != std::string::npos) {
+            if (cfg.selection.selection_mode.find("TagAndProbe") != std::string::npos) {
 
                 if (cfg.general.dataset == "MC") {    
                     
@@ -197,9 +197,9 @@ int main(int argc, char* argv[]) {
 
             OutputManager manager(cfg);
 
-            if (cfg.general.analysis_mode == "TagAndProbe") {
+            if (cfg.selection.selection_mode == "TagAndProbe") {
                 manager.BookAnalysis(node_TP, cfg);
-            } else if (cfg.general.analysis_mode == "ResponseMatrix") {
+            } else if (cfg.selection.selection_mode == "ResponseMatrix") {
                 manager.BookAnalysis(node_RM, cfg);
             }
 
@@ -228,7 +228,7 @@ int main(int argc, char* argv[]) {
         }
 
         std::string tree = cfg.general.dataset + "_TagAndProbe_Tree";
-        ROOT::RDataFrame data_frame(tree, cfg.io.o_file_data);
+        ROOT::RDataFrame data_frame(tree, cfg.analysis.o_template_file_data);
 
         ROOT::RDF::RNode node_template = data_frame;
         
@@ -236,10 +236,10 @@ int main(int argc, char* argv[]) {
         std::vector<ROOT::RDF::RResultPtr<TH3D>> template_vec = TemplateMaker(node_template, cfg, entry_map_vec);
         
 
-        TFile o_template_file(cfg.io.o_file_template.c_str(), "UPDATE");
+        TFile o_template_file(cfg.analysis.o_template_file_data.c_str(), "UPDATE");
         
         if (o_template_file.IsZombie()) {
-            std::cout << "ERROR: Cannot find output file: " << cfg.io.o_file_template << std::endl;
+            std::cout << "ERROR: Cannot find output file: " << cfg.analysis.o_template_file_data << std::endl;
             return 1;
         }
 
@@ -252,8 +252,8 @@ int main(int argc, char* argv[]) {
 
         o_template_file.Close();
 
-        if (verbose) {
-            std::cout << "Templates successfully been written to: " << cfg.io.o_file_template << std::endl;
+        if (cfg.general.verbose) {
+            std::cout << "Templates successfully been written to: " << cfg.analysis.o_template_file_data << std::endl;
         }
     }
 

@@ -166,8 +166,8 @@ class OutputManager {
     public:
         /// @brief OutputManager class constructor.
         /// @param cfg Main configuration struct.
-        OutputManager(const config_struct& cfg) : o_file_plots(cfg.io.o_file_plots), o_file_data(cfg.io.o_file_data), visualize(cfg.general.visualize), 
-        save_sel_plots(cfg.general.save_sel_plots), save_sel_data(cfg.general.save_sel_data), canv(cfg.canvas) {};
+        OutputManager(const config_struct& cfg) : o_file_plots(cfg.selection.o_sel_file_plots), o_file_data(cfg.selection.o_sel_file_data), visualize(cfg.selection.visual_sel), 
+        save_sel_plots(cfg.selection.save_sel_plots), save_sel_data(cfg.selection.save_sel_data), canv(cfg.canvas) {};
         
         ~OutputManager(){};
     
