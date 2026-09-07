@@ -256,15 +256,21 @@ int main(int argc, char* argv[]) {
 
     if (cfg.general.operation_mode.find("Analysis") != std::string::npos) {
         try {        
-            ROOT::EnableImplicitMT();
+            //ROOT::EnableImplicitMT();
 
-            std::vector<MC_Template_RooF> template_container;
+            std::vector<Template_RooF> template_container;
+            std::vector<FitResult> fit_results;
 
-            if (!LoadMCTemplate(cfg, template_container)) {
+            if (LoadTemplate(cfg, template_container) != 0) {
                 std::cout << "ERROR: Load operations fails, exiting." << std::endl;
                 return 1;
             }
             
+            if (Eff_BinnedFit(template_container, cfg, fit_results) != 0) {
+                std::cout << "ERROR: Fit operation fails." << std::endl;
+                return 1;
+            }
+
             /*
             std::string tree = cfg.general.dataset + "_" + cfg.general.analysis_mode + "_Tree";
             ROOT::RDataFrame data_frame(tree, cfg.io.o_file_data);
