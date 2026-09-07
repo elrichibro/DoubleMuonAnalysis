@@ -16,12 +16,9 @@
 struct general_config {
     std::string dataset = "MC";
     std::string operation_mode = "";
-    std::string analysis_mode = "";
 
     int verbose = 1;
     bool visualize = false;
-    bool save_sel_plots = false;
-    bool save_sel_data = false; 
 };
 
 /// @brief Stores input/output file paths.
@@ -31,9 +28,23 @@ struct io_config {
     std::string tree_mc_name = "";// MonteCarlo tree name.
     std::string in_mc_file = "";// Input MonteCarlo file path.
     std::string val_file = "";// Validation json file path.
-    std::string o_file_plots = "";// Output file path for plots.
-    std::string o_file_data = "";// Output file path for data.
-    std::string o_file_template = "";// Output file path for template analysis.
+};
+
+struct selection_config {
+    std::string selection_mode = "";
+    bool save_sel_plots = false;
+    bool save_sel_data = false; 
+    bool visual_sel = false;
+    std::string o_sel_file_plots = "";// Output file path for plots.
+    std::string o_sel_file_data = "";// Output file path for data.
+};
+
+struct analysis_config {
+    std::string bins_settup = "";
+    std::string o_template_file_data = "";// Output file path for template analysis.
+    std::vector<float> pt_bins;
+    std::vector<float> eta_bins;
+    float mll_bins = 0;
 };
 
 /// @brief Flags for enabling/disablig specifics selections cuts.
@@ -65,25 +76,24 @@ struct canvas_config {
     int height = 600; 
 };
 
-struct analysis_config {
-    std::vector<float> pt_bins;
-    std::vector<float> eta_bins;
-    float mll_bins = 0;
-};
-
 /// @brief Stores the other data structs.
 struct config_struct {
     general_config general;
     io_config io;
+
+    selection_config selection;
+    analysis_config analysis;
+    
     flags_config flag_TP;
     cuts_config cut_TP;
     flags_config flag_RM;
     cuts_config cut_RM;
+    
     plot_config pt_plot;
     plot_config eta_plot;
     plot_config mll_plot;
+    
     canvas_config canvas;
-    analysis_config analysis;
 };
 
 // ------------------------------------------------------------------------------------------------------------------------------------

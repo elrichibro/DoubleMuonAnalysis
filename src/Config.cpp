@@ -23,11 +23,8 @@ int Configure(config_struct& value, const std::string& json_path) {
 
             value.general.dataset = j.value("dataset", value.general.dataset);
             value.general.operation_mode = j.value("operation_mode", value.general.operation_mode);
-            value.general.analysis_mode = j.value("analysis_mode", value.general.analysis_mode);
             value.general.verbose = j.value("verbose", value.general.verbose);
             value.general.visualize = j.value("visualize", value.general.visualize);
-            value.general.save_sel_plots = j.value("save_sel_plots", value.general.save_sel_plots);
-            value.general.save_sel_data = j.value("save_sel_data", value.general.save_sel_data);
         }
 
         if (json_obj.contains("io")) {
@@ -38,9 +35,31 @@ int Configure(config_struct& value, const std::string& json_path) {
             value.io.tree_mc_name = j.value("tree_mc_name", value.io.tree_mc_name);
             value.io.in_mc_file = j.value("in_mc_file", value.io.in_mc_file);
             value.io.val_file = j.value("val_file", value.io.val_file);
-            value.io.o_file_plots = j.value("o_file_plots", value.io.o_file_plots);
-            value.io.o_file_data = j.value("o_file_data", value.io.o_file_data);
-            value.io.o_file_template = j.value("o_file_template", value.io.o_file_template);
+        }
+
+        if (json_obj.contains("selection")) {
+            const auto& j = json_obj["selection"];
+
+            value.selection.selection_mode = j.value("selection_mode", value.selection.selection_mode);
+            value.selection.save_sel_plots = j.value("save_sel_plot", value.selection.save_sel_plots);
+            value.selection.save_sel_data = j.value("save_sel_data", value.selection.save_sel_data);
+            value.selection.visual_sel = j.value("visual_sel", value.selection.visual_sel);
+            value.selection.o_sel_file_plots = j.value("o_sel_file_plots", value.selection.o_sel_file_plots);
+            value.selection.o_sel_file_data = j.value("o_sel_file_data", value.selection.o_sel_file_data); 
+        }
+
+        if (json_obj.contains("analysis")) {
+            const auto& j = json_obj["analysis"];
+
+            value.analysis.bins_settup = j.value("bins_settup", value.analysis.bins_settup);
+            value.analysis.o_template_file_data = j.value("o_template_file_data", value.analysis.o_template_file_data);
+            if (j.contains("pt_bins")) {
+                value.analysis.pt_bins = j["pt_bins"].get<std::vector<float>>();
+            }
+            if (j.contains("pt_bins")) {
+                value.analysis.eta_bins = j["eta_bins"].get<std::vector<float>>();
+            }
+            value.analysis.mll_bins = j.value("mll_bins", value.analysis.mll_bins);
         }
 
         if (json_obj.contains("flag_TP")) {
@@ -118,18 +137,6 @@ int Configure(config_struct& value, const std::string& json_path) {
                 value.canvas.height = j_c.value("height", value.canvas.height);
             }
         }
-        if (json_obj.contains("analysis")) {
-            const auto& j = json_obj["analysis"];
-
-            if (j.contains("pt_bins")) {
-                value.analysis.pt_bins = j["pt_bins"].get<std::vector<float>>();
-            }
-            if (j.contains("pt_bins")) {
-                value.analysis.eta_bins = j["eta_bins"].get<std::vector<float>>();
-            }
-
-            value.analysis.mll_bins = j.value("mll_bins", value.analysis.mll_bins);
-        }
     } catch (const std::exception& except) {
         std::cout << "ERROR: " << except.what() << std::endl;
         return -1;
@@ -148,11 +155,8 @@ void Verbose_config(const config_struct& value) {
     std::cout << "General settings:" << std::endl;
     std::cout << "    Dataset used: " << value.general.dataset << std::endl;
     std::cout << "    Operation mode: " << value.general.operation_mode << std::endl;
-    std::cout << "    Analysis mode: " << value.general.analysis_mode << std::endl;
     std::cout << "    Verbose mode: " << value.general.verbose << std::endl;
     std::cout << "    Visualize flag: " << value.general.visualize << std::endl;
-    std::cout << "    Save selection plots flag: " << value.general.save_sel_plots << std::endl;
-    std::cout << "    Save selection data flag: " << value.general.save_sel_data << std::endl;
 
     std::cout << "" << std::endl;    
     std::cout << "--------------------------------------------------------------------" << std::endl;
@@ -163,13 +167,39 @@ void Verbose_config(const config_struct& value) {
     std::cout << "    Data Tree: " << value.io.tree_data_name << std::endl;
     std::cout << "    Input MC file: " << value.io.in_mc_file << std::endl;
     std::cout << "    MC Tree: " << value.io.tree_mc_name << std::endl;
+    std::cout << "    Validation file: " << value.io.val_file << std::endl;
     
     std::cout << "" << std::endl;
+    std::cout << "--------------------------------------------------------------------" << std::endl;
+    std::cout << "" << std::endl;
 
-    std::cout << "    Validation file: " << value.io.val_file << std::endl;
-    std::cout << "    Output file selected plots: " << value.io.o_file_plots << std::endl;
-    std::cout << "    Output file selected data: " << value.io.o_file_data << std::endl;
-    std::cout << "    Output file template analysis data: " << value.io.o_file_template << std::endl;
+    std::cout << "Selection settup:" << std::endl;
+    std::cout << "    Mode: " << value.selection.selection_mode << std::endl;
+    std::cout << "    Save plots: " << value.selection.save_sel_plots << std::endl;
+    std::cout << "    Save data: " << value.selection.save_sel_data << std::endl;
+    std::cout << "    Visualize: " << value.selection.visual_sel << std::endl;
+    std::cout << "    Output plots file path: " << value.selection.o_sel_file_plots << std::endl;
+    std::cout << "    Output data file path: " << value.selection.o_sel_file_data << std::endl;
+
+    std::cout << "" << std::endl;
+    std::cout << "--------------------------------------------------------------------" << std::endl;
+    std::cout << "" << std::endl;
+
+    std::cout << "Analysis settup:" << std::endl;
+    std::cout << "    Bins settup: " << value.analysis.bins_settup << std::endl;
+    std::cout << "    Output template file path: " << value.analysis.o_template_file_data << std::endl;
+
+    std::cout << "    Pt bins intervals: ";
+    for (auto it : value.analysis.pt_bins) {
+        std::cout << it << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "    Eta bins intervals: ";
+    for (auto it : value.analysis.eta_bins) {
+        std::cout << it << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "    Invariant mass bins number: " << value.analysis.mll_bins << std::endl;
 
     std::cout << "" << std::endl;
     std::cout << "--------------------------------------------------------------------" << std::endl;
@@ -243,25 +273,6 @@ void Verbose_config(const config_struct& value) {
     std::cout << "        Width: " << value.canvas.width << std::endl;
     std::cout << "        Height: " << value.canvas.height << std::endl;
   
-    std::cout << "" << std::endl;
-    std::cout << "--------------------------------------------------------------------" << std::endl;
-    std::cout << "" << std::endl;
-
-    std::cout << "Analysis settup:" << std::endl;
-    std::cout << "    Pt bins intervals: ";
-    for (auto it : value.analysis.pt_bins) {
-        std::cout << it << " ";
-    }
-
-    std::cout << std::endl;
-
-    std::cout << "    Eta bins intervals: ";
-    for (auto it : value.analysis.eta_bins) {
-        std::cout << it << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "    Invariant mass bins number: " << value.analysis.mll_bins << std::endl;
-
     std::cout << "" << std::endl;
     std::cout << "--------------------------------------------------------------------" << std::endl;
     std::cout << "" << std::endl;
