@@ -232,8 +232,9 @@ int main(int argc, char* argv[]) {
 
         ROOT::RDF::RNode node_template = data_frame;
         
-        auto h3_pass = TemplateMaker(node_template, cfg, true);
-        auto h3_fail = TemplateMaker(node_template, cfg, false);
+        std::vector<ROOT::RDF::RResultPtr<TH2D>> entry_map_vec;
+        std::vector<ROOT::RDF::RResultPtr<TH3D>> template_vec = TemplateMaker(node_template, cfg, entry_map_vec);
+        
 
         TFile o_template_file(cfg.io.o_file_template.c_str(), "UPDATE");
         
@@ -244,8 +245,10 @@ int main(int argc, char* argv[]) {
 
         o_template_file.cd();
 
-        h3_pass->Write();
-        h3_fail->Write();
+        for (int i = 0; i < template_vec.size(); i++) {
+            template_vec[i]->Write();
+            entry_map_vec[i]->Write();
+        }
 
         o_template_file.Close();
 

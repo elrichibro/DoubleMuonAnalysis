@@ -24,7 +24,9 @@
 // MC Template Maker
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-ROOT::RDF::RResultPtr<TH3D> TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const bool mask) {
+std::vector<ROOT::RDF::RResultPtr<TH3D>> TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, std::vector<ROOT::RDF::RResultPtr<TH2D>>& entry_map) {
+    std::vector<ROOT::RDF::RResultPtr<TH3D>> container;
+    
     ROOT::RDF::RNode node_hist = node;
 
     std::vector<float> pt_bins = cfg.analysis.pt_bins;
@@ -38,31 +40,48 @@ ROOT::RDF::RResultPtr<TH3D> TemplateMaker(ROOT::RDF::RNode node, const config_st
 
     std::string sample = cfg.general.dataset; 
 
-    std::string name = (mask) ? "h3_pass" : "h3_fail";
-    name = sample + "_" + name;
+    std::string name_pass = sample + "_h3_pass";
+    std::string name_fail = sample + "_h3_fail";
+    std::string name_entries_pass = sample + "_h2_entries_pass";
+    std::string name_entries_fail = sample + "_h2_entries_fail";
 
     std::string title = "3D Histogram_" + sample;
+    std::string title_entries = "2D Entries Histogram_" + sample;
 
-    ROOT::RDF::TH3DModel model(name.c_str(), title.c_str(), eta_bins.size() - 1, eta_bins.data(), pt_bins.size() - 1, pt_bins.data(),
+    ROOT::RDF::TH3DModel model_pass(name_pass.c_str(), title.c_str(), eta_bins.size() - 1, eta_bins.data(), pt_bins.size() - 1, pt_bins.data(),
      mll_bins.size() - 1, mll_bins.data() );
     
-    if (mask) {
-        node_hist = node_hist
-            .Define(sample + "_Probe_Pt_Pass", sample + "_Probe_Pt[" + sample + "_Mask_Pass]")
-            .Define(sample + "_Probe_Eta_Pass", sample + "_Probe_Eta[" + sample + "_Mask_Pass]")
-            .Define(sample + "_Mll_Pass", sample + "_Mll[" + sample + "_Mask_Pass]");
+    ROOT::RDF::TH3DModel model_fail(name_fail.c_str(), title.c_str(), eta_bins.size() - 1, eta_bins.data(), pt_bins.size() - 1, pt_bins.data(),
+     mll_bins.size() - 1, mll_bins.data() );
 
-        auto h3 = node_hist.Histo3D(model, sample + "_Probe_Eta_Pass", sample + "_Probe_Pt_Pass", sample + "_Mll_Pass");
-        return h3;
-    } else {
-        node_hist = node_hist
-            .Define(sample + "_Probe_Pt_Fail", sample + "_Probe_Pt[!" + sample + "_Mask_Pass]")
-            .Define(sample + "_Probe_Eta_Fail", sample + "_Probe_Eta[!" + sample + "_Mask_Pass]")
-            .Define(sample + "_Mll_Fail", sample + "_Mll[!" + sample + "_Mask_Pass]");
+    ROOT::RDF::TH2DModel model_entries_pass(name_entries_pass.c_str(), title_entries.c_str(), eta_bins.size() - 1, eta_bins.data(), pt_bins.size() - 1, pt_bins.data());
+    ROOT::RDF::TH2DModel model_entries_fail(name_entries_fail.c_str(), title_entries.c_str(), eta_bins.size() - 1, eta_bins.data(), pt_bins.size() - 1, pt_bins.data());
+    
+    node_hist = node_hist
+        .Define(sample + "_Probe_Pt_Pass", sample + "_Probe_Pt[" + sample + "_Mask_Pass]")
+        .Define(sample + "_Probe_Eta_Pass", sample + "_Probe_Eta[" + sample + "_Mask_Pass]")
+        .Define(sample + "_Mll_Pass", sample + "_Mll[" + sample + "_Mask_Pass]")
+        .Define(sample + "_Probe_Pt_Fail", sample + "_Probe_Pt[!" + sample + "_Mask_Pass]")
+        .Define(sample + "_Probe_Eta_Fail", sample + "_Probe_Eta[!" + sample + "_Mask_Pass]")
+        .Define(sample + "_Mll_Fail", sample + "_Mll[!" + sample + "_Mask_Pass]");
 
-        auto h3 = node_hist.Histo3D(model, sample + "_Probe_Eta_Fail", sample + "_Probe_Pt_Fail", sample + "_Mll_Fail");
-        return h3;
-    }
+
+    auto h3_pass = node_hist.Histo3D(model_pass, sample + "_Probe_Eta_Pass", sample + "_Probe_Pt_Pass", sample + "_Mll_Pass");
+    auto h3_fail = node_hist.Histo3D(model_fail, sample + "_Probe_Eta_Fail", sample + "_Probe_Pt_Fail", sample + "_Mll_Fail");
+    
+    auto h2_pass = node_hist.Histo2D(model_entries_pass, sample + "_Probe_Eta_Pass", sample + "_Probe_Pt_Pass");
+    auto h2_fail = node_hist.Histo2D(model_entries_fail, sample + "_Probe_Eta_Fail", sample + "_Probe_Pt_Fail");
+
+    h2_pass->SetOption("COLZ TEXT");
+    h2_fail->SetOption("COLZ TEXT");
+
+    entry_map.push_back(h2_pass);
+    entry_map.push_back(h2_fail);
+
+    container.push_back(h3_pass);
+    container.push_back(h3_fail);
+
+    return container;
 }
 
 
