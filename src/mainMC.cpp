@@ -228,32 +228,41 @@ int main(int argc, char* argv[]) {
         }
 
         std::string tree = cfg.general.dataset + "_TagAndProbe_Tree";
-        ROOT::RDataFrame data_frame(tree, cfg.analysis.o_template_file_data);
+        ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
 
         ROOT::RDF::RNode node_template = data_frame;
         
         std::vector<ROOT::RDF::RResultPtr<TH2D>> entry_map_vec;
         std::vector<ROOT::RDF::RResultPtr<TH3D>> template_vec = TemplateMaker(node_template, cfg, entry_map_vec);
-        
 
         TFile o_template_file(cfg.analysis.o_template_file_data.c_str(), "UPDATE");
-        
+
         if (o_template_file.IsZombie()) {
             std::cout << "ERROR: Cannot find output file: " << cfg.analysis.o_template_file_data << std::endl;
             return 1;
         }
 
-        o_template_file.cd();
+        TDirectory* bin_dir = o_template_file.GetDirectory(cfg.analysis.bins_settup.c_str());
+        if (!bin_dir) {
+            bin_dir = o_template_file.mkdir(cfg.analysis.bins_settup.c_str());
+        }
+
+        bin_dir->cd();
 
         for (int i = 0; i < template_vec.size(); i++) {
-            template_vec[i]->Write();
-            entry_map_vec[i]->Write();
+            template_vec[i]->Write(nullptr, TObject::kOverwrite);
+            
+            if ((i < entry_map_vec.size()) && (entry_map_vec[i])) {
+                entry_map_vec[i]->Write(nullptr, TObject::kOverwrite);
+            }
+            
         }
 
         o_template_file.Close();
 
         if (cfg.general.verbose) {
-            std::cout << "Templates successfully been written to: " << cfg.analysis.o_template_file_data << std::endl;
+            std::cout << "Templates successfully been written to: " << cfg.analysis.o_template_file_data 
+            << "[" << cfg.analysis.bins_settup << "]" <<  std::endl;
         }
     }
 
