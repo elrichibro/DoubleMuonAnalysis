@@ -77,7 +77,7 @@ void CheckPlotsTemplate(const std::vector<Template_RooF>& container, const confi
 /// @param cfg 
 /// @param results 
 /// @return 
-int Eff_BinnedFit(std::vector<Template_RooF>& container, const config_struct& cfg, std::vector<FitResult>& results);
+int Eff_BinnedFit(std::vector<Template_RooF>& container, const analysis_params& params, std::vector<FitResult>& results, const int verb);
 
 /// @brief 
 /// @param results 

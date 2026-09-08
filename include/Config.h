@@ -40,6 +40,14 @@ struct selection_config {
 };
 
 struct analysis_params {
+    std::vector<double> efficiency;
+    std::vector<double> n_tot;
+    
+    std::vector<double> mu;
+    std::vector<double> sigma;   
+    
+    std::vector<double> lambda_pass;
+    std::vector<double> lambda_fail;
 };
 
 struct analysis_config {

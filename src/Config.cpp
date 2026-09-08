@@ -56,10 +56,20 @@ int Configure(config_struct& value, const std::string& json_path) {
             if (j.contains("pt_bins")) {
                 value.analysis.pt_bins = j["pt_bins"].get<std::vector<float>>();
             }
-            if (j.contains("pt_bins")) {
+            if (j.contains("eta_bins")) {
                 value.analysis.eta_bins = j["eta_bins"].get<std::vector<float>>();
             }
             value.analysis.mll_bins = j.value("mll_bins", value.analysis.mll_bins);
+            
+            if (j.contains("params")) {
+                const auto& j_p = j["params"];
+                value.analysis.params.efficiency = j_p["efficiency"].get<std::vector<double>>();
+                value.analysis.params.n_tot = j_p["n_tot"].get<std::vector<double>>();
+                value.analysis.params.mu = j_p["mu"].get<std::vector<double>>();
+                value.analysis.params.sigma = j_p["sigma"].get<std::vector<double>>();
+                value.analysis.params.lambda_pass = j_p["lambda_pass"].get<std::vector<double>>();
+                value.analysis.params.lambda_fail = j_p["lambda_fail"].get<std::vector<double>>();
+            }
         }
 
         if (json_obj.contains("flag_TP")) {
@@ -200,6 +210,42 @@ void Verbose_config(const config_struct& value) {
     }
     std::cout << std::endl;
     std::cout << "    Invariant mass bins number: " << value.analysis.mll_bins << std::endl;
+    std::cout << "    Fit parameters: " << std::endl;
+    std::cout << "        Efficiency: |";
+    for (auto it : value.analysis.params.efficiency) {
+        std::cout << it << " | ";
+    }
+    std::cout << std::endl;
+    
+    std::cout << "        Signal Events: |";
+    for (auto it : value.analysis.params.n_tot) {
+        std::cout << it << " | ";
+    }
+    std::cout << std::endl;
+    
+    std::cout << "        Gaussian mean: |";
+    for (auto it : value.analysis.params.mu) {
+        std::cout << it << " | ";
+    }
+    std::cout << std::endl;
+    
+    std::cout << "        Gaussian sigma: |";
+    for (auto it : value.analysis.params.sigma) {
+        std::cout << it << " | ";
+    }
+    std::cout << std::endl;
+    
+    std::cout << "        Lambda pass: |";
+    for (auto it : value.analysis.params.lambda_pass) {
+        std::cout << it << " | ";
+    }
+    std::cout << std::endl;
+    
+    std::cout << "        Lambda fail: |";
+    for (auto it : value.analysis.params.lambda_fail) {
+        std::cout << it << " | ";
+    }
+    std::cout << std::endl;
 
     std::cout << "" << std::endl;
     std::cout << "--------------------------------------------------------------------" << std::endl;
