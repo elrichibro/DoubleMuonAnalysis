@@ -280,7 +280,7 @@ int main(int argc, char* argv[]) {
             
             //CheckPlotsTemplate(template_container, cfg);
 
-            int check_fit = Eff_BinnedFit(template_container, cfg, fit_results);
+            int check_fit = Eff_BinnedFit(template_container, cfg.analysis.params, fit_results, cfg.general.verbose);
 
             if (check_fit != 0) {
                 std::cout << "ERROR: Fit operation fails." << std::endl;

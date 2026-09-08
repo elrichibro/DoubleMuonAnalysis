@@ -28,7 +28,15 @@
     "o_template_file_data":"../output/risultati_template.root",
     "pt_bins": [25.0, 30.0, 35.0, 40.0, 50.0],
     "eta_bins": [-2.4, -1.8, -1.2, -0.6, 0.0, 0.6, 1.2, 1.8, 2.4],
-    "mll_bins": 50.0
+    "mll_bins": 50.0,
+    "params": {
+      "efficiency":[0.9, 0.6, 1.0],
+      "n_tot":[0,0,0],
+      "mu":[-0.08, -5.0, 5.0],
+      "sigma":[1, 0.00001, 3.0],
+      "lambda_pass":[-0.02, -3.0, 0.0],
+      "lambda_fail":[-0.04, -3.0, 0.0]
+    }
   },
 
   "flag_TP": {

@@ -232,7 +232,7 @@ void CheckPlotsTemplate(const std::vector<Template_RooF>& analysis_struct, const
 // Fitter Binned data
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const config_struct& cfg, std::vector<FitResult>& results) {
+int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const analysis_params& params, std::vector<FitResult>& results, const int verb) {
     results.reserve(analysis_struct.size());
     
     RooRealVar mll("mll", "m_{#mu+#mu-}", 60.0, 120.0, "GeV");
@@ -267,7 +267,7 @@ int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const config_stru
         double mc_pass_entries = it.h_MC_pass->Integral();
         double mc_fail_entries = it.h_MC_fail->Integral();
         
-        if (cfg.general.verbose) {
+        if (verb) {
             std::cout << "Events in Pass DATA: " << data_pass_entries <<std::endl;
             std::cout << "Events in Fail DATA: " << data_fail_entries <<std::endl;
             std::cout << "Events in Pass MC: " << mc_pass_entries <<std::endl;
@@ -275,12 +275,12 @@ int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const config_stru
         }  
 
         // SIGNAL
-        RooRealVar efficiency("efficiency", "Efficiency", 0.9, 0.6, 1.0);
-        RooRealVar n_sig_tot("n_sig_tot", "Number of signal events", total_entries * 0.9, total_entries * 0.1, total_entries);
+        RooRealVar efficiency("efficiency", "Efficiency", params.efficiency.at(0), params.efficiency.at(1), params.efficiency.at(2));
+        RooRealVar n_sig_tot("n_sig_tot", "Number of signal events", total_entries * 0.9, 0.0, 1e8);
         
         // Gaussian convolution parameters
-        RooRealVar mu("mu", "Mean gaussian", -0.2, -3.0, 3.0);
-        RooRealVar sigma("sigma", "Sigma gaussina", 0.4, 0.0001, 3.0);
+        RooRealVar mu("mu", "Mean gaussian", params.mu.at(0), params.mu.at(1), params.mu.at(2));
+        RooRealVar sigma("sigma", "Sigma gaussina", params.sigma.at(0), params.sigma.at(1), params.sigma.at(2));
         RooGaussian gauss("gauss", "Smearing", mll, mu, sigma);
 
         RooFFTConvPdf conv_pass_sig("conv_pass_sig", "Conv model Pass signal + gauss", mll, hist_mc_pass_pdf, gauss);
@@ -291,8 +291,8 @@ int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const config_stru
         RooFormulaVar n_sig_fail("n_sig_fail", "(1.0 - efficiency) * n_sig_tot", RooArgList(efficiency, n_sig_tot));
 
         // BACKGROUND
-        RooRealVar lambda_pass("lambda_pass", "Decay freq Pass Bkg", -0.02, -1.0, 0.0);
-        RooRealVar lambda_fail("lambda_fail", "Decay freq Fail Bkg", -0.04, -1.0, 0.0);
+        RooRealVar lambda_pass("lambda_pass", "Decay freq Pass Bkg", params.lambda_pass.at(0), params.lambda_pass.at(1), params.lambda_pass.at(2));
+        RooRealVar lambda_fail("lambda_fail", "Decay freq Fail Bkg", params.lambda_fail.at(0), params.lambda_fail.at(1), params.lambda_fail.at(2));
         
         RooExponential bkg_pass("bkg_pass", "Bkg Pass", mll, lambda_pass);
         RooExponential bkg_fail("bkg_fail", "Bkg Fail", mll, lambda_fail);
@@ -319,6 +319,7 @@ int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const config_stru
         efficiency.setVal(0.90);
         */
 
+
         std::unique_ptr<RooFitResult> raw_fitRes(simPdf.fitTo(
         
             hist_sig_data, 
@@ -329,7 +330,7 @@ int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const config_stru
             RooFit::Verbose(false)
         
         ));
-
+        
         int fit_status = raw_fitRes ? raw_fitRes->status() : -1;
         
         if (fit_status == 0) {
