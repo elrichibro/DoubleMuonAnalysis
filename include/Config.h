@@ -39,12 +39,16 @@ struct selection_config {
     std::string o_sel_file_data = "";// Output file path for data.
 };
 
+struct analysis_params {
+};
+
 struct analysis_config {
     std::string bins_settup = "";
     std::string o_template_file_data = "";// Output file path for template analysis.
     std::vector<float> pt_bins;
     std::vector<float> eta_bins;
     float mll_bins = 0;
+    analysis_params params;
 };
 
 /// @brief Flags for enabling/disablig specifics selections cuts.

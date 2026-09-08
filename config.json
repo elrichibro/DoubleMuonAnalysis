@@ -1,9 +1,9 @@
 {
   "general": { 
-    "dataset": "DATA",
-    "operation_mode":"Template",
+    "dataset": "MC",
+    "operation_mode":"Analysis",
     "verbose": 1,
-    "visualize":false
+    "visualize":true
   },
   
   "io": {
@@ -24,11 +24,11 @@
   },
 
   "analysis": {
-    "bins_settup":"Settup_1_Pt5_Eta8",
+    "bins_settup":"Settup_3_Pt4_Eta8",
     "o_template_file_data":"../output/risultati_template.root",
-    "pt_bins": [25.0, 30.0, 35.0, 40.0, 45.0, 50.0],
+    "pt_bins": [25.0, 30.0, 35.0, 40.0, 50.0],
     "eta_bins": [-2.4, -1.8, -1.2, -0.6, 0.0, 0.6, 1.2, 1.8, 2.4],
-    "mll_bins": 100.0
+    "mll_bins": 50.0
   },
 
   "flag_TP": {
