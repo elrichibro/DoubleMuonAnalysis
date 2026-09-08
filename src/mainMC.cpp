@@ -278,11 +278,24 @@ int main(int argc, char* argv[]) {
                 return 1;
             }
             
-            if (Eff_BinnedFit(template_container, cfg, fit_results) != 0) {
+            //CheckPlotsTemplate(template_container, cfg);
+
+            int check_fit = Eff_BinnedFit(template_container, cfg, fit_results);
+
+            if (check_fit != 0) {
                 std::cout << "ERROR: Fit operation fails." << std::endl;
                 return 1;
             }
+                
+            std::vector<std::string> booked_values = {"efficiency", "n_tot", "fit_status", "mu", "sigma", "lambda_pass", "lambda_fail"};
 
+            int check = SaveFitPlots(fit_results, cfg, booked_values);
+
+            if (check != 0) {
+                std::cout << "ERROR: Save operation fails, exiting..." << std::endl;
+                return 0;
+            }
+            
             /*
             std::string tree = cfg.general.dataset + "_" + cfg.general.analysis_mode + "_Tree";
             ROOT::RDataFrame data_frame(tree, cfg.io.o_file_data);

@@ -10,6 +10,13 @@
 #include <cstdint>
 
 // ------------------------------------------------------------------------------------------------------------------------------------
+/*
+This file contains:
+    - CalculateInvariantMass()
+    - CalculateInvariantMass_Pair()
+    - CalculatePhiStar()
+*/
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 /**
  * @brief Calculates the invariant mass of the first two particles in the event.
@@ -24,12 +31,23 @@ template <typename T>
 T CalculateInvariantMass(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi, const ROOT::RVec<T>& mass) {
     
     return ROOT::VecOps::InvariantMass(ROOT::RVec<T>{pt[0], pt[1]}, ROOT::RVec<T>{eta[0], eta[1]}, ROOT::RVec<T>{phi[0], phi[1]},
-        ROOT::RVec<T>{mass[0], mass[1]} );
+        ROOT::RVec<T>{mass[0], mass[1]});
 
 }
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
+/// @brief 
+/// @tparam T 
+/// @param pt1 
+/// @param pt2 
+/// @param eta1 
+/// @param eta2 
+/// @param phi1 
+/// @param phi2 
+/// @param mass1 
+/// @param mass2 
+/// @return 
 template <typename T>
 T CalculateInvariantMass_Pair(const T pt1, const T pt2, const T eta1, const T eta2, const T phi1, const T phi2, const T mass1, const T mass2) {
     
@@ -56,13 +74,11 @@ T CalculateInvariantMass_Pair(const T pt1, const T pt2, const T eta1, const T et
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-/**
- * @brief Calculates the special angular variable between the first two particles in the event.
- * @tparam Template: float, double.
- * @param eta Pseudorapidity of the particles.
- * @param phi Angular variable in cilindrical cordinates.
- * @return Returns special angular variable.
- */
+/// @brief Calculates the special angular variable between the first two particles in the event.
+/// @tparam T : float, double.
+/// @param eta Pseudorapidity of the particles.
+/// @param phi Angular variable in cilindrical cordinates.
+/// @return Returns special angular variable.
 template <typename T>
 T CalculatePhiStar(const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi) {
     T delta_phi = std::abs(ROOT::VecOps::DeltaPhi(phi[0], phi[1]));
