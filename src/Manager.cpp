@@ -234,8 +234,8 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
     } else if ((cfg.general.operation_mode.find("Analysis") != std::string::npos) && (cfg.selection.selection_mode == "TagAndProbe")) {
         
         // Efficiency MonteCarlo
-        std::vector<float> pt_bins = cfg.analysis.pt_bins;
-        std::vector<float> eta_bins = cfg.analysis.eta_bins;
+        std::vector<float> pt_bins = cfg.templ.pt_bins;
+        std::vector<float> eta_bins = cfg.templ.eta_bins;
 
         ROOT::RDF::TH1DModel model_Eff_pt("h_Eff_pt", "Pt Efficiency; p_{T} [GeV]; Efficiency", pt_bins.size() - 1, pt_bins.data());
         ROOT::RDF::TH1DModel model_Eff_eta("h_Eff_eta", "Eta Efficiency; #eta; Efficiency", eta_bins.size() - 1, eta_bins.data());

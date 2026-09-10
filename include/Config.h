@@ -39,6 +39,15 @@ struct selection_config {
     std::string o_sel_file_data = "";// Output file path for data.
 };
 
+struct template_config {
+    std::string bins_settup = "";
+    std::string o_template_file_data = "";// Output file path for template analysis.
+    std::string template_type = "";
+    std::vector<float> pt_bins;
+    std::vector<float> eta_bins;
+    float mll_bins = 0;
+};
+
 struct analysis_params {
     std::vector<double> efficiency;
     std::vector<double> n_tot;
@@ -51,11 +60,7 @@ struct analysis_params {
 };
 
 struct analysis_config {
-    std::string bins_settup = "";
-    std::string o_template_file_data = "";// Output file path for template analysis.
-    std::vector<float> pt_bins;
-    std::vector<float> eta_bins;
-    float mll_bins = 0;
+    bool pre_fit = false;
     analysis_params params;
 };
 
@@ -94,6 +99,7 @@ struct config_struct {
     io_config io;
 
     selection_config selection;
+    template_config templ;
     analysis_config analysis;
     
     flags_config flag_TP;

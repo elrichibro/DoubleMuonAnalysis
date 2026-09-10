@@ -48,18 +48,26 @@ int Configure(config_struct& value, const std::string& json_path) {
             value.selection.o_sel_file_data = j.value("o_sel_file_data", value.selection.o_sel_file_data); 
         }
 
-        if (json_obj.contains("analysis")) {
-            const auto& j = json_obj["analysis"];
+        if (json_obj.contains("template")) {
+            const auto& j = json_obj["template"];
 
-            value.analysis.bins_settup = j.value("bins_settup", value.analysis.bins_settup);
-            value.analysis.o_template_file_data = j.value("o_template_file_data", value.analysis.o_template_file_data);
+            value.templ.bins_settup = j.value("bins_settup", value.templ.bins_settup);
+            value.templ.o_template_file_data = j.value("o_template_file_data", value.templ.o_template_file_data);
+            value.templ.template_type = j.value("template_type", value.templ.template_type);
+
             if (j.contains("pt_bins")) {
-                value.analysis.pt_bins = j["pt_bins"].get<std::vector<float>>();
+                value.templ.pt_bins = j["pt_bins"].get<std::vector<float>>();
             }
             if (j.contains("eta_bins")) {
-                value.analysis.eta_bins = j["eta_bins"].get<std::vector<float>>();
+                value.templ.eta_bins = j["eta_bins"].get<std::vector<float>>();
             }
-            value.analysis.mll_bins = j.value("mll_bins", value.analysis.mll_bins);
+            value.templ.mll_bins = j.value("mll_bins", value.templ.mll_bins);
+        }
+
+        if (json_obj.contains("analysis")) {
+            const auto& j = json_obj["analysis"];
+            
+            value.analysis.pre_fit = j.value("pre_fit", value.analysis.pre_fit);
             
             if (j.contains("params")) {
                 const auto& j_p = j["params"];
@@ -195,21 +203,30 @@ void Verbose_config(const config_struct& value) {
     std::cout << "--------------------------------------------------------------------" << std::endl;
     std::cout << "" << std::endl;
 
-    std::cout << "Analysis settup:" << std::endl;
-    std::cout << "    Bins settup: " << value.analysis.bins_settup << std::endl;
-    std::cout << "    Output template file path: " << value.analysis.o_template_file_data << std::endl;
+    std::cout << "Template options: " << std::endl;
+    std::cout << "    Bins settup: " << value.templ.bins_settup << std::endl;
+    std::cout << "    Output template file path: " << value.templ.o_template_file_data << std::endl;
+    std::cout << "    Template output type: " << value.templ.template_type << std::endl;
 
     std::cout << "    Pt bins intervals: ";
-    for (auto it : value.analysis.pt_bins) {
+    for (auto it : value.templ.pt_bins) {
         std::cout << it << " ";
     }
     std::cout << std::endl;
     std::cout << "    Eta bins intervals: ";
-    for (auto it : value.analysis.eta_bins) {
+    for (auto it : value.templ.eta_bins) {
         std::cout << it << " ";
     }
     std::cout << std::endl;
-    std::cout << "    Invariant mass bins number: " << value.analysis.mll_bins << std::endl;
+    std::cout << "    Invariant mass bins number: " << value.templ.mll_bins << std::endl;
+    
+    std::cout << "" << std::endl;
+    std::cout << "--------------------------------------------------------------------" << std::endl;
+    std::cout << "" << std::endl;
+    
+    std::cout << "Analysis settup:" << std::endl;
+    std::cout << "    Pre-Fit flag option: " << value.analysis.pre_fit << std::endl;
+
     std::cout << "    Fit parameters: " << std::endl;
     std::cout << "        Efficiency: |";
     for (auto it : value.analysis.params.efficiency) {

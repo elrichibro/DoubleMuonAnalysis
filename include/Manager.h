@@ -197,11 +197,4 @@ class OutputManager {
         void Clear() { pipeline.clear(); }
 };
 
-// ----------------
-// ANALYSIS WRAPPER
-// ----------------
-
-
-
-
 #endif
