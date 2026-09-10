@@ -2,6 +2,7 @@
 #define ANALYSISTOOLS_H
 
 #include "Config.h"
+#include "Filters.h"
 
 #include "TH1D.h"
 #include "TH2D.h"
@@ -18,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "Manager.h"// for snapshot type
 
 struct Template_RooF{
     int eta_bin_idx;
@@ -61,11 +63,11 @@ struct FitResult {
 };
 
 /// @brief 
-/// @param node 
+/// @param node_DATA 
+/// @param node_MC 
 /// @param cfg 
-/// @param entry_map 
 /// @return 
-std::vector<ROOT::RDF::RResultPtr<TH3D>> TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, std::vector<ROOT::RDF::RResultPtr<TH2D>>& entry_map);
+int TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const int dataset);
 
 /// @brief 
 /// @param cfg 
@@ -79,16 +81,17 @@ int LoadTemplate(const config_struct& cfg, std::vector<Template_RooF>& container
 void CheckPlotsTemplate(const std::vector<Template_RooF>& container, const config_struct& cfg);
 
 /// @brief 
-/// @param container 
+/// @param analysis_struct 
 /// @param cfg 
 /// @param results 
+/// @param o_file 
 /// @return 
-int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const analysis_params& params, const bool pre_fit, std::vector<FitResult>& results, 
-    const int verb, TFile* o_file, const std::string& o_dir);
+int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const config_struct& cfg, std::vector<FitResult>& results, TFile* o_file);
 
 /// @brief 
 /// @param results 
 /// @param cfg 
+/// @param o_file 
 /// @param vals 
 /// @return 
 int SaveFitPlots(const std::vector<FitResult>& results, const config_struct& cfg, TFile* o_file, const std::vector<std::string>& vals);
@@ -100,7 +103,7 @@ int SaveFitPlots(const std::vector<FitResult>& results, const config_struct& cfg
 /// @param simPdf 
 /// @param res 
 /// @param o_file 
-/// @param output_dir 
+/// @param o_dir 
 void SaveBinFitCanvas(RooRealVar& mll, RooCategory& sample, RooDataHist& data, RooSimultaneous& simPdf, const FitResult& res, TFile* o_file, 
 const std::string& o_dir);
 

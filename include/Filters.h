@@ -13,14 +13,17 @@
 // Validation Runs
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-/**
- * @brief Checks the validated runs from the not ones.
- * @param val_map Validation map.
- * @param run_name Run column name.
- * @param block_name Luminosity block column name.
- * @return Returns the validated node-dataset.
-*/
-ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map, const std::string& run_name, const std::string& block_name);
+/// @brief 
+/// @param node 
+/// @param pt_col 
+/// @param eta_col 
+/// @param mll_col 
+/// @param columns_name 
+/// @param cfg 
+/// @param dataset 
+/// @return 
+ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& pt_col, const std::string& eta_col, const std::string& mll_col, 
+std::vector<std::string>& columns_name, const config_struct& cfg, const int dataset, const int succes);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 // Kinematical cuts
@@ -37,7 +40,7 @@ ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_t
  * @return Returns the node containing the bool mask.
 */
 ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& mask_name, const std::string& pt_name, const std::string& eta_name,
-float pt_cut, float eta_cut);
+const config_struct& cfg);
 
 // -------
 // STRUCTS

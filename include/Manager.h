@@ -18,6 +18,10 @@
 
 #include <ROOT/RDataFrame.hxx>
 
+
+using snapshot_type = decltype(std::declval<ROOT::RDF::RNode>().Snapshot("", "", std::vector<std::string>{}, ROOT::RDF::RSnapshotOptions{}));
+
+
 // ------------------------------------------------------------------------------------------------------------------------------------
 // PipelineObj class
 // ------------------------------------------------------------------------------------------------------------------------------------
@@ -151,7 +155,6 @@ class OutputManager {
         std::vector<std::unique_ptr<PipelineObj>> pipeline;// Pipe container
         
         // Deducing the Snapshot pointer type
-        using snapshot_type = decltype(std::declval<ROOT::RDF::RNode>().Snapshot("", "", std::vector<std::string>{}, ROOT::RDF::RSnapshotOptions{}));
         std::vector<snapshot_type> snapshot_vec;// Snapshot vector -> needed for scope visibility.
 
         bool visualize = false;

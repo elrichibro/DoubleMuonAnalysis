@@ -227,39 +227,23 @@ int main(int argc, char* argv[]) {
             std::cout << "Initilizing Template operation mode..." << std::endl;
         }
 
-        std::string tree = cfg.general.dataset + "_TagAndProbe_Tree";
-        ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
+        if (cfg.general.dataset.find("DATA") != std::string::npos) {
+            std::string tree = "DATA_TagAndProbe_Tree";
+            ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
 
-        ROOT::RDF::RNode node_template = data_frame;
-        
-        std::vector<ROOT::RDF::RResultPtr<TH2D>> entry_map_vec;
-        std::vector<ROOT::RDF::RResultPtr<TH3D>> template_vec = TemplateMaker(node_template, cfg, entry_map_vec);
-
-        TFile o_template_file(cfg.templ.o_template_file_data.c_str(), "UPDATE");
-
-        if (o_template_file.IsZombie()) {
-            std::cout << "ERROR: Cannot find output file: " << cfg.templ.o_template_file_data << std::endl;
-            return 1;
-        }
-
-        TDirectory* bin_dir = o_template_file.GetDirectory(cfg.templ.bins_settup.c_str());
-        
-        if (!bin_dir) {
-            bin_dir = o_template_file.mkdir(cfg.templ.bins_settup.c_str());
-        }
-
-        bin_dir->cd();
-
-        for (int i = 0; i < template_vec.size(); i++) {
-            template_vec[i]->Write(nullptr, TObject::kOverwrite);
+            ROOT::RDF::RNode node = data_frame;
             
-            if ((i < entry_map_vec.size()) && (entry_map_vec[i])) {
-                entry_map_vec[i]->Write(nullptr, TObject::kOverwrite);
-            }
-            
+            int check_maker = TemplateMaker(node, cfg, 1);
         }
 
-        o_template_file.Close();
+        if (cfg.general.dataset.find("MC") != std::string::npos) {
+            std::string tree = "MC_TagAndProbe_Tree";
+            ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
+
+            ROOT::RDF::RNode node = data_frame;
+            
+            int check_maker = TemplateMaker(node, cfg, 2);
+        }
 
         if (cfg.general.verbose) {
             std::cout << "Templates successfully been written to: " << cfg.templ.o_template_file_data 
@@ -283,8 +267,7 @@ int main(int argc, char* argv[]) {
             
             //CheckPlotsTemplate(template_container, cfg);
 
-            int check_fit = Eff_BinnedFit(template_container, cfg.analysis.params, cfg.analysis.pre_fit, fit_results,
-             cfg.general.verbose, &o_template_file, cfg.templ.bins_settup);
+            int check_fit = Eff_BinnedFit(template_container, cfg, fit_results, &o_template_file);
 
             if (check_fit != 0) {
                 std::cout << "ERROR: Fit operation fails." << std::endl;
