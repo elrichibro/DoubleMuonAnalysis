@@ -224,7 +224,7 @@ int main(int argc, char* argv[]) {
         ROOT::EnableImplicitMT();
         
         if (verbose) {
-            std::cout << "Initilizing template operation mode..." << std::endl;
+            std::cout << "Initilizing Template operation mode..." << std::endl;
         }
 
         std::string tree = cfg.general.dataset + "_TagAndProbe_Tree";
@@ -235,16 +235,17 @@ int main(int argc, char* argv[]) {
         std::vector<ROOT::RDF::RResultPtr<TH2D>> entry_map_vec;
         std::vector<ROOT::RDF::RResultPtr<TH3D>> template_vec = TemplateMaker(node_template, cfg, entry_map_vec);
 
-        TFile o_template_file(cfg.analysis.o_template_file_data.c_str(), "UPDATE");
+        TFile o_template_file(cfg.templ.o_template_file_data.c_str(), "UPDATE");
 
         if (o_template_file.IsZombie()) {
-            std::cout << "ERROR: Cannot find output file: " << cfg.analysis.o_template_file_data << std::endl;
+            std::cout << "ERROR: Cannot find output file: " << cfg.templ.o_template_file_data << std::endl;
             return 1;
         }
 
-        TDirectory* bin_dir = o_template_file.GetDirectory(cfg.analysis.bins_settup.c_str());
+        TDirectory* bin_dir = o_template_file.GetDirectory(cfg.templ.bins_settup.c_str());
+        
         if (!bin_dir) {
-            bin_dir = o_template_file.mkdir(cfg.analysis.bins_settup.c_str());
+            bin_dir = o_template_file.mkdir(cfg.templ.bins_settup.c_str());
         }
 
         bin_dir->cd();
@@ -261,14 +262,16 @@ int main(int argc, char* argv[]) {
         o_template_file.Close();
 
         if (cfg.general.verbose) {
-            std::cout << "Templates successfully been written to: " << cfg.analysis.o_template_file_data 
-            << "[" << cfg.analysis.bins_settup << "]" <<  std::endl;
+            std::cout << "Templates successfully been written to: " << cfg.templ.o_template_file_data 
+            << "[" << cfg.templ.bins_settup << "]" <<  std::endl;
         }
     }
 
     if (cfg.general.operation_mode.find("Analysis") != std::string::npos) {
         try {        
             //ROOT::EnableImplicitMT();
+
+            TFile o_template_file(cfg.templ.o_template_file_data.c_str(), "UPDATE");
 
             std::vector<Template_RooF> template_container;
             std::vector<FitResult> fit_results;
@@ -280,7 +283,8 @@ int main(int argc, char* argv[]) {
             
             //CheckPlotsTemplate(template_container, cfg);
 
-            int check_fit = Eff_BinnedFit(template_container, cfg.analysis.params, fit_results, cfg.general.verbose);
+            int check_fit = Eff_BinnedFit(template_container, cfg.analysis.params, cfg.analysis.pre_fit, fit_results,
+             cfg.general.verbose, &o_template_file, cfg.templ.bins_settup);
 
             if (check_fit != 0) {
                 std::cout << "ERROR: Fit operation fails." << std::endl;
@@ -289,13 +293,32 @@ int main(int argc, char* argv[]) {
                 
             std::vector<std::string> booked_values = {"efficiency", "n_tot", "fit_status", "mu", "sigma", "lambda_pass", "lambda_fail"};
 
-            int check = SaveFitPlots(fit_results, cfg, booked_values);
+            int check = SaveFitPlots(fit_results, cfg, &o_template_file, booked_values);
 
             if (check != 0) {
                 std::cout << "ERROR: Save operation fails, exiting..." << std::endl;
                 return 0;
             }
             
+            int i = 1;
+
+            for (const auto& it : fit_results) {
+                std::cout << "" << std::endl;
+                std::cout << "Fit number: " << i << ", status: " << it.fit_status << std::endl; 
+                std::cout << "" << std::endl;
+                
+                std::cout << "    Efficiency: " << it.efficiency << " +- " << it.efficiency_err << std::endl;
+                std::cout << "    Total signal events: " << it.n_tot << " +- " << it.n_tot_err << std::endl;
+
+                std::cout << "    Mean: " << it.mu << " +- " << it.mu_err << std::endl;
+                std::cout << "    Sigma: " << it.sigma << " +- " << it.sigma_err << std::endl;
+                
+                std::cout << "    Lambda pass: " << it.lambda_pass << " +- " << it.lambda_pass_err << std::endl;
+                std::cout << "    Lambda fail: " << it.lambda_fail << " +- " << it.lambda_fail_err << std::endl;
+
+                i++;
+            }
+
             /*
             std::string tree = cfg.general.dataset + "_" + cfg.general.analysis_mode + "_Tree";
             ROOT::RDataFrame data_frame(tree, cfg.io.o_file_data);
