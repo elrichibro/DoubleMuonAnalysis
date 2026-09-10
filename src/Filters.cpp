@@ -51,20 +51,56 @@ ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_t
 // Kinematic muon filter
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& mask_name, const std::string& pt_column, const std::string& eta_column,
- float pt_cut, float eta_cut) {
-    
-    ROOT::RDF::RNode node_kin_cut = node
-        .Define(mask_name, [pt_cut, eta_cut](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta) {
-            
-            // Physical cut
-            return ((pt > pt_cut) && (abs(eta) < eta_cut));
+ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& pt_col, const std::string& eta_col, const std::string& mll_col, 
+std::vector<std::string>& columns_name, const config_struct& cfg, const int dataset, const int succes) {
 
-        }, {pt_column, eta_column});
+    ROOT::RDF::RNode node_kin_cut = node;
+
+    const auto& eta_bins = cfg.templ.eta_bins;
+    const auto& pt_bins  = cfg.templ.pt_bins;
+
+    for (int i = 0; i < eta_bins.size() - 1; i++) {
+        float eta_min = eta_bins.at(i);
+        float eta_max = eta_bins.at(i + 1);
+
+        for (int j = 0; j < pt_bins.size() - 1; j++) {
+            float pt_min = pt_bins.at(j);
+            float pt_max = pt_bins.at(j + 1);
+
+            std::string column_name = "Mll_Eta" + std::to_string(i + 1) + "_Pt" + std::to_string(j + 1);
+
+            if (dataset == 1) {
+                column_name = "DATA_" + column_name;
+            } else if (dataset == 2) {
+                column_name = "MC_" + column_name;
+            } else {
+                std::cout << "ERROR: invalid identifier DATA/MC, exiting..." << std::endl;
+            }
+
+            if (succes == 1) {
+                column_name = column_name + "_Pass";
+            } else if (succes == 2) {
+                column_name = column_name + "_Fail";
+            } else {
+                std::cout << "ERROR: invalid identifier pass/fail, exiting..." << std::endl;
+            }
+
+            columns_name.push_back(column_name);
+
+            node_kin_cut = node_kin_cut
+                .Define(column_name, [eta_min, eta_max, pt_min, pt_max](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, 
+                    const ROOT::RVec<float>& mll) {
+                        auto mask = ((pt > pt_min) && (pt <= pt_max) && (eta > eta_min) && (eta <= eta_max));
+                    
+                    return mll[mask];
+                }, {pt_col, eta_col, mll_col});
+
+            std::cout << "Filter applied: " << column_name << std::endl; 
+        }
+    }
 
     return node_kin_cut;
 }
-
 // ------------------------------------------------------------------------------------------------------------------------------------
 // TagAndProbe selection - Data
 // ------------------------------------------------------------------------------------------------------------------------------------
