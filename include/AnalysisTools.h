@@ -8,6 +8,12 @@
 #include "TH3D.h"
 
 #include <ROOT/RDataFrame.hxx>
+#include <TFile.h>
+
+#include <RooRealVar.h>
+#include <RooCategory.h>
+#include <RooDataHist.h>
+#include <RooSimultaneous.h>
 
 #include <string>
 #include <vector>
@@ -77,13 +83,26 @@ void CheckPlotsTemplate(const std::vector<Template_RooF>& container, const confi
 /// @param cfg 
 /// @param results 
 /// @return 
-int Eff_BinnedFit(std::vector<Template_RooF>& container, const analysis_params& params, std::vector<FitResult>& results, const int verb);
+int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const analysis_params& params, const bool pre_fit, std::vector<FitResult>& results, 
+    const int verb, TFile* o_file, const std::string& o_dir);
 
 /// @brief 
 /// @param results 
 /// @param cfg 
 /// @param vals 
 /// @return 
-int SaveFitPlots(const std::vector<FitResult>& results, const config_struct& cfg, const std::vector<std::string>& vals);
+int SaveFitPlots(const std::vector<FitResult>& results, const config_struct& cfg, TFile* o_file, const std::vector<std::string>& vals);
+
+/// @brief 
+/// @param mll 
+/// @param sample 
+/// @param data 
+/// @param simPdf 
+/// @param res 
+/// @param o_file 
+/// @param output_dir 
+void SaveBinFitCanvas(RooRealVar& mll, RooCategory& sample, RooDataHist& data, RooSimultaneous& simPdf, const FitResult& res, TFile* o_file, 
+const std::string& o_dir);
+
 
 #endif
