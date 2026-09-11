@@ -15,6 +15,17 @@
 
 /// @brief 
 /// @param node 
+/// @param val_map 
+/// @param run_name 
+/// @param block_name 
+/// @return 
+ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map, const std::string& run_name, const std::string& block_name);
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+// Kinematical cuts
+// ------------------------------------------------------------------------------------------------------------------------------------
+/// @brief 
+/// @param node 
 /// @param pt_col 
 /// @param eta_col 
 /// @param mll_col 
@@ -25,22 +36,6 @@
 ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& pt_col, const std::string& eta_col, const std::string& mll_col, 
 std::vector<std::string>& columns_name, const config_struct& cfg, const int dataset, const int succes);
 
-// ------------------------------------------------------------------------------------------------------------------------------------
-// Kinematical cuts
-// ------------------------------------------------------------------------------------------------------------------------------------
-
-/**
- * @brief Defines a new column in the dataset that represents the mask of particles that pass the kinematic cuts.
- * @param node RDF node.
- * @param mask_name Name of the new column-mask.
- * @param pt_name Column name for particle transverse momentum.
- * @param eta_name Column name for particle pseudorapidity.
- * @param pt_cut Minimum transverse momentum threshold.
- * @param eta_cut Pseudorapidity range.
- * @return Returns the node containing the bool mask.
-*/
-ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& mask_name, const std::string& pt_name, const std::string& eta_name,
-const config_struct& cfg);
 
 // -------
 // STRUCTS
