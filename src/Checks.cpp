@@ -30,6 +30,8 @@
     0 x ( 0 0 1 0 )( 0 0 0 1 )( 0 0 0 0 )( 0 0 0 1 ) = 0x2101
 */
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 ROOT::RDF::RNode CalculateInvMass(ROOT::RDF::RNode node, const std::string& tag, int FSR) {
     // Column names construction
     const std::string mask = "good_Mask_" + tag;
@@ -41,27 +43,32 @@ ROOT::RDF::RNode CalculateInvMass(ROOT::RDF::RNode node, const std::string& tag,
 
     // Node definition
     ROOT::RDF::RNode node_FSR = node
+        // True Event Filter: Z0 -> mu+ mu-
         .Filter([FSR](const ROOT::RVec<Int_t>& pdg, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother) {
             return is_MC_Event(pdg, flags, mother, FSR);
             },
         {"GenPart_pdgId", "GenPart_statusFlags", "GenPart_genPartIdxMother"}, "1. True Event" + tag)
         
+        // Mu / AntiMu maks
         .Define("Mu_mask_" + tag, (FSR == 1) ? is_MC_Muon_bFSR : is_MC_Muon_aFSR, {"GenPart_pdgId", "GenPart_statusFlags", "GenPart_genPartIdxMother"})
         .Define("AMu_mask_" + tag, (FSR == 1) ? is_MC_AntiMuon_bFSR : is_MC_AntiMuon_aFSR, {"GenPart_pdgId", "GenPart_statusFlags", "GenPart_genPartIdxMother"})
 
+        // Merge of both masks
         .Define(mask, "Mu_mask_" + tag + " || AMu_mask_" + tag)
 
+        // Selection of Mu/AntiMu pt, eta, phi, mass
         .Define(pt, "GenPart_pt[" + mask + "]")
         .Define(eta, "GenPart_eta[" + mask + "]")
         .Define(phi, "GenPart_phi[" + mask + "]")
         .Define(mass, "GenPart_mass[" + mask + "]")
 
+        // Invariant Mass of the muon pair
         .Define(m_ll, CalculateInvariantMass<float>, {pt, eta, phi, mass});
 
     return node_FSR;
 }
 
-
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 ROOT::RDF::RNode node_recMC(ROOT::RDF::RNode node) {
     
@@ -87,10 +94,13 @@ ROOT::RDF::RNode node_recMC(ROOT::RDF::RNode node) {
     return node_rec;
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 ROOT::RVec<bool> is_MC_Z0(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags) {
     return ((pdgId == 23) && ((flags & 0x2101) == 0x2101));
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 int get_MC_Z0_idx(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags) {
     auto z_mask = is_MC_Z0(pdgId, flags);
@@ -102,6 +112,7 @@ int get_MC_Z0_idx(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags
     return static_cast<int>(ROOT::VecOps::ArgMax(z_mask));
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 ROOT::RVec<bool> is_MC_Muon_bFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother_id) {
     int z_idx = get_MC_Z0_idx(pdgId, flags);
@@ -113,6 +124,7 @@ ROOT::RVec<bool> is_MC_Muon_bFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVe
     return ((pdgId == 13) && ((flags & 0x181) == 0x181) && (mother_id == z_idx));
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 ROOT::RVec<bool> is_MC_AntiMuon_bFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother_id) {
     int z_idx = get_MC_Z0_idx(pdgId, flags);
@@ -124,33 +136,38 @@ ROOT::RVec<bool> is_MC_AntiMuon_bFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT:
     return ((pdgId == -13) && ((flags & 0x181) == 0x181) && (mother_id == z_idx));
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 ROOT::RVec<bool> is_MC_Muon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother_id) {
     return ((pdgId == 13) && ((flags & 0x2101) == 0x2101));
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 ROOT::RVec<bool> is_MC_AntiMuon_aFSR(const ROOT::RVec<Int_t>& pdgId, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother_id) {
     return ((pdgId == -13) && ((flags & 0x2101) == 0x2101));
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 bool is_MC_Event(const ROOT::RVec<int>& pdgId, const ROOT::RVec<int>& flags, const ROOT::RVec<int>& mother_id, const int FSR) {
-    const uint16_t num_parts = pdgId.size();
     
-    unsigned int count_Z0 = 0;
-    unsigned int count_Mu = 0;
-    unsigned int count_aMu = 0;
+    const int num_parts = pdgId.size();
+    int count_Z0 = 0;
+    int count_Mu = 0;
+    int count_aMu = 0;
 
     const uint16_t mask_aFSR = 0x2101;
     const uint16_t mask_bFSR = 0x181;
 
+    // Before FSR status
     if (FSR == 1) {
         int z_idx = -1;
 
-        for (uint8_t i = 0; i < num_parts; i++) {
+        for (int i = 0; i < num_parts; i++) {
             if ((pdgId[i] == 23) && ((flags[i] & mask_aFSR) == mask_aFSR)) {
                 count_Z0++;
-                z_idx = static_cast<int>(i);
+                z_idx = i;
             }
         }
 
@@ -158,7 +175,7 @@ bool is_MC_Event(const ROOT::RVec<int>& pdgId, const ROOT::RVec<int>& flags, con
             return false;
         }
 
-        for (size_t i = 0; i < num_parts; i++) {
+        for (int i = 0; i < num_parts; i++) {
             if (((flags[i] & mask_bFSR) == mask_bFSR) && (mother_id[i] == z_idx)) {
                 if (pdgId[i] == 13) {
                     count_Mu++;
@@ -170,8 +187,9 @@ bool is_MC_Event(const ROOT::RVec<int>& pdgId, const ROOT::RVec<int>& flags, con
 
         return ((count_Mu == 1) && (count_aMu == 1));
 
+    // After FSR
     } else if (FSR == 2) {
-        for (size_t i = 0; i < num_parts; i++) {
+        for (int i = 0; i < num_parts; i++) {
             if ((flags[i] & mask_aFSR) == mask_aFSR) {
                 if (pdgId[i] == 23) {
                     count_Z0++;
