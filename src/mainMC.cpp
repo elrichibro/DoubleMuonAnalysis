@@ -20,7 +20,9 @@ int main(int argc, char* argv[]) {
     std::string json_path = "";
     
     int verbose = 0;
+    bool control = false;
     bool visualize = false;
+    
     bool save_plots = false;
     bool save_data = false;
     
@@ -37,6 +39,8 @@ int main(int argc, char* argv[]) {
             verbose = 1;
         } else if ((arg == "--visualize") || (arg == "-vis")) {
             visualize = true;
+        } else if ((arg == "--control") || (arg == "-c")) {
+            control = true;
         } else {
             std::cout << "ERROR: invalid input command, please try again, exinting.\n" << std::endl;
             return 1;
@@ -71,11 +75,18 @@ int main(int argc, char* argv[]) {
         Verbose_config(cfg);
     }
 
+    if (control) {
+        std::cout << "Control config settup done, exiting." << std::endl;
+        return 0;
+    }
     const flags_config flags_TP = cfg.flag_TP;
     const cuts_config cuts_TP = cfg.cut_TP;
 
     const flags_config flags_RM = cfg.flag_TP;
     const cuts_config cuts_RM = cfg.cut_TP;
+
+    validation_type validation_map = Validation_load(cfg.io.val_file);
+    std::cout << "Validation Map created." << std::endl;
     
     // ------------------------------------------------------------------------------------------------------------------------------------
     // VISUALIZATION OPTION
@@ -167,7 +178,8 @@ int main(int argc, char* argv[]) {
                             "Muon_genPartFlav", "Muon_genPartIdx", "GenPart_status", "GenPart_pdgId", "GenPart_eta", "GenPart_phi"});
                 
                 } else if (cfg.general.dataset == "DATA") {
-
+                    node_TP = ApplyValidationFilter(node_TP, validation_map, "run", "luminosityBlock");
+                    
                     node_TP = node_TP
                         .Define("TP_Result",
                         [flags_TP, cuts_TP](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
@@ -205,7 +217,7 @@ int main(int argc, char* argv[]) {
 
             manager.Run();
 
-            if (visualize && app != nullptr) {
+            if ((cfg.selection.visual_sel) && (app != nullptr)) {
                 std::cout << "Initializing visualization ..." << std::endl;
                 app->Run();
                 
@@ -227,7 +239,7 @@ int main(int argc, char* argv[]) {
             std::cout << "Initilizing Template operation mode..." << std::endl;
         }
 
-        if (cfg.general.dataset.find("DATA") != std::string::npos) {
+        if (cfg.general.dataset == "DATA") {
             std::string tree = "DATA_TagAndProbe_Tree";
             ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
 
@@ -236,7 +248,7 @@ int main(int argc, char* argv[]) {
             int check_maker = TemplateMaker(node, cfg, 1);
         }
 
-        if (cfg.general.dataset.find("MC") != std::string::npos) {
+        if (cfg.general.dataset == "MC") {
             std::string tree = "MC_TagAndProbe_Tree";
             ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
 
@@ -253,9 +265,9 @@ int main(int argc, char* argv[]) {
 
     if (cfg.general.operation_mode.find("Analysis") != std::string::npos) {
         try {        
-            //ROOT::EnableImplicitMT();
+            ROOT::EnableImplicitMT();
 
-            TFile o_template_file(cfg.templ.o_template_file_data.c_str(), "UPDATE");
+            TFile o_template_file(cfg.templ.o_template_file_data.c_str(), "UPDATE");// Template file -> read intput
 
             std::vector<Template_RooF> template_container;
             std::vector<FitResult> fit_results;
@@ -264,10 +276,14 @@ int main(int argc, char* argv[]) {
                 std::cout << "ERROR: Load operations fails, exiting." << std::endl;
                 return 1;
             }
-            
             //CheckPlotsTemplate(template_container, cfg);
+            
 
-            int check_fit = Eff_BinnedFit(template_container, cfg, fit_results, &o_template_file);
+            TFile o_fit_file(cfg.analysis.o_fit_file.c_str(), "UPDATE");// Current writing file
+
+            o_fit_file.cd();
+
+            int check_fit = Eff_BinnedFit(template_container, cfg, fit_results, &o_fit_file);
 
             if (check_fit != 0) {
                 std::cout << "ERROR: Fit operation fails." << std::endl;
@@ -276,7 +292,7 @@ int main(int argc, char* argv[]) {
                 
             std::vector<std::string> booked_values = {"efficiency", "n_tot", "fit_status", "mu", "sigma", "lambda_pass", "lambda_fail"};
 
-            int check = SaveFitPlots(fit_results, cfg, &o_template_file, booked_values);
+            int check = SaveMapFittedValues(fit_results, cfg, &o_fit_file, booked_values);
 
             if (check != 0) {
                 std::cout << "ERROR: Save operation fails, exiting..." << std::endl;
