@@ -4,8 +4,6 @@
 #include <Rtypes.h>
 
 // ------------------------------------------------------------------------------------------------------------------------------------
-// Run validation filter
-// ------------------------------------------------------------------------------------------------------------------------------------
 
 ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map, const std::string& run_name, const std::string& block_name) {
     ROOT::RDF::RNode node_validation = node
@@ -48,11 +46,9 @@ ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_t
 }
 
 // ------------------------------------------------------------------------------------------------------------------------------------
-// Kinematic muon filter
-// ------------------------------------------------------------------------------------------------------------------------------------
 
-ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& pt_col, const std::string& eta_col, const std::string& mll_col, 
-std::vector<std::string>& columns_name, const config_struct& cfg, const int dataset, const int succes) {
+ROOT::RDF::RNode ApplyKinematicalBinDivision(ROOT::RDF::RNode node, const config_struct& cfg, const std::string& pt_col, const std::string& eta_col, 
+    const std::string& mll_col, std::vector<std::string>& columns_name,  const int dataset, const int sample) {
 
     ROOT::RDF::RNode node_kin_cut = node;
 
@@ -77,9 +73,9 @@ std::vector<std::string>& columns_name, const config_struct& cfg, const int data
                 std::cout << "ERROR: invalid identifier DATA/MC, exiting..." << std::endl;
             }
 
-            if (succes == 1) {
+            if (sample == 1) {
                 column_name = column_name + "_Pass";
-            } else if (succes == 2) {
+            } else if (sample == 2) {
                 column_name = column_name + "_Fail";
             } else {
                 std::cout << "ERROR: invalid identifier pass/fail, exiting..." << std::endl;
@@ -101,8 +97,7 @@ std::vector<std::string>& columns_name, const config_struct& cfg, const int data
 
     return node_kin_cut;
 }
-// ------------------------------------------------------------------------------------------------------------------------------------
-// TagAndProbe selection - Data
+
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 ResultsTagAndProbe CalculateTagAndProbe_DATA(const MuonKinematics_TP& kin, const MuonFlags_TP& flags, const flags_config cfg_f, 
@@ -167,8 +162,6 @@ const cuts_config cfg_c) {
     return results;
 }
 
-// ------------------------------------------------------------------------------------------------------------------------------------
-// TagAndProbe selection - MonteCarlo
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 ResultsTagAndProbe CalculateTagAndProbe_MC(const MuonKinematics_TP& kin, const MuonFlags_TP& flags, const flags_config cfg_f, 
@@ -280,8 +273,6 @@ const cuts_config cfg_c, const MuonFlags_RM& DeltaR_flags, const ROOT::RVec<floa
 }
 
 // ------------------------------------------------------------------------------------------------------------------------------------
-// Response Matrix calculus
-// ------------------------------------------------------------------------------------------------------------------------------------
 
 ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin, const MuonFlags_RM& flags, const flags_config cfg_f, 
 const cuts_config cfg_c) {
@@ -323,6 +314,5 @@ const cuts_config cfg_c) {
             }
         }
     }
-    
     return results;
 }

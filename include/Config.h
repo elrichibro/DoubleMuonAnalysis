@@ -12,13 +12,13 @@
 // General Configuration struct
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-/// @brief 
+/// @brief Stores general settup status.
 struct general_config {
-    std::string dataset = "MC";
-    std::string operation_mode = "";
+    std::string dataset = "MC";// Dataset.
+    std::string operation_mode = "";// Operation mode: Selection, Template, Analysis.
 
-    int verbose = 1;
-    bool visualize = false;
+    int verbose = 1;// General verbose flag.
+    bool visualize = false;// General visualization flag.
 };
 
 /// @brief Stores input/output file paths.
@@ -30,43 +30,47 @@ struct io_config {
     std::string val_file = "";// Validation json file path.
 };
 
+/// @brief Selection mode settup
 struct selection_config {
-    std::string selection_mode = "";
-    bool save_sel_plots = false;
-    bool save_sel_data = false; 
-    bool visual_sel = false;
+    std::string selection_mode = "";// TagAndProbe or RespMatrix.
+    bool save_sel_plots = false;// Flag for saving selection plots.
+    bool save_sel_data = false;// Flag for saving selection data.
+    bool visual_sel = false;// Flag for visualization of selection subdataset.
     std::string o_sel_file_plots = "";// Output file path for plots.
     std::string o_sel_file_data = "";// Output file path for data.
 };
 
+/// @brief Template mode settup
 struct template_config {
-    std::string bins_settup = "";
-    std::string o_template_file_data = "";// Output file path for template analysis.
-    std::string template_type = "";
-    std::vector<float> pt_bins;
-    std::vector<float> eta_bins;
-    float mll_bins = 0;
+    std::string bins_settup = "";// Name of bins status
+    std::string o_template_file_data = "";// Output file path for template mode.
+    std::string template_type = "";// DATA or HISTO unbinned or binned throughtput.
+    std::vector<float> pt_bins;// Vector of pt bins.
+    std::vector<float> eta_bins;// Vector of eta bins.
+    float mll_bins = 0;// Number of Invariant Mass bins.
 };
 
+/// @brief Analysis parameters for fine tuning. 
 struct analysis_params {
-    std::vector<double> efficiency;
-    std::vector<double> n_tot;
+    std::vector<double> efficiency;// Efficiency = N_sig_pass/(N_sig_pass + N_sig_fail)
+    std::vector<double> n_tot;// Total number of Signal probes.
     
-    std::vector<double> mu;
-    std::vector<double> sigma;   
+    std::vector<double> mu;// Mean of convolution gaussian.
+    std::vector<double> sigma;// Sigma of convolution gaussian.
     
-    std::vector<double> lambda_pass;
-    std::vector<double> lambda_fail;
+    std::vector<double> lambda_pass;// Lambda of passed background.
+    std::vector<double> lambda_fail;// Lambda of failed background.
 };
 
+/// @brief Analysis mode settup
 struct analysis_config {
-    bool pre_fit = false;
-    std::string o_fit_file = "";
-    std::string sample_pass_data = "";
-    std::string sample_pass_mc = "";
-    std::string sample_fail_data = "";
-    std::string sample_fail_mc = "";
-    analysis_params params;
+    bool pre_fit = false;// Flag for prefit option.
+    std::string o_fit_file = "";// Fit output file path.
+    std::string sample_pass_data = "";// Data format.
+    std::string sample_pass_mc = "";// Data format.
+    std::string sample_fail_data = "";// Data format.
+    std::string sample_fail_mc = "";// Data format.
+    analysis_params params;// Struct of analysis parameters.
 };
 
 /// @brief Flags for enabling/disablig specifics selections cuts.
@@ -86,19 +90,21 @@ struct cuts_config {
     float mass_max = 200.0f;// Invariant mass Max value
 };
 
+/// @brief Plot settup struct.
 struct plot_config {
-    std::string title_axis = "";
-    float axis_min = 0.0f;
-    float axis_max = 100.f;
-    int nbins = 50;
+    std::string title_axis = "";// Plot title.
+    float axis_min = 0.0f;// Plot min axis value.
+    float axis_max = 100.f;// Plot max axis value.
+    int nbins = 50;// Plot number of bins.
 };
 
+// Canvas settup struct.
 struct canvas_config {
     int width = 800;
     int height = 600; 
 };
 
-/// @brief Stores the other data structs.
+/// @brief General config struct.
 struct config_struct {
     general_config general;
     io_config io;
@@ -120,21 +126,19 @@ struct config_struct {
 };
 
 // ------------------------------------------------------------------------------------------------------------------------------------
+// Configuration functions
+// ------------------------------------------------------------------------------------------------------------------------------------
 
-/**
- * @brief Sets the json file information into the system struct.
- * @param value Reference to the configuration struct. 
- * @param json_path Json file path.
- * @return Returns 0 on success, -1 on failure.
-*/
+/// @brief Sets the json file information into the system struct.
+/// @param value Reference to the configuration struct.
+/// @param json_path Json file path.
+/// @return Returns 0 on success, -1 on failure.
 int Configure(config_struct& value, const std::string& json_path);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-/**
- * @brief Prints on terminal the information contained in the struct.
- * @param value Constant reference to the configuration struct.
-*/
+/// @brief Prints on terminal the information contained in the struct.
+/// @param value Constant reference to the configuration struct.
 void Verbose_config(const config_struct& value);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
@@ -146,11 +150,9 @@ void Verbose_config(const config_struct& value);
 */
 using validation_type = std::unordered_map<std::uint32_t, std::vector<std::pair<std::uint16_t, std::uint16_t>>>;
 
-/**
- * @brief Loads the json validation file info into the validation container.
- * @param json_path Validation json file path.
- * @return Returns the validation map.
-*/
+/// @brief Loads the json validation file info into the validation container.
+/// @param json_path Validation json file path.
+/// @return Returns the validation map.
 validation_type Validation_load(const std::string& json_path);
 
 #endif

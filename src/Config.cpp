@@ -360,19 +360,23 @@ void Verbose_config(const config_struct& value) {
 validation_type Validation_load(const std::string& json_path) {    
     validation_type validation_map;
     
+    // Opening stream
     std::ifstream file(json_path);
     if (!file.is_open()) {
         throw std::runtime_error("Error: cannot open " + json_path);
     }
 
+    // Using JSON lib
     nlohmann::json json_data = nlohmann::json::parse(file);// JSON CORE !!!
     
+    // Loop on JSON object
     for (const auto& [run_number, lum_block] : json_data.items()) {
         std::uint32_t run = static_cast<std::uint32_t>(std::stoul(run_number));
 
         std::vector<std::pair<std::uint16_t, std::uint16_t>> blocks;
         blocks.reserve(lum_block.size());
 
+        // Loop on Luminosity block vector
         for (const auto& iter : lum_block) {
             std::uint16_t start = static_cast<std::uint16_t>(iter[0].get<unsigned int>());
             std::uint16_t end   = static_cast<std::uint16_t>(iter[1].get<unsigned int>());

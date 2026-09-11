@@ -24,6 +24,12 @@
 
 #include "Manager.h"// for snapshot type
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+// ----------------
+// Analysis Structs
+// ----------------
+
 struct Template_RooF{
     int eta_bin_idx;
     int pt_bin_idx;
@@ -70,12 +76,16 @@ struct FitResult {
     int fit_status;
 };
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 /// @brief 
-/// @param node_DATA 
-/// @param node_MC 
+/// @param node 
 /// @param cfg 
+/// @param dataset 
 /// @return 
 int TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const int dataset);
+
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 /// @brief 
 /// @param tree 
@@ -85,24 +95,22 @@ int TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const int dat
 /// @return 
 RooDataSet* LoadRVecIntoDataset(TTree* tree, const std::string& branch_name, RooRealVar& mll, const std::string& ds_name);
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 /// @brief 
 /// @param cfg 
 /// @param container 
 /// @return 
 int LoadTemplate(const config_struct& cfg, std::vector<Template_RooF>& container);
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 /// @brief 
 /// @param container 
 /// @param cfg 
 void CheckPlotsTemplate(const std::vector<Template_RooF>& container, const config_struct& cfg);
 
-/// @brief 
-/// @param analysis_struct 
-/// @param cfg 
-/// @param results 
-/// @param o_file 
-/// @return 
-int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const config_struct& cfg, std::vector<FitResult>& results, TFile* o_file);
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 /// @brief 
 /// @param results 
@@ -111,6 +119,8 @@ int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const config_stru
 /// @param vals 
 /// @return 
 int SaveMapFittedValues(const std::vector<FitResult>& results, const config_struct& cfg, TFile* o_file, const std::vector<std::string>& vals);
+
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 /// @brief 
 /// @param mll 
@@ -123,5 +133,14 @@ int SaveMapFittedValues(const std::vector<FitResult>& results, const config_stru
 void SaveBinFitCanvas(RooRealVar& mll, RooCategory& sample, RooAbsData& data, RooSimultaneous& simPdf, const FitResult& res, TFile* o_file, 
 const config_struct& cfg);
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+/// @brief 
+/// @param analysis_struct 
+/// @param cfg 
+/// @param results 
+/// @param o_file 
+/// @return 
+int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const config_struct& cfg, std::vector<FitResult>& results, TFile* o_file);
 
 #endif

@@ -25,8 +25,6 @@
 #include <TSystem.h>
 
 // ------------------------------------------------------------------------------------------------------------------------------------
-// MC Template Maker
-// ------------------------------------------------------------------------------------------------------------------------------------
 
 int TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const int dataset) {   
     ROOT::RDF::RNode node_hist = node;
@@ -54,6 +52,7 @@ int TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const int dat
 
     std::string name_pass = sample + "_h3_pass";
     std::string name_fail = sample + "_h3_fail";
+    
     std::string name_entries_pass = sample + "_h2_entries_pass";
     std::string name_entries_fail = sample + "_h2_entries_fail";
 
@@ -100,13 +99,13 @@ int TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const int dat
         
         std::vector<std::string> names;
 
-        node_hist = ApplyKinMuonFilter(node_hist, sample + "_Probe_Pt_Pass", sample + "_Probe_Eta_Pass", sample + "_Mll_Pass", 
-            names, cfg, dataset, 1);
+        node_hist = ApplyKinematicalBinDivision(node_hist, cfg, sample + "_Probe_Pt_Pass", sample + "_Probe_Eta_Pass", sample + "_Mll_Pass", 
+            names, dataset, 1);
         
         std::cout << "First filter applied" << std::endl;
 
-        node_hist = ApplyKinMuonFilter(node_hist, sample + "_Probe_Pt_Fail", sample + "_Probe_Eta_Fail", sample + "_Mll_Fail", 
-            names, cfg, dataset, 2);
+        node_hist = ApplyKinematicalBinDivision(node_hist, cfg, sample + "_Probe_Pt_Fail", sample + "_Probe_Eta_Fail", sample + "_Mll_Fail", 
+            names, dataset, 2);
 
         std::cout << "Second filter applied" << std::endl;
         std::cout << "Initializing SnapShot" << std::endl;
