@@ -10,11 +10,14 @@
 
 #include <ROOT/RDataFrame.hxx>
 #include <TFile.h>
+#include "TTree.h"
 
 #include <RooRealVar.h>
 #include <RooCategory.h>
 #include <RooDataHist.h>
 #include <RooSimultaneous.h>
+
+#include <RooDataSet.h>
 
 #include <string>
 #include <vector>
@@ -35,6 +38,11 @@ struct Template_RooF{
     TH1D* h_MC_fail{nullptr};
     TH1D* h_DATA_pass{nullptr};
     TH1D* h_DATA_fail{nullptr};
+
+    RooDataSet* d_MC_pass{nullptr};
+    RooDataSet* d_MC_fail{nullptr};
+    RooDataSet* d_DATA_pass{nullptr};
+    RooDataSet* d_DATA_fail{nullptr};
 };
 
 struct FitResult {
@@ -70,6 +78,14 @@ struct FitResult {
 int TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const int dataset);
 
 /// @brief 
+/// @param tree 
+/// @param branch_name 
+/// @param mll 
+/// @param ds_name 
+/// @return 
+RooDataSet* LoadRVecIntoDataset(TTree* tree, const std::string& branch_name, RooRealVar& mll, const std::string& ds_name);
+
+/// @brief 
 /// @param cfg 
 /// @param container 
 /// @return 
@@ -94,7 +110,7 @@ int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const config_stru
 /// @param o_file 
 /// @param vals 
 /// @return 
-int SaveFitPlots(const std::vector<FitResult>& results, const config_struct& cfg, TFile* o_file, const std::vector<std::string>& vals);
+int SaveMapFittedValues(const std::vector<FitResult>& results, const config_struct& cfg, TFile* o_file, const std::vector<std::string>& vals);
 
 /// @brief 
 /// @param mll 
@@ -104,8 +120,8 @@ int SaveFitPlots(const std::vector<FitResult>& results, const config_struct& cfg
 /// @param res 
 /// @param o_file 
 /// @param o_dir 
-void SaveBinFitCanvas(RooRealVar& mll, RooCategory& sample, RooDataHist& data, RooSimultaneous& simPdf, const FitResult& res, TFile* o_file, 
-const std::string& o_dir);
+void SaveBinFitCanvas(RooRealVar& mll, RooCategory& sample, RooAbsData& data, RooSimultaneous& simPdf, const FitResult& res, TFile* o_file, 
+const config_struct& cfg);
 
 
 #endif
