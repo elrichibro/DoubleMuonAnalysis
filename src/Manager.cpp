@@ -20,6 +20,7 @@ Classes:
 
 void ObjectTH1::Write(TFile& file) {
     if (th1) {
+        file.cd();
         th1->Write();
     }
 }
@@ -38,6 +39,7 @@ void ObjectTH1::Draw(TCanvas& canvas) {
 
 void ObjectTH2::Write(TFile& file) {
     if (th2) {
+        file.cd();
         th2->Write();
     }
 }
