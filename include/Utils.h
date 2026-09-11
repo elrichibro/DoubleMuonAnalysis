@@ -10,23 +10,23 @@
 #include <cstdint>
 
 // ------------------------------------------------------------------------------------------------------------------------------------
+
 /*
 This file contains:
     - CalculateInvariantMass()
     - CalculateInvariantMass_Pair()
     - CalculatePhiStar()
 */
+
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-/**
- * @brief Calculates the invariant mass of the first two particles in the event.
- * @tparam Template: float, double.
- * @param pt ROOT Vector containing the transverse momentum of the particles.
- * @param eta Pseudorapidity.
- * @param phi Angular variable in cilindrical cordinates.
- * @param mass Mass values of the event particles.
- * @return Returns the invariant mass.
- */
+/// @brief Calculates the invariant mass of the first two particles in the event.
+/// @tparam T Template: float, double.
+/// @param pt ROOT Vector containing the transverse momentum of the particles.
+/// @param eta Pseudorapidity.
+/// @param phi Angular variable in cilindrical cordinates.
+/// @param mass Mass values of the event particles.
+/// @return Returns the invariant mass.
 template <typename T>
 T CalculateInvariantMass(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi, const ROOT::RVec<T>& mass) {
     
@@ -37,17 +37,17 @@ T CalculateInvariantMass(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, cons
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-/// @brief 
-/// @tparam T 
-/// @param pt1 
-/// @param pt2 
-/// @param eta1 
-/// @param eta2 
-/// @param phi1 
-/// @param phi2 
-/// @param mass1 
-/// @param mass2 
-/// @return 
+/// @brief Calculates the invariant mass of a pair of particles givin the individual quantities.
+/// @tparam T float, double
+/// @param pt1 Transverse momentum of first particle.
+/// @param pt2 Transverse momentum of second particle.
+/// @param eta1 Pseudorapidity of the first particle.
+/// @param eta2 Pseudorapidity of the second particle.
+/// @param phi1 Angular emission variable of first particle.
+/// @param phi2 Angular emission variable of second particle.
+/// @param mass1 Mass quantity of first particle.
+/// @param mass2 Mass quantity of second particle.
+/// @return The invariant mass of the pair.
 template <typename T>
 T CalculateInvariantMass_Pair(const T pt1, const T pt2, const T eta1, const T eta2, const T phi1, const T phi2, const T mass1, const T mass2) {
     
@@ -89,7 +89,5 @@ T CalculatePhiStar(const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi) {
 
     return std::tan((TMath::Pi() - delta_phi) / 2.0) * sin;
 }
-
-// ------------------------------------------------------------------------------------------------------------------------------------
 
 #endif

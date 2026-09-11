@@ -10,32 +10,31 @@
 #include "Config.h"
 
 // ------------------------------------------------------------------------------------------------------------------------------------
-// Validation Runs
-// ------------------------------------------------------------------------------------------------------------------------------------
 
-/// @brief 
-/// @param node 
-/// @param val_map 
-/// @param run_name 
-/// @param block_name 
-/// @return 
+/// @brief Apply the validation check to all the events in the dataset.
+/// @param node Input RDF node.
+/// @param val_map Struct containing the validated run and the relative luminosity blocks.
+/// @param run_name Name of the "run" column in the dataset.
+/// @param block_name Name of the "luminosity block" column in the dataset.
+/// @return A RDF node with all validated events for post analysis.
 ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map, const std::string& run_name, const std::string& block_name);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
-// Kinematical cuts
-// ------------------------------------------------------------------------------------------------------------------------------------
-/// @brief 
-/// @param node 
-/// @param pt_col 
-/// @param eta_col 
-/// @param mll_col 
-/// @param columns_name 
-/// @param cfg 
-/// @param dataset 
-/// @return 
-ROOT::RDF::RNode ApplyKinMuonFilter(ROOT::RDF::RNode node, const std::string& pt_col, const std::string& eta_col, const std::string& mll_col, 
-std::vector<std::string>& columns_name, const config_struct& cfg, const int dataset, const int succes);
 
+/// @brief Applies the kinematical bin division to and unbinned dataset.
+/// @param node Input RDF node
+/// @param pt_col Name of the transverse momentum column.
+/// @param eta_col Name of the pseudorapidity column.
+/// @param mll_col Name of the invariant mass column.
+/// @param columns_name Column names for Snapshot operation.
+/// @param cfg General configure struct.
+/// @param dataset MC or DATA  
+/// @param sample PASS or FAIL
+/// @return Returns the RDF node with the new defined quantities.
+ROOT::RDF::RNode ApplyKinematicalBinDivision(ROOT::RDF::RNode node, const config_struct& cfg, const std::string& pt_col, const std::string& eta_col,
+    const std::string& mll_col, std::vector<std::string>& columns_name, const int dataset, const int sample);
+
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 // -------
 // STRUCTS
@@ -91,51 +90,44 @@ struct MuonFlags_RM {
     const ROOT::RVec<int>& pdg_id_gen;// PDG id of the particle.
 };
 
-// -------
-// METHODS
-// -------
 
 // ------------------------------------------------------------------------------------------------------------------------------------
-// TagAndProbe
-// ------------------------------------------------------------------------------------------------------------------------------------
 
-/**
- * @brief TagAndProbe function selection for MonteCarlo sample (by adding a DeltaR selection)
- * @param kin Muon kinematic event values.
- * @param flags Muon event flags.
- * @param cfg_f Contains the kinematical flags. Passed by value -> small struct -> L1/L2 catche
- * @param cfg_c Stores the cuts values.
- * @param DeltaR_flags Flags for Generated/Reconstructed muons pairing.
- * @param gen_eta Pseudorapidity of Generated muon used for DeltaR calculus.
- * @param gen_phi Phi angle of Generated muon used for DeltaR calculus.
- * @return Struct containing probe muons kinematical variables.
-*/
+// ---------
+// Functions
+// ---------
+
+/// @brief TagAndProbe function selection for MonteCarlo sample (by adding a DeltaR selection)
+/// @param kin Muon kinematic event values.
+/// @param flags Muon event flags.
+/// @param cfg_f Contains the kinematical flags. Passed by value -> small struct -> L1/L2 catche
+/// @param cfg_c Stores the cuts values.
+/// @param DeltaR_flags Flags for Generated/Reconstructed muons pairing.
+/// @param gen_eta Pseudorapidity of Generated muon used for DeltaR calculus.
+/// @param gen_phi Phi angle of Generated muon used for DeltaR calculus.
+/// @return Struct containing probe muons kinematical variables.
 ResultsTagAndProbe CalculateTagAndProbe_MC(const MuonKinematics_TP& kin, const MuonFlags_TP& flags, const flags_config cfg_f, 
 const cuts_config cfg_c, const MuonFlags_RM& DeltaR_flags, const ROOT::RVec<float> gen_eta, const ROOT::RVec<float> gen_phi);
 
-/**
- * @brief TagAndProbe function selection for data sample.
- * @param kin Muon kinematic event values.
- * @param flags Muon event flags.
- * @param cfg_f Contains the kinematical flags. Passed by value -> small struct -> L1/L2 catche
- * @param cfg_c Stores the cuts values.
- * @return Struct containing probe muons kinematical variables.
-*/
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+/// @brief TagAndProbe function selection for data sample.
+/// @param kin Muon kinematic event values.
+/// @param flags Muon event flags.
+/// @param cfg_f Contains the kinematical flags. Passed by value -> small struct -> L1/L2 catche
+/// @param cfg_c Stores the cuts values.
+/// @return Struct containing probe muons kinematical variables.
 ResultsTagAndProbe CalculateTagAndProbe_DATA(const MuonKinematics_TP& kin, const MuonFlags_TP& flags, const flags_config cfg_f, 
 const cuts_config cfg_c);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
-// ResponseMatrix
-// ------------------------------------------------------------------------------------------------------------------------------------
 
-/**
- * @brief Calculates the Response Matrix between Generated and Reconstructed muons in MonteCarlo sample.
- * @param kin Muon kinematical variables.
- * @param flags Muon event flags.
- * @param cfg_f Contains the kinematical flags. Passed by value -> small struct -> L1/L2 catche
- * @param cfg_c Stores the cuts values.
- * @return Struct containing the transverse momentum and pseudorapidity of muons that pass the selection. 
-*/
+/// @brief Calculates the Response Matrix between Generated and Reconstructed muons in MonteCarlo sample.
+/// @param kin Muon kinematical variables.
+/// @param flags Muon event flags.
+/// @param cfg_f Contains the kinematical flags. Passed by value -> small struct -> L1/L2 catche
+/// @param cfg_c Stores the cuts values.
+/// @return Struct containing the transverse momentum and pseudorapidity of muons that pass the selection.
 ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin, const MuonFlags_RM& flags, const flags_config cfg_f, 
 const cuts_config cfg_c);
 
