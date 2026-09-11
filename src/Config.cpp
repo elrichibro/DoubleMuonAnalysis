@@ -41,7 +41,7 @@ int Configure(config_struct& value, const std::string& json_path) {
             const auto& j = json_obj["selection"];
 
             value.selection.selection_mode = j.value("selection_mode", value.selection.selection_mode);
-            value.selection.save_sel_plots = j.value("save_sel_plot", value.selection.save_sel_plots);
+            value.selection.save_sel_plots = j.value("save_sel_plots", value.selection.save_sel_plots);
             value.selection.save_sel_data = j.value("save_sel_data", value.selection.save_sel_data);
             value.selection.visual_sel = j.value("visual_sel", value.selection.visual_sel);
             value.selection.o_sel_file_plots = j.value("o_sel_file_plots", value.selection.o_sel_file_plots);
@@ -68,6 +68,12 @@ int Configure(config_struct& value, const std::string& json_path) {
             const auto& j = json_obj["analysis"];
             
             value.analysis.pre_fit = j.value("pre_fit", value.analysis.pre_fit);
+            value.analysis.o_fit_file = j.value("o_fit_file", value.analysis.o_fit_file);
+
+            value.analysis.sample_pass_data = j.value("sample_pass_data", value.analysis.sample_pass_data);
+            value.analysis.sample_pass_mc = j.value("sample_pass_mc", value.analysis.sample_pass_mc);
+            value.analysis.sample_fail_data = j.value("sample_fail_data", value.analysis.sample_fail_data);
+            value.analysis.sample_fail_mc = j.value("sample_fail_mc", value.analysis.sample_fail_mc);
             
             if (j.contains("params")) {
                 const auto& j_p = j["params"];
@@ -226,39 +232,44 @@ void Verbose_config(const config_struct& value) {
     
     std::cout << "Analysis settup:" << std::endl;
     std::cout << "    Pre-Fit flag option: " << value.analysis.pre_fit << std::endl;
+    std::cout << "    Fit results file path: " << value.analysis.o_fit_file << std::endl;
+    std::cout << "    Sample Data Pass: " << value.analysis.sample_pass_data << std::endl;
+    std::cout << "    Sample MC Pass: " << value.analysis.sample_pass_mc << std::endl;
+    std::cout << "    Sample Data Fail: " << value.analysis.sample_fail_data << std::endl;
+    std::cout << "    Sample MC Fail: " << value.analysis.sample_fail_mc << std::endl;
 
     std::cout << "    Fit parameters: " << std::endl;
-    std::cout << "        Efficiency: |";
+    std::cout << "        Efficiency: | ";
     for (auto it : value.analysis.params.efficiency) {
         std::cout << it << " | ";
     }
     std::cout << std::endl;
     
-    std::cout << "        Signal Events: |";
+    std::cout << "        Signal Events: | ";
     for (auto it : value.analysis.params.n_tot) {
         std::cout << it << " | ";
     }
     std::cout << std::endl;
     
-    std::cout << "        Gaussian mean: |";
+    std::cout << "        Gaussian mean: | ";
     for (auto it : value.analysis.params.mu) {
         std::cout << it << " | ";
     }
     std::cout << std::endl;
     
-    std::cout << "        Gaussian sigma: |";
+    std::cout << "        Gaussian sigma: | ";
     for (auto it : value.analysis.params.sigma) {
         std::cout << it << " | ";
     }
     std::cout << std::endl;
     
-    std::cout << "        Lambda pass: |";
+    std::cout << "        Lambda pass: | ";
     for (auto it : value.analysis.params.lambda_pass) {
         std::cout << it << " | ";
     }
     std::cout << std::endl;
     
-    std::cout << "        Lambda fail: |";
+    std::cout << "        Lambda fail: | ";
     for (auto it : value.analysis.params.lambda_fail) {
         std::cout << it << " | ";
     }

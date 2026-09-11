@@ -1,6 +1,6 @@
 {
   "general": { 
-    "dataset": "DATA_MC",
+    "dataset": "MC",
     "operation_mode":"Analysis",
     "verbose": 1,
     "visualize":true
@@ -16,8 +16,8 @@
 
   "selection": {
     "selection_mode": "TagAndProbe",
-    "save_sel_plots":false,
-    "save_sel_data":false,
+    "save_sel_plots":true,
+    "save_sel_data":true,
     "visual_sel":false,
     "o_sel_file_plots":"../output/risultati_plots.root",
     "o_sel_file_data":"../output/risultati_data.root"
@@ -34,6 +34,11 @@
   
   "analysis": {
     "pre_fit":true,
+    "o_fit_file":"../output/risultati_fit.root",
+    "sample_pass_data":"histo",
+    "sample_pass_mc":"histo",
+    "sample_fail_data":"histo",
+    "sample_fail_mc":"histo",
     "params": {
       "efficiency":[0.9, 0.4, 1.0],
       "n_tot":[0,0,0],

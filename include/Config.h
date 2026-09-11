@@ -61,6 +61,11 @@ struct analysis_params {
 
 struct analysis_config {
     bool pre_fit = false;
+    std::string o_fit_file = "";
+    std::string sample_pass_data = "";
+    std::string sample_pass_mc = "";
+    std::string sample_fail_data = "";
+    std::string sample_fail_mc = "";
     analysis_params params;
 };
 
