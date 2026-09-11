@@ -22,8 +22,10 @@
 using snapshot_type = decltype(std::declval<ROOT::RDF::RNode>().Snapshot("", "", std::vector<std::string>{}, ROOT::RDF::RSnapshotOptions{}));
 
 
-// ------------------------------------------------------------------------------------------------------------------------------------
-// PipelineObj class
+
+
+
+
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 /// @brief Is the Pipeline object: TH1D, TH2D, TEfficiency... used by the OutputManager class to book histograms, save or print them.
@@ -40,8 +42,6 @@ class PipelineObj {
         virtual std::string GetName() const = 0;// Pure virtual
 };
 
-// ------------------------------------------------------------------------------------------------------------------------------------
-// ObjectTH1 class
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 /// @brief Child class of PipelineObj -> Histogram 1 dimensional.
@@ -62,8 +62,6 @@ class ObjectTH1 : public PipelineObj {
 };
 
 // ------------------------------------------------------------------------------------------------------------------------------------
-// ObjectTH2 class
-// ------------------------------------------------------------------------------------------------------------------------------------
 
 /// @brief Child class of PipelineObj -> Histogram 2D. 
 class ObjectTH2 : public PipelineObj {
@@ -83,8 +81,6 @@ class ObjectTH2 : public PipelineObj {
         void Draw(TCanvas& canvas) override;
 };
 
-// ------------------------------------------------------------------------------------------------------------------------------------
-// ObjectTEff class
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 /// @brief Child template class of PipelineObj. TEfficiency can accepts bouth: TH1D or TH2D. Used for complex analysis plots. 
@@ -146,11 +142,9 @@ class ObjectTEff : public PipelineObj {
 };
 
 // ------------------------------------------------------------------------------------------------------------------------------------
-// OutputManager class
-// ------------------------------------------------------------------------------------------------------------------------------------
 
-/// @brief OutputManager class -> The instance controls the output of the program -> saves pipeline objects and print plots.
-class OutputManager {
+/// @brief OutputSelManager class -> The instance controls the output of the program -> saves pipeline objects and print plots.
+class OutputSelManager {
     private: 
         std::vector<std::unique_ptr<PipelineObj>> pipeline;// Pipe container
         
@@ -169,10 +163,10 @@ class OutputManager {
     public:
         /// @brief OutputManager class constructor.
         /// @param cfg Main configuration struct.
-        OutputManager(const config_struct& cfg) : o_file_plots(cfg.selection.o_sel_file_plots), o_file_data(cfg.selection.o_sel_file_data), visualize(cfg.selection.visual_sel), 
+        OutputSelManager(const config_struct& cfg) : o_file_plots(cfg.selection.o_sel_file_plots), o_file_data(cfg.selection.o_sel_file_data), visualize(cfg.selection.visual_sel), 
         save_sel_plots(cfg.selection.save_sel_plots), save_sel_data(cfg.selection.save_sel_data), canv(cfg.canvas) {};
         
-        ~OutputManager(){};
+        ~OutputSelManager(){};
     
         // Overload method: used to add PipelineObjs to the pipe.
         void AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr<TH1D> hist);

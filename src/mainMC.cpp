@@ -207,7 +207,7 @@ int main(int argc, char* argv[]) {
             // Output Manager
             // ------------------------------------------------------------------------------------------------------------------------------------
 
-            OutputManager manager(cfg);
+            OutputSelManager manager(cfg);
 
             if (cfg.selection.selection_mode == "TagAndProbe") {
                 manager.BookAnalysis(node_TP, cfg);
@@ -327,7 +327,7 @@ int main(int argc, char* argv[]) {
                 << " tree from " <<  cfg.io.o_file_data << " file, starting analysis ..." << std::endl;
             }
 
-            OutputManager Amanager(cfg);
+            OutputSelManager Amanager(cfg);
 
             Amanager.BookAnalysis(data_frame, cfg);
             Amanager.Run();

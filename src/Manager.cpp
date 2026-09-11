@@ -15,8 +15,6 @@ Classes:
 */
 
 // ------------------------------------------------------------------------------------------------------------------------------------
-// ObjectTH1 Methods
-// ------------------------------------------------------------------------------------------------------------------------------------
 
 void ObjectTH1::Write(TFile& file) {
     if (th1) {
@@ -33,8 +31,6 @@ void ObjectTH1::Draw(TCanvas& canvas) {
     th1->Draw("E HIST");
 }
 
-// ------------------------------------------------------------------------------------------------------------------------------------
-// ObjectTH2 Methods
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 void ObjectTH2::Write(TFile& file) {
@@ -54,18 +50,16 @@ void ObjectTH2::Draw(TCanvas& canvas) {
 }
 
 // ------------------------------------------------------------------------------------------------------------------------------------
-// OutputManager Methods
-// ------------------------------------------------------------------------------------------------------------------------------------
 
-void OutputManager::AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr<TH1D> hist) {
+void OutputSelManager::AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr<TH1D> hist) {
     pipeline.push_back(std::make_unique<ObjectTH1>(name, hist));
 }
 
-void OutputManager::AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr<TH2D> hist) {
+void OutputSelManager::AddToPipeline(const std::string& name, ROOT::RDF::RResultPtr<TH2D> hist) {
     pipeline.push_back(std::make_unique<ObjectTH2>(name, hist));
 }
 
-void OutputManager::Run() {
+void OutputSelManager::Run() {
     // Check execution time - START
     auto start_time = std::chrono::high_resolution_clock::now();
     
@@ -128,7 +122,9 @@ void OutputManager::Run() {
     std::cout << "Ending of OutputManager::Run()" << std::endl;
 }
 
-void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg) {
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg) {
     
     // -------------------------
     // Defining histogram models
@@ -283,5 +279,3 @@ void OutputManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg
         snapshot_vec.push_back(snapshot);// Needed for scope visibility -> Smart pointer for Event Loop action
     }
 }
-
-
