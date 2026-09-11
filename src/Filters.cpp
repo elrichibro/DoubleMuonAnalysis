@@ -1,5 +1,6 @@
 #include "Filters.h"
 #include "Utils.h"
+#include "Checks.h"
 
 #include <Rtypes.h>
 
@@ -314,5 +315,64 @@ const cuts_config cfg_c) {
             }
         }
     }
+    return results;
+}
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+std::vector<float> CalculateAcceptance(ROOT::RDF::RNode node, const std::string& tag, int FSR) {
+    std::vector<float> results;
+    
+    ROOT::RDF::RNode node_acc = node
+        // True Event Filter: Z0 -> mu+ mu-
+        .Define("Z0_Event", [FSR](const ROOT::RVec<Int_t>& pdg, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother) {
+            return is_MC_Event(pdg, flags, mother, FSR);
+        }, {"GenPart_pdgId", "GenPart_statusFlags", "GenPart_genPartIdxMother"})
+        .Filter("Z0_Event", "Is_Z0_mumu");
+
+    auto tot_gen_events = node_acc.Count();
+
+    node_acc = node_acc
+        .Define("Mu_mask_" + tag, (FSR == 1) ? is_MC_Muon_bFSR : is_MC_Muon_aFSR, {"GenPart_pdgId", "GenPart_statusFlags", "GenPart_genPartIdxMother"})
+        .Define("AMu_mask_" + tag, (FSR == 1) ? is_MC_AntiMuon_bFSR : is_MC_AntiMuon_aFSR, {"GenPart_pdgId", "GenPart_statusFlags", "GenPart_genPartIdxMother"})
+
+        .Define("Mu_pt", "GenPart_pt[Mu_mask_" + tag + "]")
+        .Define("Mu_eta", "GenPart_eta[Mu_mask_" + tag + "]")
+        .Define("Mu_phi", "GenPart_phi[Mu_mask_" + tag + "]")
+        .Define("Mu_mass", "GenPart_mass[Mu_mask_" + tag + "]")
+        
+        .Define("AMu_pt", "GenPart_pt[AMu_mask_" + tag + "]")
+        .Define("AMu_eta", "GenPart_eta[AMu_mask_" + tag + "]")
+        .Define("AMu_phi", "GenPart_phi[AMu_mask_" + tag + "]")
+        .Define("AMu_mass", "GenPart_mass[AMu_mask_" + tag + "]")
+
+        .Filter("(Mu_pt[0] > 25) && (AMu_pt[0] > 25)", "Pt_cut")
+        .Filter("(abs(Mu_eta[0]) < 2.4) && (abs(AMu_eta[0]) < 2.4)", "Eta_cut")
+
+        .Define("Z0_InvMass", [](const ROOT::RVec<float>& mu_pt, const ROOT::RVec<float>& amu_pt, const ROOT::RVec<float>& mu_eta, 
+        const ROOT::RVec<float>& amu_eta, const ROOT::RVec<float>& mu_phi, const ROOT::RVec<float>& amu_phi, const ROOT::RVec<float>& mu_mass, 
+        const ROOT::RVec<float>& amu_mass) {
+                
+            return CalculateInvariantMass_Pair<float>(mu_pt[0], amu_pt[0], mu_eta[0], amu_eta[0], mu_phi[0], amu_phi[0], 
+                mu_mass[0], amu_mass[0]);
+        }, {"Mu_pt", "AMu_pt", "Mu_eta", "AMu_eta", "Mu_phi", "AMu_phi", "Mu_mass", "AMu_mass"})
+
+        .Filter("Z0_InvMass > 60.0 && Z0_InvMass < 120.0", "Mass_cut");
+
+        auto acc_events = node_acc.Count();
+        auto report_node = node_acc.Report();
+
+        report_node->Print();
+
+        float num_tot = static_cast<float>(tot_gen_events.GetValue());
+        float num_acc = static_cast<float>(acc_events.GetValue());
+
+
+        float acc = (num_tot > 0) ? (num_acc / num_tot) : 0.0;
+        results.push_back(acc);
+
+        float acc_err = sqrt((acc * (1 - acc)) / num_tot);
+        results.push_back(acc_err);
+
     return results;
 }

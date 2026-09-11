@@ -98,6 +98,27 @@ int main(int argc, char* argv[]) {
         app = new TApplication("app", &argc, argv);
     }
 
+    if (cfg.general.operation_mode.find("Acceptance") != std::string::npos) {
+            ROOT::EnableImplicitMT();// MultiThread option: ON
+
+            ROOT::RDataFrame data_frame(cfg.io.tree_mc_name, cfg.io.in_mc_file);
+
+            if (verbose){ 
+                std::cout << "RDataFrame object created, unpacking tree: " << dataset_tree 
+                << ", from file: " << dataset_file << ", starting selection ..." << std::endl;
+            }
+            
+            ROOT::RDF::RNode node_ACC = data_frame;
+
+            std::vector<float> results = CalculateAcceptance(node_ACC, "aFSR", 2);
+            if(results.size() != 2) {
+                std::cout << "ERROR: invalid results size: " << results.size() << ", exiting.." << std::endl;
+                return 1;
+            }
+                
+            std::cout << "Geometrical acceptance: " << results.at(0) << "+-" << results.at(1) << std::endl;
+    }
+
     if (cfg.general.operation_mode.find("Selection") != std::string::npos) {
         try {
             ROOT::EnableImplicitMT();// MultiThread option: ON
@@ -105,8 +126,8 @@ int main(int argc, char* argv[]) {
             ROOT::RDataFrame data_frame(dataset_tree, dataset_file);
             
             if (verbose){ 
-                std::cout << "RDataFrame object created, unpacking " << dataset_tree 
-                << " tree from " << dataset_file << " file, starting selection ..." << std::endl;
+                std::cout << "RDataFrame object created, unpacking tree: " << dataset_tree 
+                << " from file: " << dataset_file << ", starting selection ..." << std::endl;
             }
 
             /*
