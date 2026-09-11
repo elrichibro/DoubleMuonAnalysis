@@ -32,7 +32,6 @@ T CalculateInvariantMass(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, cons
     
     return ROOT::VecOps::InvariantMass(ROOT::RVec<T>{pt[0], pt[1]}, ROOT::RVec<T>{eta[0], eta[1]}, ROOT::RVec<T>{phi[0], phi[1]},
         ROOT::RVec<T>{mass[0], mass[1]});
-
 }
 
 // ------------------------------------------------------------------------------------------------------------------------------------

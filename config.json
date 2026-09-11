@@ -1,7 +1,7 @@
 {
   "general": { 
     "dataset": "MC",
-    "operation_mode":"Analysis",
+    "operation_mode":"Acceptance",
     "verbose": 1,
     "visualize":true
   },

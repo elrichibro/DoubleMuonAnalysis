@@ -24,7 +24,7 @@ ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_t
 /// @brief Applies the kinematical bin division to and unbinned dataset.
 /// @param node Input RDF node
 /// @param pt_col Name of the transverse momentum column.
-/// @param eta_col Name of the pseudorapidity column.
+/// @param eta_col Name of the pseudorapidity column. 
 /// @param mll_col Name of the invariant mass column.
 /// @param columns_name Column names for Snapshot operation.
 /// @param cfg General configure struct.
@@ -130,5 +130,14 @@ const cuts_config cfg_c);
 /// @return Struct containing the transverse momentum and pseudorapidity of muons that pass the selection.
 ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin, const MuonFlags_RM& flags, const flags_config cfg_f, 
 const cuts_config cfg_c);
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+/// @brief 
+/// @param node 
+/// @param tag 
+/// @param FSR 
+/// @return 
+std::vector<float> CalculateAcceptance(ROOT::RDF::RNode node, const std::string& tag, int FSR);
 
 #endif
