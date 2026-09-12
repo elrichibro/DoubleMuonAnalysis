@@ -30,77 +30,73 @@
 // Analysis Structs
 // ----------------
 
+/// @brief Struct for Template load
 struct Template_RooF{
-    int eta_bin_idx;
-    int pt_bin_idx;
+    int eta_bin_idx;// Eta template bin index.
+    int pt_bin_idx;// Pt template bin index.
     
-    float eta_min;
-    float eta_max;
-    
-    float pt_min;
-    float pt_max;
-    
-    TH1D* h_MC_pass{nullptr};
-    TH1D* h_MC_fail{nullptr};
-    TH1D* h_DATA_pass{nullptr};
-    TH1D* h_DATA_fail{nullptr};
+    std::unique_ptr<TH1D>h_MC_pass{nullptr};// TH1D container for MonteCarlo (passed sample).
+    std::unique_ptr<TH1D>h_MC_fail{nullptr};// TH1D container for MonteCarlo (failed sample).
+    std::unique_ptr<TH1D>h_DATA_pass{nullptr};// TH1D container for Data (passed sample).
+    std::unique_ptr<TH1D>h_DATA_fail{nullptr};// TH1D container for Data (failed sample).
 
-    RooDataSet* d_MC_pass{nullptr};
-    RooDataSet* d_MC_fail{nullptr};
-    RooDataSet* d_DATA_pass{nullptr};
-    RooDataSet* d_DATA_fail{nullptr};
+    std::unique_ptr<RooDataSet>d_MC_pass{nullptr};// RooDataSet container for MonteCarlo (passed sample).
+    std::unique_ptr<RooDataSet>d_MC_fail{nullptr};// RooDataSet container for MonteCarlo (failed sample).
+    std::unique_ptr<RooDataSet>d_DATA_pass{nullptr};// RooDataSet container for Data (passed sample).
+    std::unique_ptr<RooDataSet>d_DATA_fail{nullptr};// RooDataSet container for Data (failed sample).
 };
 
+/// @brief Fit results container
 struct FitResult {
-    int eta_bin_idx;
-    int pt_bin_idx;
+    int eta_bin_idx;// Eta bin index.
+    int pt_bin_idx;// Pt bin index.
     
-    double efficiency;
-    double efficiency_err;
+    double efficiency;// Efficiency value.
+    double efficiency_err;// Efficiency fit error.
     
-    double n_tot;
-    double n_tot_err;
+    double n_tot;// Total number of signal events.
+    double n_tot_err;// Total number of signal events fit error.
     
-    double mu;
-    double mu_err;
+    double mu;// Gaussian mean.
+    double mu_err;// Gaussian mean fit error.
     
-    double sigma;
-    double sigma_err;
+    double sigma;// Gaussian sigma.
+    double sigma_err;// Gaussian sigma fit error.
 
-    double lambda_pass;
-    double lambda_pass_err;
+    double lambda_pass;// Lambda PASS of background model.
+    double lambda_pass_err;// Lambda PASS fit error.
 
-    double lambda_fail;
-    double lambda_fail_err;
+    double lambda_fail;// Lambda FAIL of background model.
+    double lambda_fail_err;// Lambda FAIL fit error.
     
-    int fit_status;
+    int fit_status;// Fit status
 };
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-/// @brief 
-/// @param node 
-/// @param cfg 
-/// @param dataset 
-/// @return 
+/// @brief Creates an intermediate status of data optimizated for analysis process.
+/// @param node RDF input node.
+/// @param cfg Configure general struct.
+/// @param dataset (1)DATA/(2)MC dataset type.
+/// @return 0 if succes, else error code.
 int TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const int dataset);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-/// @brief 
-/// @param tree 
-/// @param branch_name 
-/// @param mll 
-/// @param ds_name 
-/// @return 
-RooDataSet* LoadRVecIntoDataset(TTree* tree, const std::string& branch_name, RooRealVar& mll, const std::string& ds_name);
+/// @brief Loads RVectors into RooDataSet (scalar type needed).
+/// @param tree Loaded TTree -> template data.
+/// @param branch_name Specific bin settup branch.
+/// @param mll Invariant mass variable for RooFit usage.
+/// @param data_name For RooDataSet variable.
+/// @return RooDataSet of a specific bins settup (template struct element).
+std::unique_ptr<RooDataSet> LoadRVecIntoDataset(TTree* tree, const std::string& branch_name, RooRealVar& mll, const std::string& data_name);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-/// @brief 
-/// @param cfg 
-/// @param container 
-/// @return 
+/// @brief Loads the template data into the system struct.
+/// @param cfg Configure general struct.
+/// @param container Container for template data (binned/unbinned formats -> lazy option).
+/// @return 0 if succes, else error code.
 int LoadTemplate(const config_struct& cfg, std::vector<Template_RooF>& container);
 
 // ------------------------------------------------------------------------------------------------------------------------------------

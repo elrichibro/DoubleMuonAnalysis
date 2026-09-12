@@ -1,7 +1,7 @@
 {
   "general": { 
     "dataset": "MC",
-    "operation_mode":"Acceptance",
+    "operation_mode":"Analysis",
     "verbose": 1,
     "visualize":true
   },
@@ -38,7 +38,7 @@
     "sample_pass_data":"histo",
     "sample_pass_mc":"histo",
     "sample_fail_data":"histo",
-    "sample_fail_mc":"histo",
+    "sample_fail_mc":"data",
     "params": {
       "efficiency":[0.9, 0.4, 1.0],
       "n_tot":[0,0,0],
