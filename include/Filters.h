@@ -133,11 +133,11 @@ const cuts_config cfg_c);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-/// @brief 
-/// @param node 
-/// @param tag 
-/// @param FSR 
-/// @return 
+/// @brief Calculates the acceptance from MonteCarlo sample.
+/// @param node Input RDF node.
+/// @param tag Tag for Column name.
+/// @param FSR FSR Muon states.
+/// @return Returns the value of detector acceptance in Z0->mu+mu- event. First element is central value, second value is the stat. sigma.
 std::vector<float> CalculateAcceptance(ROOT::RDF::RNode node, const std::string& tag, int FSR);
 
 #endif
