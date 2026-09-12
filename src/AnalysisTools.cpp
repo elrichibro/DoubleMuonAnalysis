@@ -192,37 +192,33 @@ std::unique_ptr<RooDataSet> LoadRVecIntoDataset(TTree* tree, const std::string& 
 }
 
 /*
-std::unique_ptr<RooDataSet> LoadRVecIntoDataset(TTree* tree, const std::string& branch_name, RooRealVar& mll, const std::string& data_name) {
-    if (!tree) return nullptr;
+ROOT::RDataFrame df_mc(*tree_mc);   // wrappa il TTree già aperto in un nodo RDF
 
-    TTree flat_tree("flat_tree", "Tempo tree");
+std::vector<std::string> branch_names_mc;   // popola con i nomi effettivamente attivi
+// (costruiti dallo stesso doppio loop pt/eta, solo raccolti PRIMA di leggere)
 
-    float mass_val = 0.0f;
-    
-    flat_tree.Branch(mll.GetName(), &mass_val, Form("%s/F", mll.GetName()));
+std::vector<ROOT::RDF::RResultPtr<std::vector<ROOT::VecOps::RVec<float>>>> results;
+results.reserve(branch_names_mc.size());
 
-    ROOT::VecOps::RVec<float>* column_vec = nullptr;
-    tree->SetBranchAddress(branch_name.c_str(), &column_vec);
+for (const auto& bname : branch_names_mc) {
+    results.push_back(df_mc.Take<ROOT::VecOps::RVec<float>>(bname));   // SOLO prenotato, non eseguito
+}
 
-    Long64_t n_entries = tree->GetEntries();
+// Il primo accesso (GetValue() o *risultato) scatena UN SOLO loop
+// multi-thread che soddisfa TUTTE le richieste insieme.
+for (size_t k = 0; k < branch_names_mc.size(); ++k) {
+    const auto& col_data = results[k].GetValue();   // std::vector<RVec<float>>, un elemento per evento
 
-    for (Long64_t i = 0; i < n_entries; i++) {
-        tree->GetEntry(i);
-        if (column_vec) {
-            for (float mass : *column_vec) {
-                mass_val = mass;
-                flat_tree.Fill(); 
-            }
+    auto ds = std::make_unique<RooDataSet>(("d_" + branch_names_mc[k]).c_str(), "Unbinned mll", RooArgSet(mll));
+    for (const auto& rvec : col_data) {
+        for (float mass : rvec) {
+            mll.setVal(mass);
+            ds->add(RooArgSet(mll));
         }
     }
-    tree->ResetBranchAddresses();
-
-    auto data = std::make_unique<RooDataSet>(data_name.c_str(), "Unbinned mll", RooArgSet(mll), RooFit::Import(flat_tree));
-
-    return data;
+    // assegna ds al Template_RooF corrispondente
 }
 */
-
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 int LoadTemplate(const config_struct& cfg, std::vector<Template_RooF>& container) {
