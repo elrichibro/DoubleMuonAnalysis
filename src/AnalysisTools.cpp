@@ -161,125 +161,53 @@ int TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const int dat
 }
 
 // ------------------------------------------------------------------------------------------------------------------------------------
-
-std::unique_ptr<RooDataSet> LoadRVecIntoDataset(TTree* tree, const std::string& branch_name, RooRealVar& mll, const std::string& data_name) {
-    if (!tree) {
-        std::cout << "ERROR: invalid tree -> asociated branch: " << branch_name << ", exiting..." << std::endl;
-        return nullptr;
-    }
-
-    auto data = std::make_unique<RooDataSet>(data_name.c_str(), "Unbinned mll", RooArgSet(mll));
  
-    ROOT::VecOps::RVec<float>* column_vec = nullptr;
-    
-    tree->SetBranchAddress(branch_name.c_str(), &column_vec);
- 
-    Long64_t n_entries = tree->GetEntries();
-
-    for (Long64_t i = 0; i < n_entries; i++) {
-        tree->GetEntry(i);
- 
-        if (column_vec != nullptr) {
-            for (float mass : *column_vec) {
-                mll.setVal(mass);
-                data->add(RooArgSet(mll));
-            }
-        }
-    }
-    tree->ResetBranchAddresses();
-
-    return data;
-}
-
-/*
-ROOT::RDataFrame df_mc(*tree_mc);   // wrappa il TTree già aperto in un nodo RDF
-
-std::vector<std::string> branch_names_mc;   // popola con i nomi effettivamente attivi
-// (costruiti dallo stesso doppio loop pt/eta, solo raccolti PRIMA di leggere)
-
-std::vector<ROOT::RDF::RResultPtr<std::vector<ROOT::VecOps::RVec<float>>>> results;
-results.reserve(branch_names_mc.size());
-
-for (const auto& bname : branch_names_mc) {
-    results.push_back(df_mc.Take<ROOT::VecOps::RVec<float>>(bname));   // SOLO prenotato, non eseguito
-}
-
-// Il primo accesso (GetValue() o *risultato) scatena UN SOLO loop
-// multi-thread che soddisfa TUTTE le richieste insieme.
-for (size_t k = 0; k < branch_names_mc.size(); ++k) {
-    const auto& col_data = results[k].GetValue();   // std::vector<RVec<float>>, un elemento per evento
-
-    auto ds = std::make_unique<RooDataSet>(("d_" + branch_names_mc[k]).c_str(), "Unbinned mll", RooArgSet(mll));
-    for (const auto& rvec : col_data) {
-        for (float mass : rvec) {
-            mll.setVal(mass);
-            ds->add(RooArgSet(mll));
-        }
-    }
-    // assegna ds al Template_RooF corrispondente
-}
-*/
-// ------------------------------------------------------------------------------------------------------------------------------------
-
-int LoadTemplate(const config_struct& cfg, std::vector<Template_RooF>& container) {
-    RooRealVar mll("mll", "m_{#mu+#mu-}", 60.0, 120.0, "GeV");
-
+int LoadTemplate(const config_struct& cfg, std::vector<Template_RooF>& container) { 
     TH3D* h3_MC_pass{nullptr};
     TH3D* h3_MC_fail{nullptr};
     TH3D* h3_DATA_pass{nullptr};
     TH3D* h3_DATA_fail{nullptr};
-
-    std::string name_data_fail = "";
-    std::string name_data_pass = "";
-    std::string name_mc_fail = "";
-    std::string name_mc_pass = "";
-  
-    bool h_mc_pass = false;
-    bool h_mc_fail = false;
-    bool h_data_pass = false;
-    bool h_data_fail = false;
-
-    bool d_mc_pass = false;
-    bool d_mc_fail = false;
-    bool d_data_pass = false;
-    bool d_data_fail = false;
-
-    if ((cfg.analysis.sample_pass_mc == "histo")) {
+ 
+    bool h_mc_pass = false, h_mc_fail = false, h_data_pass = false, h_data_fail = false;
+    bool d_mc_pass = false, d_mc_fail = false, d_data_pass = false, d_data_fail = false;
+ 
+    if (cfg.analysis.sample_pass_mc == "histo") {
         h_mc_pass = true;
-    } else if((cfg.analysis.sample_pass_mc == "data")) {
+    } else if (cfg.analysis.sample_pass_mc == "data") {
         d_mc_pass = true;
     }
-
-    if ((cfg.analysis.sample_pass_data == "histo")) {
+    
+    if (cfg.analysis.sample_pass_data == "histo") {
         h_data_pass = true;
-    } else if((cfg.analysis.sample_pass_data == "data")) {
+    } else if (cfg.analysis.sample_pass_data == "data") {
         d_data_pass = true;
     }
-
-    if ((cfg.analysis.sample_fail_mc == "histo")) {
+    
+    if (cfg.analysis.sample_fail_mc == "histo") {
         h_mc_fail = true;
-    } else if((cfg.analysis.sample_fail_mc == "data")) {
+    } else if (cfg.analysis.sample_fail_mc == "data") {
         d_mc_fail = true;
     }
-
-    if ((cfg.analysis.sample_fail_data == "histo")) {
+    
+    if (cfg.analysis.sample_fail_data == "histo") {
         h_data_fail = true;
-    } else if((cfg.analysis.sample_fail_data == "data")) {
+    } else if (cfg.analysis.sample_fail_data == "data") {
         d_data_fail = true;
     }
-
+    
     std::unique_ptr<TFile> file(TFile::Open(cfg.templ.o_template_file_data.c_str(), "READ"));
-
+    
     if ((!file) || (file->IsZombie())) {
         std::cout << "ERROR: Cannot open the template output file: " << cfg.templ.o_template_file_data << std::endl;
         return 1;
     }
-
+ 
     TDirectory* bin_dir{nullptr};
     TTree* tree_data{nullptr};
     TTree* tree_mc{nullptr};
-    
-    if ((h_data_pass) || (h_data_fail) || (h_mc_fail) || (h_mc_pass)) {
+ 
+    if (h_data_pass || h_data_fail || h_mc_fail || h_mc_pass) {
+        
         bin_dir = file->GetDirectory(cfg.templ.bins_settup.c_str());
         
         if (!bin_dir) {
@@ -287,7 +215,7 @@ int LoadTemplate(const config_struct& cfg, std::vector<Template_RooF>& container
             return 1;
         }
     }
-
+ 
     if (d_data_pass || d_data_fail) {
         std::string tree_name = "DATA_" + cfg.templ.bins_settup + "_Tree";
         tree_data = file->Get<TTree>(tree_name.c_str());
@@ -297,155 +225,189 @@ int LoadTemplate(const config_struct& cfg, std::vector<Template_RooF>& container
         std::string tree_name = "MC_" + cfg.templ.bins_settup + "_Tree";
         tree_mc = file->Get<TTree>(tree_name.c_str());
     }
-
-    // ----------------
-    // Histogram option
-    // ----------------
-
+ 
     if (h_mc_pass) {
         h3_MC_pass = bin_dir->Get<TH3D>("MC_h3_pass");
     }
-
+    
     if (h_data_pass) {
         h3_DATA_pass = bin_dir->Get<TH3D>("DATA_h3_pass");
     }
-
+    
     if (h_mc_fail) {
         h3_MC_fail = bin_dir->Get<TH3D>("MC_h3_fail");
     }
-
+    
     if (h_data_fail) {
         h3_DATA_fail = bin_dir->Get<TH3D>("DATA_h3_fail");
     }
 
-    // Getting bins
     std::vector<float> pt_bins = cfg.templ.pt_bins;
     std::vector<float> eta_bins = cfg.templ.eta_bins;
     
     const int n_pt_bins = pt_bins.size() - 1;
     const int n_eta_bins = eta_bins.size() - 1;
-
     const int tot_bins = n_pt_bins * n_eta_bins;
-    
-    // Reserve capacity
+ 
     container.clear();
     container.reserve(tot_bins);
+ 
+    std::vector<ColumnNames> col_mc_pass;
+    std::vector<ColumnNames> col_mc_fail;
+    std::vector<ColumnNames> col_data_pass;
+    std::vector<ColumnNames> col_data_fail;
+ 
+    std::cout << "Starting load ..." << std::endl;
+ 
+    for (int i = 0; i < n_pt_bins; i++) {
+        int bin_pt = i + 1;
+ 
+        for (int j = 0; j < n_eta_bins; j++) {
+            int bin_eta = j + 1;
+ 
+            std::unique_ptr<TH1D> h1_mc_pass;
+            std::unique_ptr<TH1D> h1_mc_fail;
+            std::unique_ptr<TH1D> h1_data_pass;
+            std::unique_ptr<TH1D> h1_data_fail;
+ 
+            if (h_mc_pass) {
+                std::string name = "h_mll_mc_pass_eta" + std::to_string(bin_eta) + "_pt" + std::to_string(bin_pt);
+                TH1D* hist = h3_MC_pass->ProjectionZ(name.c_str(), bin_eta, bin_eta, bin_pt, bin_pt);
+                hist->SetDirectory(nullptr);
+                h1_mc_pass.reset(hist);
+            }
 
-    std::cout << "Starting load..." << std::endl;
+            if (h_mc_fail) {
+                std::string name = "h_mll_mc_fail_eta" + std::to_string(bin_eta) + "_pt" + std::to_string(bin_pt);
+                TH1D* hist = h3_MC_fail->ProjectionZ(name.c_str(), bin_eta, bin_eta, bin_pt, bin_pt);
+                hist->SetDirectory(nullptr);
+                h1_mc_fail.reset(hist);
+            }
+            
+            if (h_data_pass) {
+                std::string name = "h_mll_data_pass_eta" + std::to_string(bin_eta) + "_pt" + std::to_string(bin_pt);
+                TH1D* hist = h3_DATA_pass->ProjectionZ(name.c_str(), bin_eta, bin_eta, bin_pt, bin_pt);
+                hist->SetDirectory(nullptr);
+                h1_data_pass.reset(hist);
+            }
+            
+            if (h_data_fail) {
+                std::string name = "h_mll_data_fail_eta" + std::to_string(bin_eta) + "_pt" + std::to_string(bin_pt);
+                TH1D* hist = h3_DATA_fail->ProjectionZ(name.c_str(), bin_eta, bin_eta, bin_pt, bin_pt);
+                hist->SetDirectory(nullptr);
+                h1_data_fail.reset(hist);
+            }
+ 
+            int idx = (((bin_pt - 1) * n_eta_bins) + (bin_eta - 1));
+ 
+            if (d_mc_pass) {
+                std::string leaf_name = "MC_Mll_Eta" + std::to_string(bin_eta) + "_Pt" + std::to_string(bin_pt) + "_Pass";
+                col_mc_pass.push_back({leaf_name, idx});
+            }
 
-        for (int i = 0; i < n_pt_bins; i++) {
-            int bin_pt = (i + 1);
+            if (d_mc_fail) {
+                std::string leaf_name = "MC_Mll_Eta" + std::to_string(bin_eta) + "_Pt" + std::to_string(bin_pt) + "_Fail";
+                col_mc_fail.push_back({leaf_name, idx});
+            }
+            
+            if (d_data_pass) {
+                std::string leaf_name = "DATA_Mll_Eta" + std::to_string(bin_eta) + "_Pt" + std::to_string(bin_pt) + "_Pass";
+                col_data_pass.push_back({leaf_name, idx});
+            }
+            
+            if (d_data_fail) {
+                std::string leaf_name = "DATA_Mll_Eta" + std::to_string(bin_eta) + "_Pt" + std::to_string(bin_pt) + "_Fail";
+                col_data_fail.push_back({leaf_name, idx});
+            }
+ 
+            container.emplace_back(Template_RooF{
+                bin_eta,
+                bin_pt,
+                std::move(h1_mc_pass),
+                std::move(h1_mc_fail),
+                std::move(h1_data_pass),
+                std::move(h1_data_fail),
+                nullptr,
+                nullptr,
+                nullptr,
+                nullptr
+            });
+        }
+    }
+  
+    LoadRVecsIntoRooData(tree_mc, col_mc_pass, col_mc_fail, "MC", container);
+    LoadRVecsIntoRooData(tree_data, col_data_pass, col_data_fail, "DATA", container);
+ 
+    std::cout << "Load finished, exiting..." << std::endl;
+ 
+    file->Close();
+    return 0;
+}
 
-            for (int j = 0; j < n_eta_bins; j++) {
-                int bin_eta = (j + 1);
-                
-                // New pointers
-                std::unique_ptr<TH1D>h1_mc_pass;
-                std::unique_ptr<TH1D>h1_mc_fail;
-                std::unique_ptr<TH1D>h1_data_pass;
-                std::unique_ptr<TH1D>h1_data_fail;
+// ------------------------------------------------------------------------------------------------------------------------------------
 
-                std::unique_ptr<RooDataSet>d1_mc_pass;
-                std::unique_ptr<RooDataSet>d1_mc_fail;
-                std::unique_ptr<RooDataSet>d1_data_pass;
-                std::unique_ptr<RooDataSet>d1_data_fail;
+int LoadRVecsIntoRooData(TTree* tree, const std::vector<ColumnNames>& pass_columns, const std::vector<ColumnNames>& fail_columns, 
+    const std::string dataset, std::vector<Template_RooF>& container) {
+    RooRealVar mll("mll", "m_{#mu+#mu-}", 60.0, 120.0, "GeV");
+    
+    if (!tree) {
+        std::cout << "ERROR: invalid tree, exiting..." << std::endl;
+        return 1;
+    }
 
-                // Histograms
+    ROOT::RDataFrame dataframe(*tree);
+    std::vector<ROOT::RDF::RResultPtr<std::vector<ROOT::VecOps::RVec<float>>>> results;
 
-                if (h_mc_pass) {
-                    name_mc_pass = "h_mll_mc_pass_eta" + std::to_string(bin_eta) + "_pt" + std::to_string(bin_pt);
-                    TH1D* hist = h3_MC_pass->ProjectionZ(name_mc_pass.c_str(), bin_eta, bin_eta, bin_pt, bin_pt);
-                    hist->SetDirectory(nullptr);
-                    h1_mc_pass.reset(hist);
-                }
-                
-                if (h_mc_fail) {
-                    name_mc_fail = "h_mll_mc_fail_eta" + std::to_string(bin_eta) + "_pt" + std::to_string(bin_pt);
-                    TH1D* hist = h3_MC_fail->ProjectionZ(name_mc_fail.c_str(), bin_eta, bin_eta, bin_pt, bin_pt);
-                    hist->SetDirectory(nullptr);
-                    h1_mc_fail.reset(hist);
-                }
-                
-                if (h_data_pass) {
-                    name_data_pass = "h_mll_data_pass_eta" + std::to_string(bin_eta) + "_pt" + std::to_string(bin_pt);
-                    TH1D* hist = h3_DATA_pass->ProjectionZ(name_data_pass.c_str(), bin_eta, bin_eta, bin_pt, bin_pt);
-                    hist->SetDirectory(nullptr);
-                    h1_data_pass.reset(hist);
-                }
+    std::vector<ColumnNames> all_columns;
+    
+    all_columns.reserve(pass_columns.size() + fail_columns.size());
+    all_columns.insert(all_columns.end(), pass_columns.begin(), pass_columns.end());
+    all_columns.insert(all_columns.end(), fail_columns.begin(), fail_columns.end());
 
-                if (h_data_fail) {
-                    name_data_fail = "h_mll_data_fail_eta" + std::to_string(bin_eta) + "_pt" + std::to_string(bin_pt);
-                    TH1D* hist = h3_DATA_fail->ProjectionZ(name_data_fail.c_str(), bin_eta, bin_eta, bin_pt, bin_pt);
-                    hist->SetDirectory(nullptr);
-                    h1_data_fail.reset(hist);
-                }
+    results.reserve(all_columns.size());
 
-                // Data
+    auto start = std::chrono::high_resolution_clock::now();
 
-                if (d_mc_pass) {
-                    std::string leaf_name = "MC_Mll_Eta" + std::to_string(bin_eta) + "_Pt" + std::to_string(bin_pt) + "_Pass";
-                    auto start_time = std::chrono::high_resolution_clock::now();
-                    
-                    d1_mc_pass = LoadRVecIntoDataset(tree_mc, leaf_name, mll, "d_" + leaf_name);
-                    
-                    auto end_time = std::chrono::high_resolution_clock::now();
-                    std::chrono::duration<double> DeltaT = end_time - start_time;
-                    std::cout << "LoadRVecIntoDataset branch: " << leaf_name << ", total time: " << DeltaT.count() << std::endl;
-                }
-                
-                if (d_mc_fail) {
-                    std::string leaf_name = "MC_Mll_Eta" + std::to_string(bin_eta) + "_Pt" + std::to_string(bin_pt) + "_Fail";
-                    auto start_time = std::chrono::high_resolution_clock::now();
+    for (const auto& it : all_columns) {
+        results.push_back(dataframe.Take<ROOT::VecOps::RVec<float>>(it.column_name));
+    }
 
-                    d1_mc_fail = LoadRVecIntoDataset(tree_mc, leaf_name, mll, "d_" + leaf_name);
+    for (int i = 0; i < all_columns.size(); i++) {
+        const auto& data_branch = results[i].GetValue();
 
-                    auto end_time = std::chrono::high_resolution_clock::now();
-                    std::chrono::duration<double> DeltaT = end_time - start_time;
-                    std::cout << "LoadRVecIntoDataset branch: " << leaf_name << ", total time: " << DeltaT.count() << std::endl;
-                }
-                
-                if (d_data_pass) {
-                    std::string leaf_name = "DATA_Mll_Eta" + std::to_string(bin_eta) + "_Pt" + std::to_string(bin_pt) + "_Pass";
-                    auto start_time = std::chrono::high_resolution_clock::now();
-
-                    d1_data_pass = LoadRVecIntoDataset(tree_data, leaf_name, mll, "d_" + leaf_name);
-                    
-                    auto end_time = std::chrono::high_resolution_clock::now();
-                    std::chrono::duration<double> DeltaT = end_time - start_time;
-                    std::cout << "LoadRVecIntoDataset branch: " << leaf_name << ", total time: " << DeltaT.count() << std::endl;
-                }
-                
-                if (d_data_fail) {
-                    std::string leaf_name = "DATA_Mll_Eta" + std::to_string(bin_eta) + "_Pt" + std::to_string(bin_pt) + "_Fail";
-                    auto start_time = std::chrono::high_resolution_clock::now();
-                    
-                    d1_data_fail = LoadRVecIntoDataset(tree_data, leaf_name, mll, "d_" + leaf_name);
-                    
-                    auto end_time = std::chrono::high_resolution_clock::now();
-                    std::chrono::duration<double> DeltaT = end_time - start_time;
-                    std::cout << "LoadRVecIntoDataset branch: " << leaf_name << ", total time: " << DeltaT.count() << std::endl;
-                }
-
-                container.emplace_back(Template_RooF{
-                    bin_eta,
-                    bin_pt, 
-                
-                    std::move(h1_mc_pass),
-                    std::move(h1_mc_fail),
-                    
-                    std::move(h1_data_pass),
-                    std::move(h1_data_fail),
-
-                    std::move(d1_mc_pass),
-                    std::move(d1_mc_fail),
-                    std::move(d1_data_pass),
-                    std::move(d1_data_fail)
-                });
+        auto data = std::make_unique<RooDataSet>(("d_" + all_columns[i].column_name).c_str(), "Unbinned mll", RooArgSet(mll));
+        
+        for (const auto& column : data_branch) {
+            
+            for (float mass_data : column) {
+                mll.setVal(mass_data);
+                data->add(RooArgSet(mll));
             }
         }
-    std::cout << "Load finished, exiting..." << std::endl;
 
-    file->Close();
+        int idx = all_columns[i].container_idx;
+        
+        bool is_pass = (i < pass_columns.size());
+
+        if (dataset == "MC") {
+            if (is_pass) {
+                container[idx].d_MC_pass = std::move(data);
+            } else {
+                container[idx].d_MC_fail = std::move(data);
+            }
+        } else if (dataset == "DATA") {
+            if (is_pass) {
+                container[idx].d_DATA_pass = std::move(data);
+            } else {
+                container[idx].d_DATA_fail = std::move(data);
+            }
+        }
+    }
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << "Number of " << "Total time: " <<
+    std::chrono::duration<double>(end - start).count() << " s." << std::endl;
+
     return 0;
 }
 
@@ -529,12 +491,20 @@ int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const config_stru
         if (cfg.analysis.sample_pass_mc == "data") {
             mc_pass_pdf = std::make_unique<RooKeysPdf>("mc_pass_pdf", "MC Pass KeysPdf", mll, *it.d_MC_pass, RooKeysPdf::NoMirror, 1.5);
 
+            if (!mc_pass_pdf) {
+                std::cout << "ERROR: invalid mc_pass_pdf pointer, exiting..." << std::endl; 
+                return 1;
+            }
         } else if (cfg.analysis.sample_pass_mc == "histo") {
-
             hist_mc_pass = std::make_unique<RooDataHist>("hist_mc_pass", "Pass data histogram", mll, it.h_MC_pass.get());
             auto hist_pdf = std::make_unique<RooHistPdf>("hist_mc_pass_pdf", "Pass data pdf", mll, *hist_mc_pass);
             hist_pdf->setInterpolationOrder(2);
             mc_pass_pdf = std::move(hist_pdf);
+            
+            if (!mc_pass_pdf) {
+                std::cout << "ERROR: invalid mc_pass_pdf pointer, exiting..." << std::endl; 
+                return 1;
+            }
         }
 
         // --------------
@@ -544,35 +514,52 @@ int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const config_stru
         std::unique_ptr<RooAbsPdf> mc_fail_pdf = nullptr;
         std::unique_ptr<RooDataHist> hist_mc_fail = nullptr;
 
-        if (cfg.analysis.sample_fail_mc == "data") {
+        if (cfg.analysis.sample_fail_mc == "data") {            
             mc_fail_pdf = std::make_unique<RooKeysPdf>("mc_fail_pdf", "MC Fail KeysPdf", mll, *it.d_MC_fail, RooKeysPdf::NoMirror, 1.5);
 
+            if (!mc_fail_pdf) {
+                std::cout << "ERROR: invalid mc_fail_pdf pointer, exiting..." << std::endl; 
+                return 1;
+            }
         } else if (cfg.analysis.sample_fail_mc == "histo") {
-
             hist_mc_fail = std::make_unique<RooDataHist>("hist_mc_fail", "Pass fail histogram", mll, it.h_MC_fail.get());
             auto hist_pdf = std::make_unique<RooHistPdf>("hist_mc_fail_pdf", "Pass fail pdf", mll, *hist_mc_fail);
             hist_pdf->setInterpolationOrder(2);
             mc_fail_pdf = std::move(hist_pdf);
+
+            if (!mc_fail_pdf) {
+                std::cout << "ERROR: invalid mc_fail_pdf pointer, exiting..." << std::endl; 
+                return 1;
+            }
         }
 
         // DATA container
         std::unique_ptr<RooAbsData> sig_data;
 
-        if ((cfg.analysis.sample_pass_data == "data") && (cfg.analysis.sample_fail_data == "data")) {
-    
+        if ((cfg.analysis.sample_pass_data == "data") && (cfg.analysis.sample_fail_data == "data")) {    
             sig_data = std::make_unique<RooDataSet>("sig_data", "Signal data unbinned", RooArgSet(mll), 
             RooFit::Index(sample),
             RooFit::Import("Pass", *it.d_DATA_pass), 
             RooFit::Import("Fail", *it.d_DATA_fail));
-
-        } else if ((cfg.analysis.sample_fail_data == "histo") && (cfg.analysis.sample_fail_data == "histo")){
+            
+            if (!sig_data) {
+                std::cout << "ERROR: invalid sig_data pointer, exiting..." << std::endl; 
+                return 1;
+            }
+            
+        } else if ((cfg.analysis.sample_pass_data == "histo") && (cfg.analysis.sample_fail_data == "histo")){
+            std::cout << "Data binned loaded" << std::endl;
         
             std::map<std::string, TH1*> map_hist_data;
             map_hist_data["Pass"] = it.h_DATA_pass.get();
             map_hist_data["Fail"] = it.h_DATA_fail.get();
 
             sig_data = std::make_unique<RooDataHist>("sig_data", "Signal data binned", mll, sample, map_hist_data);
-        
+            
+            if (!sig_data) {
+                std::cout << "ERROR: invalid sig_data pointer, exiting..." << std::endl; 
+                return 1;
+            }
         } else {
             std::cout << "ERROR: invalid combination in JSON file, exiting..." << std::endl;
             return 1;
@@ -635,6 +622,8 @@ int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const config_stru
         simPdf.addPdf(model_pass, "Pass");
         simPdf.addPdf(model_fail, "Fail");
 
+        std::cout << "Starting pre-fitting" << std::endl;
+
         if (cfg.analysis.pre_fit) {
             efficiency.setVal(1.0);
             efficiency.setConstant(kTRUE);
@@ -649,7 +638,7 @@ int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const config_stru
             RooMinimizer m_pass(*nll_pass);
 
             m_pass.setStrategy(2);
-            m_pass.setEps(1e-3);
+            m_pass.setEps(1e-2);
             int status_migrad = m_pass.migrad();
         
             if (status_migrad == 0 || status_migrad == 1) {
@@ -683,7 +672,7 @@ int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const config_stru
         RooMinimizer m(*nll);
 
         m.setStrategy(2);
-        m.setEps(1e-3);
+        m.setEps(1e-2);
         int status_migrad = m.migrad();
         
         if (status_migrad == 0 || status_migrad == 1) {

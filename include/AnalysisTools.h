@@ -46,6 +46,12 @@ struct Template_RooF{
     std::unique_ptr<RooDataSet>d_DATA_fail{nullptr};// RooDataSet container for Data (failed sample).
 };
 
+/// @brief Column name container
+struct ColumnNames {
+    std::string column_name;
+    int container_idx;
+};
+
 /// @brief Fit results container
 struct FitResult {
     int eta_bin_idx;// Eta bin index.
@@ -89,7 +95,8 @@ int TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const int dat
 /// @param mll Invariant mass variable for RooFit usage.
 /// @param data_name For RooDataSet variable.
 /// @return RooDataSet of a specific bins settup (template struct element).
-std::unique_ptr<RooDataSet> LoadRVecIntoDataset(TTree* tree, const std::string& branch_name, RooRealVar& mll, const std::string& data_name);
+int LoadRVecsIntoRooData(TTree* tree, const std::vector<ColumnNames>& pass_columns, const std::vector<ColumnNames>& fail_columns, 
+    const std::string dataset, std::vector<Template_RooF>& container);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
