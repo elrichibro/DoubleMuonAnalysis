@@ -1,6 +1,6 @@
 {
   "general": { 
-    "dataset": "MC",
+    "dataset": "DATA",
     "operation_mode":"Analysis",
     "verbose": 1,
     "visualize":true
@@ -16,8 +16,8 @@
 
   "selection": {
     "selection_mode": "TagAndProbe",
-    "save_sel_plots":true,
-    "save_sel_data":true,
+    "save_sel_plots":false,
+    "save_sel_data":false,
     "visual_sel":false,
     "o_sel_file_plots":"../output/risultati_plots.root",
     "o_sel_file_data":"../output/risultati_data.root"
