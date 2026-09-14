@@ -56,6 +56,7 @@ struct MuonKinematics_TP {
     const ROOT::RVec<float>& eta;// Pseudorapidity
     const ROOT::RVec<float>& phi;// Angular variable
     const ROOT::RVec<float>& mass;// Reconstructed mass
+    const ROOT::RVec<int>& charge;
 };
 
 /// @brief Muon flags for TagAndProbe selections. Tag muon is a TightId muon. Probe candidate is a StandaloneId muon. Passed probe is a GlobalId muon + Isolation request.
@@ -64,6 +65,7 @@ struct MuonFlags_TP {
     const ROOT::RVec<bool>& stand;// Muon_isStandalone flag.
     const ROOT::RVec<bool>& global;// Muon_isGlobal flag.
     const ROOT::RVec<float>& iso;// Isolation parameter.
+    const ROOT::RVec<bool>& hlt;
 };
 
 /// @brief Results of the Response Matrix calculus.

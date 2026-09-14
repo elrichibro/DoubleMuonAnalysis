@@ -116,10 +116,21 @@ const cuts_config cfg_c) {
     
     //results.tag_pt.reserve(n_muons);
     //results.tag_eta.reserve(n_muons);
-     
+
+    // Fast Exit -> BKG
+    int n_tight = ROOT::VecOps::Sum(flags.tight);
+
+    if (n_tight > 2) {
+        return results;
+    }
+
+    if (n_tight == 2 && (ROOT::VecOps::Sum(flags.stand) > 2)) {
+        return results;
+    }
+
     for(int i = 0; i < n_muons; i++) {
         // Fast exit
-        if (!flags.tight[i]) {
+        if ((!flags.tight[i]) && (!flags.hlt[i])) {
             continue;
         }
 
@@ -129,12 +140,16 @@ const cuts_config cfg_c) {
                 continue;
             }
 
+            if (kin.charge[i] == kin.charge[j]) {
+                continue;
+            }
+
             // Loop into good probe muons
             const bool pass = ((kin.pt[j] > cfg_c.pt_cut) && (std::abs(kin.eta[j]) < cfg_c.eta_cut)) || (!(cfg_f.en_kinematics));
             if (!pass) {
                 continue;
             }
-
+            
             // Invariant mass (tag + probe)
             float mass = CalculateInvariantMass_Pair<float>(kin.pt[i], kin.pt[j], kin.eta[i], kin.eta[j], kin.phi[i], kin.phi[j],
             kin.mass[i], kin.mass[j]);
@@ -150,7 +165,7 @@ const cuts_config cfg_c) {
                 //results.tag_pt.push_back(kin.pt[i]);
                 //results.tag_eta.push_back(kin.eta[i]);         
                 
-                if ((flags.global[j]) && (flags.iso[j] < 0.15)) {
+                if ((flags.global[j]) && (flags.iso[j] < cfg_c.iso_cut)) {
                     // Passed probes
                     results.mask_pass.push_back(true);
                 } else {
@@ -181,9 +196,20 @@ const cuts_config cfg_c, const MuonFlags_RM& DeltaR_flags, const ROOT::RVec<floa
     //results.tag_pt.reserve(n_muons);
     //results.tag_eta.reserve(n_muons);
     
+    // Fast Exit -> BKG
+    int n_tight = ROOT::VecOps::Sum(flags.tight);
+
+    if (n_tight > 2) {
+        return results;
+    }
+
+    if (n_tight == 2 && (ROOT::VecOps::Sum(flags.stand) > 2)) {
+        return results;
+    }
+
     for(int i = 0; i < n_muons; i++) {
         // Fast exit
-        if (!flags.tight[i]) {
+        if ((!flags.tight[i]) && (!flags.hlt[i])) {
             continue;
         }
         
@@ -210,10 +236,13 @@ const cuts_config cfg_c, const MuonFlags_RM& DeltaR_flags, const ROOT::RVec<floa
             continue;
         }
         
-
         for (int j = 0; j < n_muons; j++) {
             // Fast exit -> same particle
             if (i == j || !flags.stand[j]) {
+                continue;
+            }
+            // Opposite charge
+            if (kin.charge[i] == kin.charge[j]) {
                 continue;
             }
             
@@ -244,7 +273,7 @@ const cuts_config cfg_c, const MuonFlags_RM& DeltaR_flags, const ROOT::RVec<floa
             if (!pass) {
                 continue;
             }
-
+            
             // Invariant mass (tag + probe)
             float mass = CalculateInvariantMass_Pair<float>(kin.pt[i], kin.pt[j], kin.eta[i], kin.eta[j], kin.phi[i], kin.phi[j],
             kin.mass[i], kin.mass[j]);
