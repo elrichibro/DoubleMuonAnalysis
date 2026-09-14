@@ -222,7 +222,7 @@ int main(int argc, char* argv[]) {
                 
                 //.Define(cfg.general.dataset + "_Tag_Pt", [](const ResultsTagAndProbe& res) { return res.tag_pt_pass; }, {"TP_Result"})
                 //.Define(cfg.general.dataset + "_Tag_Eta", [](const ResultsTagAndProbe& res) { return res.tag_eta_pass; }, {"TP_Result"})
-                .Define(cfg.general.dataset + "_Mask_Pass", [](const ResultsTagAndProbe& res) { return res.mask_pass; }, {"TP_Result"});
+                .Define(cfg.general.dataset + "_Mask_Pass", [](const ResultsTagAndProbe& res) { return res.mask_pass; }, {"TP_Result"});    
             
             // ------------------------------------------------------------------------------------------------------------------------------------
             // Output Manager
@@ -260,23 +260,46 @@ int main(int argc, char* argv[]) {
             std::cout << "Initilizing Template operation mode..." << std::endl;
         }
 
-        if (cfg.general.dataset == "DATA") {
-            std::string tree = "DATA_TagAndProbe_Tree";
-            ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
-
-            ROOT::RDF::RNode node = data_frame;
+        if(cfg.templ.roll_to_flat) {
+            if (cfg.general.dataset == "DATA") {
+                std::string tree = cfg.general.dataset + "_TagAndProbe_Tree";
+                ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
+                ROOT::RDF::RNode node = data_frame;
             
-            int check_maker = TemplateMaker(node, cfg, 1);
+                int chec_roll = RollRVecIntoFlat(node, cfg);  
+            }
+
+            if (cfg.general.dataset == "MC") {
+                std::string tree = cfg.general.dataset + "_TagAndProbe_Tree";
+                ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
+                ROOT::RDF::RNode node = data_frame;
+            
+                int chec_roll = RollRVecIntoFlat(node, cfg);  
+            }
+        } else {
+
+            if ((cfg.general.dataset == "DATA")) {
+                std::string tree = "DATA_TagAndProbe_Tree";
+                ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
+
+                ROOT::RDF::RNode node = data_frame;
+                
+                int chec_roll = TemplateMaker(node, cfg, 1);
+                
+                //int check_maker = TemplateMaker(node, cfg, 1);
+            }
+
+            if ((cfg.general.dataset == "MC")) {
+                std::string tree = "MC_TagAndProbe_Tree";
+                ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
+
+                ROOT::RDF::RNode node = data_frame;
+                
+                int check_maker = TemplateMaker(node, cfg, 2);
+            }
+
         }
 
-        if (cfg.general.dataset == "MC") {
-            std::string tree = "MC_TagAndProbe_Tree";
-            ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
-
-            ROOT::RDF::RNode node = data_frame;
-            
-            int check_maker = TemplateMaker(node, cfg, 2);
-        }
 
         if (cfg.general.verbose) {
             std::cout << "Templates successfully been written to: " << cfg.templ.o_template_file_data 
@@ -303,6 +326,8 @@ int main(int argc, char* argv[]) {
             TFile o_fit_file(cfg.analysis.o_fit_file.c_str(), "UPDATE");// Current writing file
 
             o_fit_file.cd();
+
+            std::cout << "Starting Fit operation..." << std::endl;
 
             int check_fit = Eff_BinnedFit(template_container, cfg, fit_results, &o_fit_file);
 

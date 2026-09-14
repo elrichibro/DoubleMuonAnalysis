@@ -43,6 +43,7 @@ struct selection_config {
 /// @brief Template mode settup
 struct template_config {
     std::string bins_settup = "";// Name of bins status
+    bool roll_to_flat = false;
     std::string o_template_file_data = "";// Output file path for template mode.
     std::string template_type = "";// DATA or HISTO unbinned or binned throughtput.
     std::vector<float> pt_bins;// Vector of pt bins.

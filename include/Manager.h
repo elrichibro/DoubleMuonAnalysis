@@ -151,6 +151,8 @@ class OutputSelManager {
         // Deducing the Snapshot pointer type
         std::vector<snapshot_type> snapshot_vec;// Snapshot vector -> needed for scope visibility.
 
+        std::vector<std::string> column_names;
+        
         bool visualize = false;
 
         bool save_sel_plots = false;

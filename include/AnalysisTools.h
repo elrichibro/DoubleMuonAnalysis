@@ -52,6 +52,7 @@ struct ColumnNames {
     int container_idx;
 };
 
+
 /// @brief Fit results container
 struct FitResult {
     int eta_bin_idx;// Eta bin index.
@@ -97,6 +98,13 @@ int TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const int dat
 /// @return RooDataSet of a specific bins settup (template struct element).
 int LoadRVecsIntoRooData(TTree* tree, const std::vector<ColumnNames>& pass_columns, const std::vector<ColumnNames>& fail_columns, 
     const std::string dataset, std::vector<Template_RooF>& container);
+
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+int LoadFlatVecsIntoRooData(TTree* tree, const config_struct& cfg, const int dataset, std::vector<Template_RooF>& container);
+
+int RollRVecIntoFlat(ROOT::RDF::RNode node, const config_struct& cfg);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 

@@ -122,9 +122,6 @@ int TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const int dat
         snapshot = true;
     }
 
-    if (snapshot) {
-        snap.GetValue(); 
-    }
     
     if (histo) {
         std::cout << "Writing Histograms into " << cfg.templ.o_template_file_data << " file." << std::endl;
@@ -217,12 +214,12 @@ int LoadTemplate(const config_struct& cfg, std::vector<Template_RooF>& container
     }
  
     if (d_data_pass || d_data_fail) {
-        std::string tree_name = "DATA_" + cfg.templ.bins_settup + "_Tree";
+        std::string tree_name = "Tree_DATA_Flat";
         tree_data = file->Get<TTree>(tree_name.c_str());
     }
 
     if (d_mc_pass || d_mc_fail) {
-        std::string tree_name = "MC_" + cfg.templ.bins_settup + "_Tree";
+        std::string tree_name = "Tree_MC_Flat";
         tree_mc = file->Get<TTree>(tree_name.c_str());
     }
  
@@ -251,11 +248,6 @@ int LoadTemplate(const config_struct& cfg, std::vector<Template_RooF>& container
  
     container.clear();
     container.reserve(tot_bins);
- 
-    std::vector<ColumnNames> col_mc_pass;
-    std::vector<ColumnNames> col_mc_fail;
-    std::vector<ColumnNames> col_data_pass;
-    std::vector<ColumnNames> col_data_fail;
  
     std::cout << "Starting load ..." << std::endl;
  
@@ -298,28 +290,6 @@ int LoadTemplate(const config_struct& cfg, std::vector<Template_RooF>& container
                 h1_data_fail.reset(hist);
             }
  
-            int idx = (((bin_pt - 1) * n_eta_bins) + (bin_eta - 1));
- 
-            if (d_mc_pass) {
-                std::string leaf_name = "MC_Mll_Eta" + std::to_string(bin_eta) + "_Pt" + std::to_string(bin_pt) + "_Pass";
-                col_mc_pass.push_back({leaf_name, idx});
-            }
-
-            if (d_mc_fail) {
-                std::string leaf_name = "MC_Mll_Eta" + std::to_string(bin_eta) + "_Pt" + std::to_string(bin_pt) + "_Fail";
-                col_mc_fail.push_back({leaf_name, idx});
-            }
-            
-            if (d_data_pass) {
-                std::string leaf_name = "DATA_Mll_Eta" + std::to_string(bin_eta) + "_Pt" + std::to_string(bin_pt) + "_Pass";
-                col_data_pass.push_back({leaf_name, idx});
-            }
-            
-            if (d_data_fail) {
-                std::string leaf_name = "DATA_Mll_Eta" + std::to_string(bin_eta) + "_Pt" + std::to_string(bin_pt) + "_Fail";
-                col_data_fail.push_back({leaf_name, idx});
-            }
- 
             container.emplace_back(Template_RooF{
                 bin_eta,
                 bin_pt,
@@ -335,12 +305,266 @@ int LoadTemplate(const config_struct& cfg, std::vector<Template_RooF>& container
         }
     }
   
-    LoadRVecsIntoRooData(tree_mc, col_mc_pass, col_mc_fail, "MC", container);
-    LoadRVecsIntoRooData(tree_data, col_data_pass, col_data_fail, "DATA", container);
+    std::cout << "Loading unbinned data..." << std::endl;
+
+    if (d_mc_pass || d_mc_fail) {
+        LoadFlatVecsIntoRooData(tree_mc, cfg, 2, container);
+    }
+    if (d_data_pass || d_data_fail) {
+        LoadFlatVecsIntoRooData(tree_data, cfg, 1, container);
+    }
+    //LoadRVecsIntoRooData(tree_mc, col_mc_pass, col_mc_fail, "MC", container);
+    //LoadRVecsIntoRooData(tree_data, col_data_pass, col_data_fail, "DATA", container);
  
     std::cout << "Load finished, exiting..." << std::endl;
  
     file->Close();
+    return 0;
+}
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+int LoadFlatVecsIntoRooData(TTree* tree, const config_struct& cfg, const int dataset, std::vector<Template_RooF>& container) {
+    if (!tree) {
+        std::cout << "ERROR: tree invalid pointer, exiting..." << std::endl;
+        return 1;
+    }
+
+    const std::vector<float> pt_bins = cfg.templ.pt_bins;
+    const std::vector<float> eta_bins = cfg.templ.eta_bins;
+
+    float min_pt = pt_bins.front();
+    float max_pt = pt_bins.back();
+
+    float min_eta = eta_bins.front();
+    float max_eta = eta_bins.back();
+
+    bool process_pass = false;
+    bool process_fail = false;
+
+    if (dataset == 1) {
+        process_pass = (cfg.analysis.sample_pass_data == "data");
+        process_fail = (cfg.analysis.sample_fail_data == "data");
+    }
+
+    if (dataset == 2) {
+        process_pass = (cfg.analysis.sample_pass_mc == "data");
+        process_fail = (cfg.analysis.sample_fail_mc == "data");
+    }  
+
+    int n_bins = (pt_bins.size() - 1) * (eta_bins.size() - 1);
+    int n_final_bins = 2 * n_bins;
+
+    std::vector<std::vector<float>> mll_buffers(n_final_bins);
+    
+    if (process_fail) {
+        for (int i = 0; i < n_bins; i++) {
+            mll_buffers[i].reserve(20000);
+        }
+    }
+
+    if (process_pass) {
+        for (int i = n_bins; i < n_final_bins; i++) {
+            mll_buffers[i].reserve(20000);
+        }
+    }
+
+    float t_pt, t_eta, t_mll;
+    int t_mask;
+
+    tree->SetBranchAddress("Probe_Pt", &t_pt);
+    tree->SetBranchAddress("Probe_Eta", &t_eta);
+    tree->SetBranchAddress("Probe_Mll", &t_mll);
+    tree->SetBranchAddress("Mask_Pass", &t_mask);
+
+    Long64_t nentries = tree->GetEntries();
+    for (Long64_t entry = 0; entry < nentries; entry++) {
+        tree->GetEntry(entry);
+
+        if (t_pt < min_pt || t_pt >= max_pt || t_eta < min_eta || t_eta >= max_eta) {
+            continue;
+        }
+
+        bool is_pass = (t_mask == 1);
+
+        if ((is_pass) && (!process_pass)) {
+            continue;
+        }
+        if ((!is_pass) && (!process_fail)) {
+            continue;
+        }
+        
+        int i_pt = std::distance(pt_bins.begin(),  std::upper_bound(pt_bins.begin(), pt_bins.end(), t_pt)) - 1;
+        int i_eta = std::distance(eta_bins.begin(), std::upper_bound(eta_bins.begin(), eta_bins.end(), t_eta)) - 1;
+
+        int k = i_eta + (i_pt * (eta_bins.size() - 1)) + (t_mask * (pt_bins.size() - 1) * (eta_bins.size() - 1));
+
+        mll_buffers[k].push_back(t_mll);
+    }
+
+    RooRealVar mll("mll", "Invariant Mass", 60.0, 120.0);
+    RooArgSet vars(mll);
+
+    for (int i = 0; i < n_final_bins; i++) {
+        if (mll_buffers[i].empty()) {
+            continue;
+        }
+
+        int idx = i % n_bins;
+        bool is_pass = (i >= n_bins);
+
+        std::string sample_tag = (dataset == 1) ? "DATA" : "MC";
+        std::string pass_tag = (is_pass) ? "Pass" : "Fail";
+        std::string data_name = "d_" + sample_tag + "_" + pass_tag + "_idx" + std::to_string(idx);
+
+        auto data = std::make_unique<RooDataSet>(data_name.c_str(), data_name.c_str(), vars);
+
+        for (float mass : mll_buffers[i]) {
+            mll.setVal(mass);
+            data->add(vars);
+        }
+
+        // DATA
+        if (dataset == 1) { 
+            if (is_pass) {
+                container[idx].d_DATA_pass = std::move(data);
+            } else {
+                container[idx].d_DATA_fail = std::move(data);
+            }
+        // MC
+        } else if (dataset == 2) {
+            if (is_pass) {
+                container[idx].d_MC_pass = std::move(data);
+            } else {
+                container[idx].d_MC_fail = std::move(data);
+            }
+        }
+    }
+    return 0;
+}
+
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+
+int RollRVecIntoFlat(ROOT::RDF::RNode node, const config_struct& cfg) {
+
+    ROOT::RDF::RNode node_roll = node;
+
+    int nMT = ROOT::GetThreadPoolSize(); 
+
+    std::vector<std::vector<double>> pt(nMT);
+    std::vector<std::vector<double>> eta(nMT);
+    std::vector<std::vector<double>> mll(nMT);
+    std::vector<std::vector<double>> pass_fail(nMT);
+    
+    for (int i = 0; i < nMT; ++i) {
+        pt[i].reserve(100000);
+        eta[i].reserve(100000);
+        mll[i].reserve(100000);
+        pass_fail[i].reserve(100000);
+    }
+
+    node_roll.ForeachSlot([&pt, &eta, &mll, &pass_fail] (unsigned int slot, const ROOT::RVec<float>& RV_pt, const ROOT::RVec<float>& RV_eta,
+            const ROOT::RVec<float>& RV_mll, const ROOT::RVec<bool>& RV_pass_fail) {
+            
+            for (size_t i = 0; i < RV_pt.size(); i++) {
+                if (RV_pt[i] > 25) {
+                    pt[slot].push_back(RV_pt[i]);
+                    eta[slot].push_back(RV_eta[i]);
+                    mll[slot].push_back(RV_mll[i]);
+                    pass_fail[slot].push_back(RV_pass_fail[i]);
+                }
+            }
+        }, 
+        {cfg.general.dataset + "_Probe_Pt", cfg.general.dataset + "_Probe_Eta", cfg.general.dataset + "_Mll", cfg.general.dataset + "_Mask_Pass"}
+    );
+    
+    std::cout << "RDF phase done" << std::endl;
+
+    size_t total_elements = 0;
+    for (int i = 0; i < nMT; i++) {
+        total_elements += pt[i].size();
+    }
+    
+    std::cout << "Merging " << total_elements << " total particles from " << nMT << " threads..." << std::endl;
+
+    std::vector<float> flat_pt;
+    flat_pt.reserve(total_elements);
+    
+    std::vector<float> flat_eta;
+    flat_eta.reserve(total_elements);
+    
+    std::vector<float> flat_mll;
+    flat_mll.reserve(total_elements);
+    
+    std::vector<int> flat_pass_fail;
+    flat_pass_fail.reserve(total_elements);
+
+    for (int i = 0; i < nMT; ++i) {
+        flat_pt.insert(flat_pt.end(), std::make_move_iterator(pt[i].begin()), std::make_move_iterator(pt[i].end()));
+        flat_eta.insert(flat_eta.end(), std::make_move_iterator(eta[i].begin()), std::make_move_iterator(eta[i].end()));
+        flat_mll.insert(flat_mll.end(), std::make_move_iterator(mll[i].begin()), std::make_move_iterator(mll[i].end()));
+        flat_pass_fail.insert(flat_pass_fail.end(), std::make_move_iterator(pass_fail[i].begin()), std::make_move_iterator(pass_fail[i].end()));
+        
+        pt[i].clear();
+        pt[i].shrink_to_fit();
+
+        eta[i].clear();
+        eta[i].shrink_to_fit();
+
+        mll[i].clear();
+        mll[i].shrink_to_fit();
+
+        pass_fail[i].clear();
+        pass_fail[i].shrink_to_fit();
+        
+    }
+
+    std::cout << "Merging done" << std::endl;
+
+    TFile o_template_file(cfg.templ.o_template_file_data.c_str(), "UPDATE");
+
+    if (o_template_file.IsZombie()) {
+
+        std::cout << "ERROR: Cannot find output file: " << cfg.templ.o_template_file_data << std::endl;
+
+        return 1;
+
+    }
+
+    o_template_file.cd();
+
+    std::string tree_name = "Tree_" + cfg.general.dataset + "_Flat";
+    TTree tree(tree_name.c_str(), "Flattened tree");
+
+    float b_pt, b_eta, b_mll;
+    int b_pass_fail;
+
+    tree.Branch("Probe_Pt", &b_pt, "Probe_Pt/F");
+    tree.Branch("Probe_Eta", &b_eta, "Probe_Eta/F");
+    tree.Branch("Probe_Mll", &b_mll, "Probe_Mll/F");
+    tree.Branch("Mask_Pass", &b_pass_fail, "Mask_Pass/I");
+
+    std::cout << "Initializing TTree..." << std::endl;
+
+    for (size_t i = 0; i < total_elements; i++) {
+        b_pt = flat_pt[i];
+        b_eta = flat_eta[i];
+        b_mll = flat_mll[i];
+        b_pass_fail = flat_pass_fail[i];
+        
+        tree.Fill();
+    }
+
+    tree.Write("", TObject::kOverwrite);
+    
+    o_template_file.Close();
+    
+    std::cout << "Done. Saved " << total_elements << " entries." << std::endl;
+
     return 0;
 }
 
