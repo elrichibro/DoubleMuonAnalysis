@@ -62,7 +62,7 @@ void OutputSelManager::AddToPipeline(const std::string& name, ROOT::RDF::RResult
 void OutputSelManager::Run() {
     // Check execution time - START
     auto start_time = std::chrono::high_resolution_clock::now();
-    
+
     for (auto& snap : snapshot_vec) {
         // if snapshot is enabled starts the Event Loop
         snap.GetValue(); 
@@ -118,7 +118,7 @@ void OutputSelManager::Run() {
         
         std::cout << "Output plots file closed at: " << DeltaT.count() << std::endl;
     }
-    
+
     std::cout << "Ending of OutputManager::Run()" << std::endl;
 }
 
@@ -164,7 +164,6 @@ void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& 
     cfg.eta_plot.nbins, cfg.eta_plot.axis_min, cfg.eta_plot.axis_max);
 */
     // vector needed for Snapshot operation
-    std::vector<std::string> columns;
 
     if ((cfg.general.operation_mode.find("Selection") != std::string::npos) && (cfg.selection.selection_mode == "TagAndProbe")) {
 
@@ -196,7 +195,7 @@ void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& 
         std::vector<std::string> names = {cfg.general.dataset + "_Probe_Pt", cfg.general.dataset + "_Probe_Eta", 
             cfg.general.dataset + "_Mll", cfg.general.dataset + "_Mask_Pass"};
 
-        columns.insert(columns.end(), names.begin(), names.end());
+        column_names.insert(column_names.end(), names.begin(), names.end());
 
     } else if ((cfg.general.operation_mode.find("Selection") != std::string::npos) && (cfg.selection.selection_mode == "ResponseMatrix")) {
         
@@ -227,7 +226,7 @@ void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& 
         //AddToPipeline("Response Matrix #eta", h2_eta_gen_rec);
         
         std::vector<std::string> names = {"Gen_Pt", "Rec_Pt", "Gen_Eta", "Rec_Eta"};
-        columns.insert(columns.end(), names.begin(), names.end());
+        column_names.insert(column_names.end(), names.begin(), names.end());
     
     } else if ((cfg.general.operation_mode.find("Analysis") != std::string::npos) && (cfg.selection.selection_mode == "TagAndProbe")) {
         
@@ -272,7 +271,7 @@ void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& 
 
         std::string snaphot_name = cfg.general.dataset + "_" + cfg.selection.selection_mode + "_Tree";
         
-        auto snapshot = node.Snapshot(snaphot_name, o_file_data, columns, snapshot_opts);
+        auto snapshot = node.Snapshot(snaphot_name, o_file_data, column_names, snapshot_opts);
         
         std::cout << "Saving data selected from " << cfg.selection.selection_mode << " in file " << o_file_data << std::endl;
     
