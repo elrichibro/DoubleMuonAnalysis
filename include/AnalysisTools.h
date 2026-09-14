@@ -46,13 +46,6 @@ struct Template_RooF{
     std::unique_ptr<RooDataSet>d_DATA_fail{nullptr};// RooDataSet container for Data (failed sample).
 };
 
-/// @brief Column name container
-struct ColumnNames {
-    std::string column_name;
-    int container_idx;
-};
-
-
 /// @brief Fit results container
 struct FitResult {
     int eta_bin_idx;// Eta bin index.
@@ -81,77 +74,80 @@ struct FitResult {
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-/// @brief Creates an intermediate status of data optimizated for analysis process.
+// --------------
+// Template maker
+// --------------
+
+/// @brief Creates an intermediate binned status of data optimizated for analysis process.
 /// @param node RDF input node.
 /// @param cfg Configure general struct.
 /// @param dataset (1)DATA/(2)MC dataset type.
 /// @return 0 if succes, else error code.
-int TemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const int dataset);
+int BinnedTemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const int dataset);
+
+/// @brief Creates a flat tree -> 1 event = 1 muon. For RooFit/RooDataSet input.
+/// @param node RDF input node.
+/// @param cfg Configuration general struct.
+/// @return 0 if succeds, else error code.
+int UnbinnedTemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-/// @brief Loads RVectors into RooDataSet (scalar type needed).
-/// @param tree Loaded TTree -> template data.
-/// @param branch_name Specific bin settup branch.
-/// @param mll Invariant mass variable for RooFit usage.
-/// @param data_name For RooDataSet variable.
-/// @return RooDataSet of a specific bins settup (template struct element).
-int LoadRVecsIntoRooData(TTree* tree, const std::vector<ColumnNames>& pass_columns, const std::vector<ColumnNames>& fail_columns, 
-    const std::string dataset, std::vector<Template_RooF>& container);
+// ---------------
+// Template Loader
+// ---------------
 
-
-// ------------------------------------------------------------------------------------------------------------------------------------
-
-int LoadFlatVecsIntoRooData(TTree* tree, const config_struct& cfg, const int dataset, std::vector<Template_RooF>& container);
-
-int RollRVecIntoFlat(ROOT::RDF::RNode node, const config_struct& cfg);
-
-// ------------------------------------------------------------------------------------------------------------------------------------
-
-/// @brief Loads the template data into the system struct.
+/// @brief Loads the template binned data into the system Template struct.
 /// @param cfg Configure general struct.
 /// @param container Container for template data (binned/unbinned formats -> lazy option).
 /// @return 0 if succes, else error code.
-int LoadTemplate(const config_struct& cfg, std::vector<Template_RooF>& container);
+int LoadBinnedTemplate(const config_struct& cfg, std::vector<Template_RooF>& container);
+
+/// @brief Loads the tree unbinned data into the RooFit RooDataSet variable and moves into the template struct.
+/// @param tree Input flat tree.
+/// @param cfg General configuration struct.
+/// @param dataset Dataset identifier: 1 = DATA, 2 = MC.
+/// @param container Template system container. 
+/// @return 0 if succeds, else error code.
+int LoadUnbinnedTemplate(TTree* tree, const config_struct& cfg, const int dataset, std::vector<Template_RooF>& container);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-/// @brief 
-/// @param container 
-/// @param cfg 
-void CheckPlotsTemplate(const std::vector<Template_RooF>& container, const config_struct& cfg);
+// ---------------------
+// Visualization methods
+// ---------------------
 
-// ------------------------------------------------------------------------------------------------------------------------------------
+/// @brief Saves the 2D plots of the fitted results in each bin of the bin_settup.
+/// @param o_file Input file.
+/// @param results Fits results.
+/// @param cfg General configuration struct.
+/// @param vals Name of the fit values booked.
+/// @return 0 if succeds, else error code(1).
+int SaveMapFittedValues(TFile* o_file, const std::vector<FitResult>& results, const config_struct& cfg, const std::vector<std::string>& vals);
 
-/// @brief 
-/// @param results 
-/// @param cfg 
-/// @param o_file 
-/// @param vals 
-/// @return 
-int SaveMapFittedValues(const std::vector<FitResult>& results, const config_struct& cfg, TFile* o_file, const std::vector<std::string>& vals);
-
-// ------------------------------------------------------------------------------------------------------------------------------------
-
-/// @brief 
-/// @param mll 
-/// @param sample 
-/// @param data 
-/// @param simPdf 
-/// @param res 
-/// @param o_file 
-/// @param o_dir 
+/// @brief Saves the fit plot for each bin selection as a RooPlot.
+/// @param mll Observable.
+/// @param sample Pass/Fail category.
+/// @param data Data of the sample -> binned/unbinned. 
+/// @param simPdf Model.
+/// @param res Results struct.
+/// @param o_file Output file.
+/// @param cfg General configuration struct.
 void SaveBinFitCanvas(RooRealVar& mll, RooCategory& sample, RooAbsData& data, RooSimultaneous& simPdf, const FitResult& res, TFile* o_file, 
 const config_struct& cfg);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-/// @brief 
-/// @param analysis_struct 
-/// @param cfg 
-/// @param results 
-/// @param o_file 
-/// @return 
-int Eff_BinnedFit(std::vector<Template_RooF>& analysis_struct, const config_struct& cfg, std::vector<FitResult>& results, TFile* o_file);
+// ------
+// Fitter
+// ------
+
+/// @brief Fits the data vs the hardcoded model.
+/// @param analysis_struct Data template struct.
+/// @param cfg General configuration struct.
+/// @param results Struct for fit results.
+/// @param o_file Output file for SaveBinFitCanvas function.
+/// @return 0 if succeds, else error code.
+int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_struct& cfg, std::vector<FitResult>& results, TFile* o_file);
 
 #endif

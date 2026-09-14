@@ -266,7 +266,7 @@ int main(int argc, char* argv[]) {
                 ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
                 ROOT::RDF::RNode node = data_frame;
             
-                int chec_roll = RollRVecIntoFlat(node, cfg);  
+                int chec_roll = UnbinnedTemplateMaker(node, cfg);  
             }
 
             if (cfg.general.dataset == "MC") {
@@ -274,7 +274,7 @@ int main(int argc, char* argv[]) {
                 ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
                 ROOT::RDF::RNode node = data_frame;
             
-                int chec_roll = RollRVecIntoFlat(node, cfg);  
+                int chec_roll = UnbinnedTemplateMaker(node, cfg);  
             }
         } else {
 
@@ -284,9 +284,7 @@ int main(int argc, char* argv[]) {
 
                 ROOT::RDF::RNode node = data_frame;
                 
-                int chec_roll = TemplateMaker(node, cfg, 1);
-                
-                //int check_maker = TemplateMaker(node, cfg, 1);
+                int chec_maker = BinnedTemplateMaker(node, cfg, 1);
             }
 
             if ((cfg.general.dataset == "MC")) {
@@ -295,11 +293,10 @@ int main(int argc, char* argv[]) {
 
                 ROOT::RDF::RNode node = data_frame;
                 
-                int check_maker = TemplateMaker(node, cfg, 2);
+                int check_maker = BinnedTemplateMaker(node, cfg, 2);
             }
 
         }
-
 
         if (cfg.general.verbose) {
             std::cout << "Templates successfully been written to: " << cfg.templ.o_template_file_data 
@@ -316,20 +313,18 @@ int main(int argc, char* argv[]) {
             std::vector<Template_RooF> template_container;
             std::vector<FitResult> fit_results;
 
-            if (LoadTemplate(cfg, template_container) != 0) {
+            if (LoadBinnedTemplate(cfg, template_container) != 0) {
                 std::cout << "ERROR: Load operations fails, exiting." << std::endl;
                 return 1;
             }
-            //CheckPlotsTemplate(template_container, cfg);
             
-
             TFile o_fit_file(cfg.analysis.o_fit_file.c_str(), "UPDATE");// Current writing file
 
             o_fit_file.cd();
 
             std::cout << "Starting Fit operation..." << std::endl;
 
-            int check_fit = Eff_BinnedFit(template_container, cfg, fit_results, &o_fit_file);
+            int check_fit = EfficiencyFitter(template_container, cfg, fit_results, &o_fit_file);
 
             if (check_fit != 0) {
                 std::cout << "ERROR: Fit operation fails." << std::endl;
@@ -338,7 +333,7 @@ int main(int argc, char* argv[]) {
                 
             std::vector<std::string> booked_values = {"efficiency", "n_tot", "fit_status", "mu", "sigma", "lambda_pass", "lambda_fail"};
 
-            int check = SaveMapFittedValues(fit_results, cfg, &o_fit_file, booked_values);
+            int check = SaveMapFittedValues(&o_fit_file, fit_results, cfg, booked_values);
 
             if (check != 0) {
                 std::cout << "ERROR: Save operation fails, exiting..." << std::endl;

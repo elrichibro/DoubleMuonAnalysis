@@ -21,11 +21,6 @@
 
 using snapshot_type = decltype(std::declval<ROOT::RDF::RNode>().Snapshot("", "", std::vector<std::string>{}, ROOT::RDF::RSnapshotOptions{}));
 
-
-
-
-
-
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 /// @brief Is the Pipeline object: TH1D, TH2D, TEfficiency... used by the OutputManager class to book histograms, save or print them.
