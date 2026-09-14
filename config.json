@@ -1,9 +1,9 @@
 {
   "general": { 
     "dataset": "DATA",
-    "operation_mode":"Template",
+    "operation_mode":"Analysis",
     "verbose": 1,
-    "visualize":true
+    "visualize":false
   },
   
   "io": {

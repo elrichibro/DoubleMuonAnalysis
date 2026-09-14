@@ -49,6 +49,7 @@ int BinnedTemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const i
         return 1;
     }
 
+    // Names
     std::string name_pass = sample + "_h3_pass";
     std::string name_fail = sample + "_h3_fail";
     
@@ -58,6 +59,7 @@ int BinnedTemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const i
     std::string title = "3D Histogram_" + sample;
     std::string title_entries = "2D Entries Histogram_" + sample;
 
+    // Models
     ROOT::RDF::TH3DModel model_pass(name_pass.c_str(), title.c_str(), eta_bins.size() - 1, eta_bins.data(), pt_bins.size() - 1, pt_bins.data(),
      mll_bins.size() - 1, mll_bins.data() );
     
@@ -67,6 +69,7 @@ int BinnedTemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const i
     ROOT::RDF::TH2DModel model_entries_pass(name_entries_pass.c_str(), title_entries.c_str(), eta_bins.size() - 1, eta_bins.data(), pt_bins.size() - 1, pt_bins.data());
     ROOT::RDF::TH2DModel model_entries_fail(name_entries_fail.c_str(), title_entries.c_str(), eta_bins.size() - 1, eta_bins.data(), pt_bins.size() - 1, pt_bins.data());
     
+    // RNode
     node_hist = node_hist
         .Define(sample + "_Probe_Pt_Pass", sample + "_Probe_Pt[" + sample + "_Mask_Pass]")
         .Define(sample + "_Probe_Eta_Pass", sample + "_Probe_Eta[" + sample + "_Mask_Pass]")
@@ -75,27 +78,14 @@ int BinnedTemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const i
         .Define(sample + "_Probe_Eta_Fail", sample + "_Probe_Eta[!" + sample + "_Mask_Pass]")
         .Define(sample + "_Mll_Fail", sample + "_Mll[!" + sample + "_Mask_Pass]");
 
-    bool histo = false;
-    bool snapshot = false;
-
-    ROOT::RDF::RResultPtr<TH3D> h3_pass, h3_fail;
-    ROOT::RDF::RResultPtr<TH2D> h2_pass, h2_fail;
-
-    snapshot_type snap;
-
     if (cfg.templ.template_type.find("HISTO") != std::string::npos) {
-        
-        h3_pass = node_hist.Histo3D(model_pass, sample + "_Probe_Eta_Pass", sample + "_Probe_Pt_Pass", sample + "_Mll_Pass");
-        h3_fail = node_hist.Histo3D(model_fail, sample + "_Probe_Eta_Fail", sample + "_Probe_Pt_Fail", sample + "_Mll_Fail");
-        
-        h2_pass = node_hist.Histo2D(model_entries_pass, sample + "_Probe_Eta_Pass", sample + "_Probe_Pt_Pass");
-        h2_fail = node_hist.Histo2D(model_entries_fail, sample + "_Probe_Eta_Fail", sample + "_Probe_Pt_Fail");
 
-        histo = true;
-    }
-
-    if (histo) {
-        std::cout << "Writing Histograms into " << cfg.templ.o_template_file_data << " file." << std::endl;
+        // Creating Smart Pointers
+        auto h3_pass = node_hist.Histo3D(model_pass, sample + "_Probe_Eta_Pass", sample + "_Probe_Pt_Pass", sample + "_Mll_Pass");
+        auto h3_fail = node_hist.Histo3D(model_fail, sample + "_Probe_Eta_Fail", sample + "_Probe_Pt_Fail", sample + "_Mll_Fail");
+        
+        auto h2_pass = node_hist.Histo2D(model_entries_pass, sample + "_Probe_Eta_Pass", sample + "_Probe_Pt_Pass");
+        auto h2_fail = node_hist.Histo2D(model_entries_fail, sample + "_Probe_Eta_Fail", sample + "_Probe_Pt_Fail");
 
         TFile o_template_file(cfg.templ.o_template_file_data.c_str(), "UPDATE");
 
@@ -121,9 +111,12 @@ int BinnedTemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const i
         h2_fail->Write(nullptr, TObject::kOverwrite);
 
         o_template_file.Close();
+    } else {
+        std::cout << "Analysis DATA option selected, exiting from BinnedTemplateMaker." << std::endl;
+        return 1; 
     }
 
-    std::cout << "Saving data in intermediate step as: " << cfg.templ.template_type << " in the file " << cfg.templ.o_template_file_data << std::endl;
+    std::cout << "Saving binned data in the file " << cfg.templ.o_template_file_data << std::endl;
 
     return 0;
 }
@@ -131,9 +124,9 @@ int BinnedTemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const i
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 int UnbinnedTemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg) {
-
     ROOT::RDF::RNode node_roll = node;
 
+    // Getting N cores
     int nMT = ROOT::GetThreadPoolSize(); 
 
     std::vector<std::vector<double>> pt(nMT);
@@ -148,6 +141,7 @@ int UnbinnedTemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg) {
         pass_fail[i].reserve(100000);
     }
 
+    // Starts event loop
     node_roll.ForeachSlot([&pt, &eta, &mll, &pass_fail] (unsigned int slot, const ROOT::RVec<float>& RV_pt, const ROOT::RVec<float>& RV_eta,
             const ROOT::RVec<float>& RV_mll, const ROOT::RVec<bool>& RV_pass_fail) {
             
@@ -159,11 +153,10 @@ int UnbinnedTemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg) {
                     pass_fail[slot].push_back(RV_pass_fail[i]);
                 }
             }
-        }, 
-        {cfg.general.dataset + "_Probe_Pt", cfg.general.dataset + "_Probe_Eta", cfg.general.dataset + "_Mll", cfg.general.dataset + "_Mask_Pass"}
+        }, {cfg.general.dataset + "_Probe_Pt", cfg.general.dataset + "_Probe_Eta", cfg.general.dataset + "_Mll", cfg.general.dataset + "_Mask_Pass"}
     );
     
-    std::cout << "RDF phase done" << std::endl;
+    std::cout << "RDF phase done." << std::endl;
 
     size_t total_elements = 0;
     for (int i = 0; i < nMT; i++) {
@@ -184,12 +177,14 @@ int UnbinnedTemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg) {
     std::vector<int> flat_pass_fail;
     flat_pass_fail.reserve(total_elements);
 
+    // Loop in cores -> mergin data
     for (int i = 0; i < nMT; ++i) {
         flat_pt.insert(flat_pt.end(), std::make_move_iterator(pt[i].begin()), std::make_move_iterator(pt[i].end()));
         flat_eta.insert(flat_eta.end(), std::make_move_iterator(eta[i].begin()), std::make_move_iterator(eta[i].end()));
         flat_mll.insert(flat_mll.end(), std::make_move_iterator(mll[i].begin()), std::make_move_iterator(mll[i].end()));
         flat_pass_fail.insert(flat_pass_fail.end(), std::make_move_iterator(pass_fail[i].begin()), std::make_move_iterator(pass_fail[i].end()));
-        
+       
+        // Security check
         pt[i].clear();
         pt[i].shrink_to_fit();
 
@@ -204,16 +199,13 @@ int UnbinnedTemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg) {
         
     }
 
-    std::cout << "Merging done" << std::endl;
+    std::cout << "Merging done." << std::endl;
 
     TFile o_template_file(cfg.templ.o_template_file_data.c_str(), "UPDATE");
 
     if (o_template_file.IsZombie()) {
-
         std::cout << "ERROR: Cannot find output file: " << cfg.templ.o_template_file_data << std::endl;
-
         return 1;
-
     }
 
     o_template_file.cd();
@@ -229,8 +221,7 @@ int UnbinnedTemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg) {
     tree.Branch("Probe_Mll", &b_mll, "Probe_Mll/F");
     tree.Branch("Mask_Pass", &b_pass_fail, "Mask_Pass/I");
 
-    std::cout << "Initializing TTree..." << std::endl;
-
+    // Filling the flat tree
     for (size_t i = 0; i < total_elements; i++) {
         b_pt = flat_pt[i];
         b_eta = flat_eta[i];
@@ -241,11 +232,9 @@ int UnbinnedTemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg) {
     }
 
     tree.Write("", TObject::kOverwrite);
-    
-    o_template_file.Close();
+    o_template_file.Close();// Flush
     
     std::cout << "Done. Saved " << total_elements << " entries." << std::endl;
-
     return 0;
 }
 
@@ -257,8 +246,16 @@ int LoadBinnedTemplate(const config_struct& cfg, std::vector<Template_RooF>& con
     TH3D* h3_DATA_pass{nullptr};
     TH3D* h3_DATA_fail{nullptr};
  
-    bool h_mc_pass = false, h_mc_fail = false, h_data_pass = false, h_data_fail = false;
-    bool d_mc_pass = false, d_mc_fail = false, d_data_pass = false, d_data_fail = false;
+    // Initializing LAZY flags
+    bool h_mc_pass = false;
+    bool h_mc_fail = false;
+    bool h_data_pass = false;
+    bool h_data_fail = false;
+    
+    bool d_mc_pass = false;
+    bool d_mc_fail = false;
+    bool d_data_pass = false;
+    bool d_data_fail = false;
  
     if (cfg.analysis.sample_pass_mc == "histo") {
         h_mc_pass = true;
@@ -284,10 +281,11 @@ int LoadBinnedTemplate(const config_struct& cfg, std::vector<Template_RooF>& con
         d_data_fail = true;
     }
     
+    // Opening file
     std::unique_ptr<TFile> file(TFile::Open(cfg.templ.o_template_file_data.c_str(), "READ"));
     
     if ((!file) || (file->IsZombie())) {
-        std::cout << "ERROR: Cannot open the template output file: " << cfg.templ.o_template_file_data << std::endl;
+        std::cout << "ERROR: Cannot open the template input file: " << cfg.templ.o_template_file_data << std::endl;
         return 1;
     }
  
@@ -295,8 +293,8 @@ int LoadBinnedTemplate(const config_struct& cfg, std::vector<Template_RooF>& con
     TTree* tree_data{nullptr};
     TTree* tree_mc{nullptr};
  
+    // Directory of the binned data.
     if (h_data_pass || h_data_fail || h_mc_fail || h_mc_pass) {
-        
         bin_dir = file->GetDirectory(cfg.templ.bins_settup.c_str());
         
         if (!bin_dir) {
@@ -304,17 +302,7 @@ int LoadBinnedTemplate(const config_struct& cfg, std::vector<Template_RooF>& con
             return 1;
         }
     }
- 
-    if (d_data_pass || d_data_fail) {
-        std::string tree_name = "Tree_DATA_Flat";
-        tree_data = file->Get<TTree>(tree_name.c_str());
-    }
 
-    if (d_mc_pass || d_mc_fail) {
-        std::string tree_name = "Tree_MC_Flat";
-        tree_mc = file->Get<TTree>(tree_name.c_str());
-    }
- 
     if (h_mc_pass) {
         h3_MC_pass = bin_dir->Get<TH3D>("MC_h3_pass");
     }
@@ -330,7 +318,19 @@ int LoadBinnedTemplate(const config_struct& cfg, std::vector<Template_RooF>& con
     if (h_data_fail) {
         h3_DATA_fail = bin_dir->Get<TH3D>("DATA_h3_fail");
     }
+    
+    // Unbinned data
+    if (d_data_pass || d_data_fail) {
+        std::string tree_name = "Tree_DATA_Flat";
+        tree_data = file->Get<TTree>(tree_name.c_str());
+    }
 
+    if (d_mc_pass || d_mc_fail) {
+        std::string tree_name = "Tree_MC_Flat";
+        tree_mc = file->Get<TTree>(tree_name.c_str());
+    }
+
+    // Starting bin settup
     std::vector<float> pt_bins = cfg.templ.pt_bins;
     std::vector<float> eta_bins = cfg.templ.eta_bins;
     
@@ -349,6 +349,7 @@ int LoadBinnedTemplate(const config_struct& cfg, std::vector<Template_RooF>& con
         for (int j = 0; j < n_eta_bins; j++) {
             int bin_eta = j + 1;
  
+            // For memory control
             std::unique_ptr<TH1D> h1_mc_pass;
             std::unique_ptr<TH1D> h1_mc_fail;
             std::unique_ptr<TH1D> h1_data_pass;
@@ -357,28 +358,36 @@ int LoadBinnedTemplate(const config_struct& cfg, std::vector<Template_RooF>& con
             if (h_mc_pass) {
                 std::string name = "h_mll_mc_pass_eta" + std::to_string(bin_eta) + "_pt" + std::to_string(bin_pt);
                 TH1D* hist = h3_MC_pass->ProjectionZ(name.c_str(), bin_eta, bin_eta, bin_pt, bin_pt);
+                
                 hist->SetDirectory(nullptr);
+                
                 h1_mc_pass.reset(hist);
             }
 
             if (h_mc_fail) {
                 std::string name = "h_mll_mc_fail_eta" + std::to_string(bin_eta) + "_pt" + std::to_string(bin_pt);
                 TH1D* hist = h3_MC_fail->ProjectionZ(name.c_str(), bin_eta, bin_eta, bin_pt, bin_pt);
+                
                 hist->SetDirectory(nullptr);
+                
                 h1_mc_fail.reset(hist);
             }
             
             if (h_data_pass) {
                 std::string name = "h_mll_data_pass_eta" + std::to_string(bin_eta) + "_pt" + std::to_string(bin_pt);
                 TH1D* hist = h3_DATA_pass->ProjectionZ(name.c_str(), bin_eta, bin_eta, bin_pt, bin_pt);
+                
                 hist->SetDirectory(nullptr);
+                
                 h1_data_pass.reset(hist);
             }
             
             if (h_data_fail) {
                 std::string name = "h_mll_data_fail_eta" + std::to_string(bin_eta) + "_pt" + std::to_string(bin_pt);
                 TH1D* hist = h3_DATA_fail->ProjectionZ(name.c_str(), bin_eta, bin_eta, bin_pt, bin_pt);
+                
                 hist->SetDirectory(nullptr);
+                
                 h1_data_fail.reset(hist);
             }
  
@@ -405,10 +414,8 @@ int LoadBinnedTemplate(const config_struct& cfg, std::vector<Template_RooF>& con
     if (d_data_pass || d_data_fail) {
         LoadUnbinnedTemplate(tree_data, cfg, 1, container);
     }
-    //LoadRVecsIntoRooData(tree_mc, col_mc_pass, col_mc_fail, "MC", container);
-    //LoadRVecsIntoRooData(tree_data, col_data_pass, col_data_fail, "DATA", container);
- 
-    std::cout << "Load finished, exiting..." << std::endl;
+
+    std::cout << "Load finished, exiting from LoadBinnedTemplate..." << std::endl;
  
     file->Close();
     return 0;
@@ -646,11 +653,9 @@ int SaveMapFittedValues(TFile* o_file, const std::vector<FitResult>& results, co
 
 void SaveBinFitCanvas(RooRealVar& mll, RooCategory& sample, RooAbsData& data, RooSimultaneous& simPdf, const FitResult& res, TFile* o_file,
      const config_struct& cfg) {
-    
-    gROOT->SetBatch(kTRUE);
-    
+
     if (!o_file || o_file->IsZombie()) {
-        std::cerr << "ERROR: Invalid output TFile pointer in SaveBinFitCanvas!" << std::endl;
+        std::cout << "ERROR: Invalid output TFile pointer in SaveBinFitCanvas!" << std::endl;
         return;
     }
 
@@ -691,21 +696,44 @@ void SaveBinFitCanvas(RooRealVar& mll, RooCategory& sample, RooAbsData& data, Ro
     TCanvas c("c_fit", "Fit Pass and Fail", 1200, 600);
     c.Divide(2, 1);
 
+    // -----
+    // Pad 1
+    // -----
+
     c.cd(1);
     gPad->SetLeftMargin(0.13);
    
-    RooPlot* frame_pass = mll.frame(RooFit::Title("Category: PASS"));
+    std::unique_ptr<RooPlot> frame_pass(mll.frame(RooFit::Title("Category: PASS")));
 
-    data.plotOn(frame_pass, RooFit::Cut("sample==sample::Pass"), RooFit::Name("data_pass"));
-    simPdf.plotOn(frame_pass, RooFit::Slice(sample, "Pass"), RooFit::ProjWData(sample, data), RooFit::Name("pdf_pass"));
-    simPdf.plotOn(frame_pass, RooFit::Slice(sample, "Pass"), 
-              RooFit::Components("conv_pass_sig"), 
-              RooFit::ProjWData(sample, data), 
-              RooFit::LineColor(kGreen+2), RooFit::LineStyle(kDotted));
-    simPdf.plotOn(frame_pass, RooFit::Slice(sample, "Pass"), RooFit::Components("bkg_pass"), RooFit::ProjWData(sample, data),
-     RooFit::LineStyle(kDashed), RooFit::LineColor(kRed));
+    data.plotOn(
+        frame_pass.get(), 
+        RooFit::Cut("sample==sample::Pass"), 
+        RooFit::Name("data_pass"));
+    
+    simPdf.plotOn(
+        frame_pass.get(), 
+        RooFit::Slice(sample, "Pass"), 
+        RooFit::ProjWData(sample, data), 
+        RooFit::Name("pdf_pass"));
+    
+    simPdf.plotOn(
+        frame_pass.get(), 
+        RooFit::Slice(sample, "Pass"), 
+        RooFit::Components("conv_pass_sig"), 
+        RooFit::ProjWData(sample, data), 
+        RooFit::LineColor(kGreen + 2), RooFit::LineStyle(kDotted));
+    
+    simPdf.plotOn(
+        frame_pass.get(), 
+        RooFit::Slice(sample, "Pass"), 
+        RooFit::Components("bkg_pass"), 
+        RooFit::ProjWData(sample, data),
+        RooFit::LineStyle(kDashed), 
+        RooFit::LineColor(kRed));
+    
     
     double chi2_pass = frame_pass->chiSquare("pdf_pass", "data_pass", 5);
+    
     frame_pass->Draw();
 
     TPaveText* txt_pass = new TPaveText(0.65, 0.65, 0.88, 0.88, "NDC");
@@ -716,18 +744,41 @@ void SaveBinFitCanvas(RooRealVar& mll, RooCategory& sample, RooAbsData& data, Ro
     txt_pass->AddText(Form("Eff: %.3f #pm %.3f", res.efficiency, res.efficiency_err));
     txt_pass->Draw("same");
 
+    // -----
+    // Pad 2
+    // -----
+
     c.cd(2);
     gPad->SetLeftMargin(0.13);
-    RooPlot* frame_fail = mll.frame(RooFit::Title("Category: FAIL"));
     
-    data.plotOn(frame_fail, RooFit::Cut("sample==sample::Fail"), RooFit::Name("data_fail"));
-    simPdf.plotOn(frame_fail, RooFit::Slice(sample, "Fail"), RooFit::ProjWData(sample, data), RooFit::Name("pdf_fail"));
-    simPdf.plotOn(frame_fail, RooFit::Slice(sample, "Fail"), 
-              RooFit::Components("conv_fail_sig"), 
-              RooFit::ProjWData(sample, data), 
-              RooFit::LineColor(kGreen+2), RooFit::LineStyle(kDotted));
-    simPdf.plotOn(frame_fail, RooFit::Slice(sample, "Fail"), RooFit::Components("bkg_fail"), RooFit::ProjWData(sample, data),
-     RooFit::LineStyle(kDashed), RooFit::LineColor(kRed));
+    std::unique_ptr<RooPlot> frame_fail(mll.frame(RooFit::Title("Category: FAIL")));
+    
+    data.plotOn(
+        frame_fail.get(), 
+        RooFit::Cut("sample==sample::Fail"), 
+        RooFit::Name("data_fail"));
+    
+    simPdf.plotOn(
+        frame_fail.get(),
+        RooFit::Slice(sample, "Fail"), 
+        RooFit::ProjWData(sample, data), 
+        RooFit::Name("pdf_fail"));
+    
+    simPdf.plotOn(
+        frame_fail.get(), 
+        RooFit::Slice(sample, "Fail"), 
+        RooFit::Components("conv_fail_sig"), 
+        RooFit::ProjWData(sample, data), 
+        RooFit::LineColor(kGreen + 2), 
+        RooFit::LineStyle(kDotted));
+    
+    simPdf.plotOn(
+        frame_fail.get(),
+        RooFit::Slice(sample, "Fail"), 
+        RooFit::Components("bkg_fail"), 
+        RooFit::ProjWData(sample, data),
+        RooFit::LineStyle(kDashed), 
+        RooFit::LineColor(kRed));
 
     double chi2_fail = frame_fail->chiSquare("pdf_fail", "data_fail", 5);
     frame_fail->Draw();
@@ -744,9 +795,6 @@ void SaveBinFitCanvas(RooRealVar& mll, RooCategory& sample, RooAbsData& data, Ro
     c.SetName(canvas_name.c_str());
     
     c.Write(canvas_name.c_str(), TObject::kOverwrite);
-
-    delete frame_pass;
-    delete frame_fail;
 }
 
 // ------------------------------------------------------------------------------------------------------------------------------------
@@ -790,6 +838,7 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
         } else if (cfg.analysis.sample_pass_mc == "histo") {
             hist_mc_pass = std::make_unique<RooDataHist>("hist_mc_pass", "Pass data histogram", mll, it.h_MC_pass.get());
             auto hist_pdf = std::make_unique<RooHistPdf>("hist_mc_pass_pdf", "Pass data pdf", mll, *hist_mc_pass);
+            
             hist_pdf->setInterpolationOrder(2);
             mc_pass_pdf = std::move(hist_pdf);
             
@@ -816,6 +865,7 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
         } else if (cfg.analysis.sample_fail_mc == "histo") {
             hist_mc_fail = std::make_unique<RooDataHist>("hist_mc_fail", "Pass fail histogram", mll, it.h_MC_fail.get());
             auto hist_pdf = std::make_unique<RooHistPdf>("hist_mc_fail_pdf", "Pass fail pdf", mll, *hist_mc_fail);
+            
             hist_pdf->setInterpolationOrder(2);
             mc_fail_pdf = std::move(hist_pdf);
 
@@ -830,6 +880,7 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
 
         if ((cfg.analysis.sample_pass_data == "data") && (cfg.analysis.sample_fail_data == "data")) {    
             sig_data = std::make_unique<RooDataSet>("sig_data", "Signal data unbinned", RooArgSet(mll), 
+            
             RooFit::Index(sample),
             RooFit::Import("Pass", *it.d_DATA_pass), 
             RooFit::Import("Fail", *it.d_DATA_fail));
@@ -857,18 +908,12 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
             return 1;
         }
 
-
+        // For initial parameter value -> n_tot 
         bool is_data_unbinned = (cfg.analysis.sample_pass_data == "data");
 
-        double data_pass_entries = is_data_unbinned ? it.d_DATA_pass->sumEntries() : it.h_DATA_pass->Integral();
-        double data_fail_entries = is_data_unbinned ? it.d_DATA_fail->sumEntries() : it.h_DATA_fail->Integral();
+        double data_pass_entries = (is_data_unbinned) ? it.d_DATA_pass->sumEntries() : it.h_DATA_pass->Integral();
+        double data_fail_entries = (is_data_unbinned) ? it.d_DATA_fail->sumEntries() : it.h_DATA_fail->Integral();
         double total_entries = data_pass_entries + data_fail_entries;
-        
-        if (cfg.general.verbose) {
-            std::cout << "Events in Pass DATA: " << data_pass_entries <<std::endl;
-            std::cout << "Events in Fail DATA: " << data_fail_entries <<std::endl;
-        }  
-
 
         // Efficiency
         RooRealVar efficiency("efficiency", "Efficiency", cfg.analysis.params.efficiency.at(0), cfg.analysis.params.efficiency.at(1),
@@ -905,7 +950,6 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
         RooRealVar n_bkg_pass("n_bkg_pass", "Number of Bkg Pass events", data_pass_entries * 0.1, 0.0, 1e7);
         RooRealVar n_bkg_fail("n_bkg_fail", "Number of Bkg Fail events", data_fail_entries * 0.5, 0.0, 1e7);
 
-
         // Global Model
         RooAddPdf model_pass("model_pass", "Global Pass model", RooArgList(conv_pass_sig, bkg_pass), RooArgList(n_sig_pass, n_bkg_pass));
         RooAddPdf model_fail("model_fail", "Global Fail model", RooArgList(conv_fail_sig, bkg_fail), RooArgList(n_sig_fail, n_bkg_fail));
@@ -914,9 +958,9 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
         simPdf.addPdf(model_pass, "Pass");
         simPdf.addPdf(model_fail, "Fail");
 
-        std::cout << "Starting pre-fitting" << std::endl;
-
         if (cfg.analysis.pre_fit) {
+            std::cout << "Starting pre-fitting." << std::endl;
+
             efficiency.setVal(1.0);
             efficiency.setConstant(kTRUE);
             RooDataHist hist_data_pass("hist_data_pass", "Pass data histogram", mll, it.h_DATA_pass.get());
@@ -924,7 +968,7 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
             std::unique_ptr<RooAbsReal> nll_pass(model_pass.createNLL(
                 hist_data_pass,
                 RooFit::Extended(kTRUE), 
-                RooFit::NumCPU(1)
+                RooFit::NumCPU(8)
             ));
 
             RooMinimizer m_pass(*nll_pass);
@@ -936,13 +980,13 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
             if (status_migrad == 0 || status_migrad == 1) {
                 m_pass.hesse();
             }
-            //m_pass.minos();
 
             std::unique_ptr<RooFitResult> prefitRes(m_pass.save());
 
             double mu_fit = mu.getVal();
-            double sigma_fit = sigma.getVal();
             double mu_err = mu.getError();
+
+            double sigma_fit = sigma.getVal();
             double sigma_err = sigma.getError();
 
             mu.setConstant(kFALSE);
@@ -956,9 +1000,9 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
         }
 
         std::unique_ptr<RooAbsReal> nll(simPdf.createNLL(
-            *sig_data, 
+            *sig_data,
             RooFit::Extended(kTRUE), 
-            RooFit::NumCPU(1)
+            RooFit::NumCPU(8)
         )); 
 
         RooMinimizer m(*nll);
