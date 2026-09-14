@@ -1,7 +1,7 @@
 {
   "general": { 
-    "dataset": "DATA",
-    "operation_mode":"Analysis",
+    "dataset": "MC",
+    "operation_mode":"Selection",
     "verbose": 1,
     "visualize":false
   },
@@ -16,8 +16,8 @@
 
   "selection": {
     "selection_mode": "TagAndProbe",
-    "save_sel_plots":false,
-    "save_sel_data":false,
+    "save_sel_data":true,
+    "save_sel_plots":true,
     "visual_sel":false,
     "o_sel_file_plots":"../output/risultati_plots.root",
     "o_sel_file_data":"../output/risultati_data.root"
@@ -25,7 +25,6 @@
 
   "template": {
     "bins_settup":"0_Set_Pt4_Eta4_Mll70",
-    "roll_to_flat":false,
     "template_type":"HISTO",
     "o_template_file_data":"../output/risultati_template.root",
     "pt_bins": [25.0, 30.0, 35.0, 40.0, 50.0],
@@ -57,7 +56,7 @@
 
   "cut_TP": {
     "pt_cut":25.0,
-    "eta_cut":2.4,
+    "eta_cut":2.5,
     "iso_cut":0.15,
     "mass_min":60.0,
     "mass_max":120.0

@@ -52,7 +52,6 @@ int Configure(config_struct& value, const std::string& json_path) {
             const auto& j = json_obj["template"];
 
             value.templ.bins_settup = j.value("bins_settup", value.templ.bins_settup);
-            value.templ.roll_to_flat = j.value("roll_to_flat", value.templ.roll_to_flat);
             value.templ.o_template_file_data = j.value("o_template_file_data", value.templ.o_template_file_data);
             value.templ.template_type = j.value("template_type", value.templ.template_type);
 
@@ -212,7 +211,6 @@ void Verbose_config(const config_struct& value) {
 
     std::cout << "Template options: " << std::endl;
     std::cout << "    Bins settup: " << value.templ.bins_settup << std::endl;
-    std::cout << "    Roll to Flat flag: " << value.templ.roll_to_flat << std::endl;
     std::cout << "    Output template file path: " << value.templ.o_template_file_data << std::endl;
     std::cout << "    Template output type: " << value.templ.template_type << std::endl;
 

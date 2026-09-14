@@ -184,34 +184,35 @@ int main(int argc, char* argv[]) {
                     node_TP = node_TP
                         .Define("TP_Result",
                         [flags_TP, cuts_TP](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
-                        const ROOT::RVec<float>& mass, const ROOT::RVec<bool>& tag, const ROOT::RVec<bool>& probe, const ROOT::RVec<bool>& glob, 
-                        const ROOT::RVec<float>& iso, const ROOT::RVec<UChar_t>& rec_flav, const ROOT::RVec<Int_t>& rec_gen_idx, 
+                        const ROOT::RVec<float>& mass, const ROOT::RVec<int>& charge,  const ROOT::RVec<bool>& tag, const ROOT::RVec<bool>& probe, const ROOT::RVec<bool>& glob, 
+                        const ROOT::RVec<float>& iso, const ROOT::RVec<bool>& hlt, const ROOT::RVec<UChar_t>& rec_flav, const ROOT::RVec<Int_t>& rec_gen_idx, 
                         const ROOT::RVec<Int_t>& gen_status, const ROOT::RVec<Int_t>& gen_pdg_id, const ROOT::RVec<float> gen_eta, const ROOT::RVec<float> gen_phi) {
                             
-                            MuonKinematics_TP kin{pt, eta, phi, mass};
-                            MuonFlags_TP flags{tag, probe, glob, iso};
+                            MuonKinematics_TP kin{pt, eta, phi, mass, charge};
+                            MuonFlags_TP flags{tag, probe, glob, iso, hlt};
                             MuonFlags_RM val{rec_flav, rec_gen_idx, gen_status, gen_pdg_id};
 
                             
                             return CalculateTagAndProbe_MC(kin, flags, flags_TP, cuts_TP, val, gen_eta, gen_phi);
 
-                        }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_tightId", "Muon_isStandalone", "Muon_isGlobal", "Muon_pfRelIso04_all",
-                            "Muon_genPartFlav", "Muon_genPartIdx", "GenPart_status", "GenPart_pdgId", "GenPart_eta", "GenPart_phi"});
+                        }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_charge", "Muon_tightId", "Muon_isStandalone", "Muon_isGlobal", "Muon_pfRelIso04_all",
+                           "HLT_Mu17" ,"Muon_genPartFlav", "Muon_genPartIdx", "GenPart_status", "GenPart_pdgId", "GenPart_eta", "GenPart_phi"});
                 
                 } else if (cfg.general.dataset == "DATA") {
                     node_TP = ApplyValidationFilter(node_TP, validation_map, "run", "luminosityBlock");
                     
                     node_TP = node_TP
                         .Define("TP_Result",
-                        [flags_TP, cuts_TP](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
-                        const ROOT::RVec<float>& mass, const ROOT::RVec<bool>& tag, const ROOT::RVec<bool>& probe, const ROOT::RVec<bool>& glob, const ROOT::RVec<float>& iso) {
+                        [flags_TP, cuts_TP] (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
+                        const ROOT::RVec<float>& mass, const ROOT::RVec<int>& charge,  const ROOT::RVec<bool>& tag, const ROOT::RVec<bool>& probe, 
+                        const ROOT::RVec<bool>& glob, const ROOT::RVec<float>& iso, const ROOT::RVec<bool>& hlt) {
                             
-                            MuonKinematics_TP kin{pt, eta, phi, mass};
-                            MuonFlags_TP flags{tag, probe, glob, iso};
+                            MuonKinematics_TP kin{pt, eta, phi, mass, charge};
+                            MuonFlags_TP flags{tag, probe, glob, iso, hlt};
                             
                             return CalculateTagAndProbe_DATA(kin, flags, flags_TP, cuts_TP);
 
-                        }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_tightId", "Muon_isStandalone", "Muon_isGlobal", "Muon_pfRelIso04_all"});
+                        }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_charge", "Muon_tightId", "Muon_isStandalone", "Muon_isGlobal", "Muon_pfRelIso04_all", "HLT_Mu17"});
                 }
             }
 
@@ -260,7 +261,7 @@ int main(int argc, char* argv[]) {
             std::cout << "Initilizing Template operation mode..." << std::endl;
         }
 
-        if(cfg.templ.roll_to_flat) {
+        if(cfg.templ.template_type.find("DATA") != std::string::npos) {
             if (cfg.general.dataset == "DATA") {
                 std::string tree = cfg.general.dataset + "_TagAndProbe_Tree";
                 ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
@@ -276,8 +277,9 @@ int main(int argc, char* argv[]) {
             
                 int chec_roll = UnbinnedTemplateMaker(node, cfg);  
             }
-        } else {
-
+        }
+        
+        if (cfg.templ.template_type.find("HISTO") != std::string::npos) {
             if ((cfg.general.dataset == "DATA")) {
                 std::string tree = "DATA_TagAndProbe_Tree";
                 ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
@@ -295,7 +297,6 @@ int main(int argc, char* argv[]) {
                 
                 int check_maker = BinnedTemplateMaker(node, cfg, 2);
             }
-
         }
 
         if (cfg.general.verbose) {
