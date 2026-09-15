@@ -305,62 +305,73 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if (cfg.general.operation_mode.find("Analysis") != std::string::npos) {
-        try {        
-            ROOT::EnableImplicitMT();
+    if (cfg.general.operation_mode == "Analysis") {
+        if(cfg.general.dataset == "DATA") {
+            try {        
+                ROOT::EnableImplicitMT();
 
-            TFile o_template_file(cfg.templ.o_template_file_data.c_str(), "UPDATE");// Template file -> read intput
+                TFile o_template_file(cfg.templ.o_template_file_data.c_str(), "UPDATE");// Template file -> read intput
 
-            std::vector<Template_RooF> template_container;
-            std::vector<FitResult> fit_results;
+                std::vector<Template_RooF> template_container;
+                std::vector<FitResult> fit_results;
 
-            if (LoadBinnedTemplate(cfg, template_container) != 0) {
-                std::cout << "ERROR: Load operations fails, exiting." << std::endl;
+                if (LoadBinnedTemplate(cfg, template_container) != 0) {
+                    std::cout << "ERROR: Load operations fails, exiting." << std::endl;
+                    return 1;
+                }
+                
+                TFile o_fit_file(cfg.analysis.o_fit_file.c_str(), "UPDATE");// Current writing file
+
+                o_fit_file.cd();
+
+                std::cout << "Starting Fit operation..." << std::endl;
+
+                int check_fit = EfficiencyFitter(template_container, cfg, fit_results, &o_fit_file);
+
+                if (check_fit != 0) {
+                    std::cout << "ERROR: Fit operation fails." << std::endl;
+                    return 1;
+                }
+                    
+                std::vector<std::string> booked_values = {"efficiency", "n_tot", "fit_status", "mu", "sigma", "lambda_pass", "lambda_fail"};
+
+                int check = SaveMapFittedValues(&o_fit_file, fit_results, cfg, booked_values);
+
+                if (check != 0) {
+                    std::cout << "ERROR: Save operation fails, exiting..." << std::endl;
+                    return 0;
+                }
+                
+                int i = 1;
+
+                for (const auto& it : fit_results) {
+                    std::cout << "" << std::endl;
+                    std::cout << "Fit number: " << i << ", status: " << it.fit_status << std::endl; 
+                    std::cout << "" << std::endl;
+                    
+                    std::cout << "    Efficiency: " << it.efficiency << " +- " << it.efficiency_err << std::endl;
+                    std::cout << "    Total signal events: " << it.n_tot << " +- " << it.n_tot_err << std::endl;
+
+                    std::cout << "    Mean: " << it.mu << " +- " << it.mu_err << std::endl;
+                    std::cout << "    Sigma: " << it.sigma << " +- " << it.sigma_err << std::endl;
+                    
+                    std::cout << "    Lambda pass: " << it.lambda_pass << " +- " << it.lambda_pass_err << std::endl;
+                    std::cout << "    Lambda fail: " << it.lambda_fail << " +- " << it.lambda_fail_err << std::endl;
+
+                    i++;
+                }
+            } catch (const std::exception& except) {
+                std::cerr << "Error nature: " << except.what() << std::endl;
                 return 1;
             }
-            
+
+        } else if (cfg.general.dataset == "MC") {
+
+        }
+            /*
             TFile o_fit_file(cfg.analysis.o_fit_file.c_str(), "UPDATE");// Current writing file
 
             o_fit_file.cd();
-
-            std::cout << "Starting Fit operation..." << std::endl;
-
-            int check_fit = EfficiencyFitter(template_container, cfg, fit_results, &o_fit_file);
-
-            if (check_fit != 0) {
-                std::cout << "ERROR: Fit operation fails." << std::endl;
-                return 1;
-            }
-                
-            std::vector<std::string> booked_values = {"efficiency", "n_tot", "fit_status", "mu", "sigma", "lambda_pass", "lambda_fail"};
-
-            int check = SaveMapFittedValues(&o_fit_file, fit_results, cfg, booked_values);
-
-            if (check != 0) {
-                std::cout << "ERROR: Save operation fails, exiting..." << std::endl;
-                return 0;
-            }
-            
-            int i = 1;
-
-            for (const auto& it : fit_results) {
-                std::cout << "" << std::endl;
-                std::cout << "Fit number: " << i << ", status: " << it.fit_status << std::endl; 
-                std::cout << "" << std::endl;
-                
-                std::cout << "    Efficiency: " << it.efficiency << " +- " << it.efficiency_err << std::endl;
-                std::cout << "    Total signal events: " << it.n_tot << " +- " << it.n_tot_err << std::endl;
-
-                std::cout << "    Mean: " << it.mu << " +- " << it.mu_err << std::endl;
-                std::cout << "    Sigma: " << it.sigma << " +- " << it.sigma_err << std::endl;
-                
-                std::cout << "    Lambda pass: " << it.lambda_pass << " +- " << it.lambda_pass_err << std::endl;
-                std::cout << "    Lambda fail: " << it.lambda_fail << " +- " << it.lambda_fail_err << std::endl;
-
-                i++;
-            }
-
-            /*
             std::string tree = cfg.general.dataset + "_" + cfg.general.analysis_mode + "_Tree";
             ROOT::RDataFrame data_frame(tree, cfg.io.o_file_data);
             
@@ -383,10 +394,7 @@ int main(int argc, char* argv[]) {
                 std::cout << "No visualization booked.\n" << std::endl;
             }
             */
-        } catch (const std::exception& except) {
-            std::cerr << "Error nature: " << except.what() << std::endl;
-            return 1;
-        }
+
     }
 
     return 0;

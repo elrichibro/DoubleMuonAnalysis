@@ -1,7 +1,7 @@
 {
   "general": { 
-    "dataset": "MC",
-    "operation_mode":"Selection",
+    "dataset": "DATA",
+    "operation_mode":"Analysis",
     "verbose": 1,
     "visualize":false
   },
@@ -16,8 +16,8 @@
 
   "selection": {
     "selection_mode": "TagAndProbe",
-    "save_sel_data":true,
-    "save_sel_plots":true,
+    "save_sel_data":false,
+    "save_sel_plots":false,
     "visual_sel":false,
     "o_sel_file_plots":"../output/risultati_plots.root",
     "o_sel_file_data":"../output/risultati_data.root"
@@ -47,6 +47,20 @@
       "lambda_pass":[-0.04, -3.0, 0.0],
       "lambda_fail":[-0.04, -3.0, 0.0]
     }
+  },
+
+  "flag_ES": {
+    "en_kinematics":true,
+    "en_mass_window":true,
+    "en_tight_muon":true
+  },
+
+  "cut_ES": {
+    "pt_cut":25.0,
+    "eta_cut":2.4,
+    "iso_cut":0.15,
+    "mass_min":60.0,
+    "mass_max":120.0
   },
 
   "flag_TP": {
