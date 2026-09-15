@@ -153,23 +153,34 @@ int main(int argc, char* argv[]) {
             
             if (cfg.selection.selection_mode.find("RespMatrix") != std::string::npos) {
                 node_RM = node_RM
-                    .Define("RespMatrix_mask", [flags_RM, cuts_RM](const ROOT::RVec<float>& pt_gen, const ROOT::RVec<float>& eta_gen, 
-                    const ROOT::RVec<float>& pt_rec, const ROOT::RVec<float>& eta_rec, const ROOT::RVec<UChar_t>& rec_flav,
-                    const ROOT::RVec<Int_t>& rec_gen_idx, const ROOT::RVec<Int_t>& gen_status, const ROOT::RVec<Int_t>& gen_pdg_id) {
+                    .Define("RespMatrix_mask", [flags_RM, cuts_RM](const ROOT::RVec<float>& pt_rec, const ROOT::RVec<float>& eta_rec, const ROOT::RVec<float>& phi_rec,
+                    const ROOT::RVec<float>& mass_rec, const ROOT::RVec<int>& charge_rec,  const ROOT::RVec<float>& pt_gen, const ROOT::RVec<float>& eta_gen,
+                    const ROOT::RVec<float>& phi_gen, const ROOT::RVec<float>& mass_gen, const ROOT::RVec<int>& charge_gen, const ROOT::RVec<bool>& reco_tight, 
+                    const ROOT::RVec<UChar_t>& reco_flav_gen, const ROOT::RVec<Int_t>& reco_idx_gen, const ROOT::RVec<Int_t>& gen_status, const ROOT::RVec<Int_t>& gen_pdg_idx) {
                         
-                        MuonKinematics_RM kin{pt_gen, eta_gen, pt_rec, eta_rec};
-                        MuonFlags_RM val{rec_flav, rec_gen_idx, gen_status, gen_pdg_id};
+                        MuonKinematics_RM kin_rec{pt_rec, eta_rec, phi_rec, mass_rec, charge_rec};
+                        MuonKinematics_RM kin_gen{pt_gen, eta_gen, phi_gen, mass_gen, charge_gen};
+                        MuonFlags_RM val{reco_tight, reco_flav_gen, reco_idx_gen, gen_status, gen_pdg_idx};
                         
-                        return CalculateRespMatrix(kin, val, flags_RM, cuts_RM);
+                        return CalculateRespMatrix(kin_rec, kin_gen, val, flags_RM, cuts_RM);
                     
-                    }, {"GenPart_pt", "GenPart_eta", "Muon_pt", "Muon_eta", "Muon_genPartFlav", "Muon_genPartIdx", "GenPart_status", "GenPart_pdgId"});
+                    }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_charge", "GenPart_pt", "GenPart_eta", "GenPart_phi", 
+                        "GenPart_mass", "Muon_charge", "Muon_tightId", "Muon_genPartFlav", "Muon_genPartIdx", "GenPart_status", "GenPart_pdgId"});
 
                 node_RM = node_RM
-                    .Define("Gen_Pt", [](const ResultsRespMatrix& res) { return res.pt_gen_RM; }, {"RespMatrix_mask"})
-                    .Define("Gen_Eta", [](const ResultsRespMatrix& res) { return res.eta_gen_RM; }, {"RespMatrix_mask"})
-                    .Define("Rec_Pt", [](const ResultsRespMatrix& res) { return res.pt_rec_RM; }, {"RespMatrix_mask"})
-                    .Define("Rec_Eta", [](const ResultsRespMatrix& res) { return res.eta_rec_RM; }, {"RespMatrix_mask"});
-            }
+                    .Define("Rec_InvMass", [](const ResultsRespMatrix& res) { return res.mll_rec; }, {"RespMatrix_mask"})
+                    .Define("Gen_InvMass", [](const ResultsRespMatrix& res) { return res.mll_gen; }, {"RespMatrix_mask"})
+                        
+                    .Define("Rec_Pt", [](const ResultsRespMatrix& res) { return res.pt_rec; }, {"RespMatrix_mask"})
+                    .Define("Gen_Pt", [](const ResultsRespMatrix& res) { return res.pt_gen; }, {"RespMatrix_mask"})
+                    
+                    .Define("Rec_Y", [](const ResultsRespMatrix& res) { return res.y_rec; }, {"RespMatrix_mask"})
+                    .Define("Gen_Y", [](const ResultsRespMatrix& res) { return res.y_gen; }, {"RespMatrix_mask"})
+
+                    .Define("Rec_Phis", [](const ResultsRespMatrix& res) { return res.phis_rec; }, {"RespMatrix_mask"})
+                    .Define("Gen_Phis", [](const ResultsRespMatrix& res) { return res.phis_gen; }, {"RespMatrix_mask"});
+
+                }
             
             // ------------------------------------------------------------------------------------------------------------------------------------
             // Tag and Probe
@@ -185,18 +196,19 @@ int main(int argc, char* argv[]) {
                         .Define("TP_Result",
                         [flags_TP, cuts_TP](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
                         const ROOT::RVec<float>& mass, const ROOT::RVec<int>& charge,  const ROOT::RVec<bool>& tag, const ROOT::RVec<bool>& probe, const ROOT::RVec<bool>& glob, 
-                        const ROOT::RVec<float>& iso, const ROOT::RVec<bool>& hlt, const ROOT::RVec<UChar_t>& rec_flav, const ROOT::RVec<Int_t>& rec_gen_idx, 
-                        const ROOT::RVec<Int_t>& gen_status, const ROOT::RVec<Int_t>& gen_pdg_id, const ROOT::RVec<float> gen_eta, const ROOT::RVec<float> gen_phi) {
+                        const ROOT::RVec<float>& iso, const ROOT::RVec<bool>& hlt, const ROOT::RVec<bool>& reco_tight, const ROOT::RVec<UChar_t>& reco_flav_gen,
+                        const ROOT::RVec<Int_t>& reco_idx_gen, const ROOT::RVec<Int_t>& gen_status, const ROOT::RVec<Int_t>& gen_pdg_idx, 
+                        const ROOT::RVec<float> gen_eta, const ROOT::RVec<float> gen_phi) {
                             
                             MuonKinematics_TP kin{pt, eta, phi, mass, charge};
                             MuonFlags_TP flags{tag, probe, glob, iso, hlt};
-                            MuonFlags_RM val{rec_flav, rec_gen_idx, gen_status, gen_pdg_id};
+                            MuonFlags_RM val{reco_tight, reco_flav_gen, reco_idx_gen, gen_status, gen_pdg_idx};
 
                             
                             return CalculateTagAndProbe_MC(kin, flags, flags_TP, cuts_TP, val, gen_eta, gen_phi);
 
                         }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_charge", "Muon_tightId", "Muon_isStandalone", "Muon_isGlobal", "Muon_pfRelIso04_all",
-                           "HLT_Mu17" ,"Muon_genPartFlav", "Muon_genPartIdx", "GenPart_status", "GenPart_pdgId", "GenPart_eta", "GenPart_phi"});
+                           "HLT_Mu17", "Muon_tightId", "Muon_genPartFlav", "Muon_genPartIdx", "GenPart_status", "GenPart_pdgId", "GenPart_eta", "GenPart_phi"});
                 
                 } else if (cfg.general.dataset == "DATA") {
                     node_TP = ApplyValidationFilter(node_TP, validation_map, "run", "luminosityBlock");
@@ -214,17 +226,17 @@ int main(int argc, char* argv[]) {
 
                         }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_charge", "Muon_tightId", "Muon_isStandalone", "Muon_isGlobal", "Muon_pfRelIso04_all", "HLT_Mu17"});
                 }
-            }
-
-            node_TP = node_TP
-                .Define(cfg.general.dataset + "_Probe_Pt", [](const ResultsTagAndProbe& res) { return res.pt; }, {"TP_Result"})
-                .Define(cfg.general.dataset + "_Probe_Eta", [](const ResultsTagAndProbe& res) { return res.eta; }, {"TP_Result"})
-                .Define(cfg.general.dataset + "_Mll", [](const ResultsTagAndProbe& res) { return res.mll; }, {"TP_Result"})
-                
-                //.Define(cfg.general.dataset + "_Tag_Pt", [](const ResultsTagAndProbe& res) { return res.tag_pt_pass; }, {"TP_Result"})
-                //.Define(cfg.general.dataset + "_Tag_Eta", [](const ResultsTagAndProbe& res) { return res.tag_eta_pass; }, {"TP_Result"})
-                .Define(cfg.general.dataset + "_Mask_Pass", [](const ResultsTagAndProbe& res) { return res.mask_pass; }, {"TP_Result"});    
             
+
+                node_TP = node_TP
+                    .Define(cfg.general.dataset + "_Probe_Pt", [](const ResultsTagAndProbe& res) { return res.pt; }, {"TP_Result"})
+                    .Define(cfg.general.dataset + "_Probe_Eta", [](const ResultsTagAndProbe& res) { return res.eta; }, {"TP_Result"})
+                    .Define(cfg.general.dataset + "_Mll", [](const ResultsTagAndProbe& res) { return res.mll; }, {"TP_Result"})
+                    
+                    //.Define(cfg.general.dataset + "_Tag_Pt", [](const ResultsTagAndProbe& res) { return res.tag_pt_pass; }, {"TP_Result"})
+                    //.Define(cfg.general.dataset + "_Tag_Eta", [](const ResultsTagAndProbe& res) { return res.tag_eta_pass; }, {"TP_Result"})
+                    .Define(cfg.general.dataset + "_Mask_Pass", [](const ResultsTagAndProbe& res) { return res.mask_pass; }, {"TP_Result"});    
+            }
             // ------------------------------------------------------------------------------------------------------------------------------------
             // Output Manager
             // ------------------------------------------------------------------------------------------------------------------------------------
@@ -233,7 +245,9 @@ int main(int argc, char* argv[]) {
 
             if (cfg.selection.selection_mode == "TagAndProbe") {
                 manager.BookAnalysis(node_TP, cfg);
-            } else if (cfg.selection.selection_mode == "ResponseMatrix") {
+                std::cout << "Starting TagAndProbe booking" << std::endl;
+            } else if (cfg.selection.selection_mode == "RespMatrix") {
+                std::cout << "Starting RespMatrix booking" << std::endl;
                 manager.BookAnalysis(node_RM, cfg);
             }
 
