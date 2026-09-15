@@ -89,4 +89,34 @@ T CalculatePhiStar(const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi) {
     return std::tan((TMath::Pi() - delta_phi) / 2.0) * sin;
 }
 
+template <typename T>
+T CalculatePtZ0(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi, const ROOT::RVec<T>& mass) {
+    ROOT::Math::PtEtaPhiMVector mu1(pt[0], eta[0], phi[0], mass[0]);
+    ROOT::Math::PtEtaPhiMVector mu2(pt[1], eta[1], phi[1], mass[1]);
+        
+    auto z_boson = mu1 + mu2;
+        
+    return static_cast<T>(z_boson.Pt());
+}
+
+template <typename T>
+T CalculatePtZ0_Raw(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& phi) {
+    T px_Z0 = (pt[0] * std::cos(phi[0])) + (pt[1] * std::cos(phi[1]));
+    T py_Z0 = (pt[0] * std::sin(phi[0])) + (pt[1] * std::sin(phi[1]));
+
+    T pt_Z0 = std::sqrt((px_Z0 * px_Z0) + (py_Z0 * py_Z0));
+
+    return pt_Z0;
+}
+
+template <typename T>
+T CalculatePtZ0_Raw_Pair(const T pt1, const T pt2, const T phi1, const T phi2) {
+    T px_Z0 = (pt1 * std::cos(phi1)) + (pt2 * std::cos(phi2));
+    T py_Z0 = (pt1 * std::sin(phi1)) + (pt2 * std::sin(phi2));
+
+    T pt_Z0 = std::sqrt((px_Z0 * px_Z0) + (py_Z0 * py_Z0));
+
+    return pt_Z0;
+}
+
 #endif
