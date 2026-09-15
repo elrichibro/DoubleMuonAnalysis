@@ -142,4 +142,12 @@ const cuts_config cfg_c);
 /// @return Returns the value of detector acceptance in Z0->mu+mu- event. First element is central value, second value is the stat. sigma.
 std::vector<float> CalculateAcceptance(ROOT::RDF::RNode node, const std::string& tag, int FSR);
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+/// @brief 
+/// @param node 
+/// @param cfg 
+/// @return 
+ROOT::RDF::RNode EventSelection(ROOT::RDF::RNode node, const config_struct& cfg);
+
 #endif

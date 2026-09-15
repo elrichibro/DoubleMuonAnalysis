@@ -409,3 +409,53 @@ std::vector<float> CalculateAcceptance(ROOT::RDF::RNode node, const std::string&
 
     return results;
 }
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+ROOT::RDF::RNode EventSelection(ROOT::RDF::RNode node, const config_struct& cfg) {
+    ROOT::RDF::RNode node_event = node;
+
+    std::string good_muon = "true";
+
+    if (cfg.flag_ES.en_kinematics) {
+        good_muon += " && (Muon_pt > " + std::to_string(cfg.cut_ES.pt_cut) + " && abs(Muon_eta) < " + std::to_string(cfg.cut_ES.eta_cut)
+         + ")";
+    }
+
+    if (cfg.flag_ES.en_tight_muon) {
+        good_muon += " && (Muon_tightId == true)";
+    }
+
+    node_event = node_event
+        .Define("GoodMuon", good_muon)
+
+        .Define("GM_Pt", "Muon_pt[GoodMuon]")
+        .Define("GM_Eta", "Muon_eta[GoodMuon]")
+        .Define("GM_Phi", "Muon_phi[GoodMuon]")
+        .Define("GM_Mass", "Muon_mass[GoodMuon]")
+        .Define("GM_Charge", "Muon_charge[GoodMuon]");
+
+    node_event = node_event
+        .Define("EventPair", "Sum(GoodMuon) == 2")
+        .Define("GoodEvent", "EventPair && (GM_Charge[0] != GM_Charge[1])");
+
+    node_event = node_event
+        .Define("InvariantMass", [] (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
+         const ROOT::RVec<float>& mass) -> float {
+            
+            return static_cast<float>(ROOT::VecOps::InvariantMass(pt, eta, phi, mass));
+        
+        }, {"GM_Pt", "GM_Eta", "GM_Phi", "GM_Mass"})
+        .Define("OneInvMass", "Sum(InvariantMass) == 1");
+
+    std::string event_cut = "GoodEvent && OneInvMass";
+    if (cfg.flag_ES.en_mass_window) {
+        event_cut += " && (InvariantMass > " + std::to_string(cfg.cut_ES.mass_min) + " && InvariantMass < " 
+        + std::to_string(cfg.cut_ES.mass_max) + ")";
+    }
+
+    node_event = node_event
+        .Filter(event_cut, "InvMass selection -> Good Event");
+
+    return node_event;
+}
