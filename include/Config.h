@@ -112,7 +112,9 @@ struct config_struct {
     selection_config selection;
     template_config templ;
     analysis_config analysis;
-    
+
+    flags_config flag_ES;
+    cuts_config cut_ES;
     flags_config flag_TP;
     cuts_config cut_TP;
     flags_config flag_RM;

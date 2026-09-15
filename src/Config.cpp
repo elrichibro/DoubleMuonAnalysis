@@ -86,6 +86,25 @@ int Configure(config_struct& value, const std::string& json_path) {
             }
         }
 
+        if (json_obj.contains("flag_ES")) {
+            const auto& j = json_obj["flag_ES"];
+
+            value.flag_ES.en_kinematics = j.value("en_kinematics", value.flag_ES.en_kinematics);
+            value.flag_ES.en_isolation = j.value("en_isolation", value.flag_ES.en_isolation);
+            value.flag_ES.en_mass_window = j.value("en_mass_window", value.flag_ES.en_mass_window);
+            value.flag_ES.en_tight_muon = j.value("en_tight_muon", value.flag_ES.en_tight_muon);
+        }
+
+        if (json_obj.contains("cut_ES")) {
+            const auto& j = json_obj["cut_ES"];
+
+            value.cut_ES.pt_cut = j.value("pt_cut", value.cut_ES.pt_cut);
+            value.cut_ES.eta_cut = j.value("eta_cut", value.cut_ES.eta_cut);
+            value.cut_ES.iso_cut = j.value("iso_cut", value.cut_ES.iso_cut);
+            value.cut_ES.mass_min = j.value("mass_min", value.cut_ES.mass_min);
+            value.cut_ES.mass_max = j.value("mass_max", value.cut_ES.mass_max);
+        }
+
         if (json_obj.contains("flag_TP")) {
             const auto& j = json_obj["flag_TP"];
 
@@ -277,6 +296,23 @@ void Verbose_config(const config_struct& value) {
 
     std::cout << "" << std::endl;
     std::cout << "--------------------------------------------------------------------" << std::endl;
+    std::cout << "" << std::endl;
+
+    std::cout << "Event Selection flags:" << std::endl;
+    std::cout << "    Kinematics: " << value.flag_ES.en_kinematics << std::endl;
+    std::cout << "    Isolation: " << value.flag_ES.en_isolation << std::endl;
+    std::cout << "    Mass window: " << value.flag_ES.en_mass_window << std::endl;
+    std::cout << "    Tight muon: " << value.flag_ES.en_tight_muon << std::endl;
+
+    std::cout << "" << std::endl;
+
+    std::cout << "Event Selection cuts:" << std::endl;
+    std::cout << "    p_T cut: " << value.cut_ES.pt_cut << std::endl;
+    std::cout << "    Eta cut: " << value.cut_ES.eta_cut << std::endl;
+    std::cout << "    Isolation cut: " << value.cut_ES.iso_cut << std::endl;
+    std::cout << "    Max mass: " << value.cut_ES.mass_max << std::endl;
+    std::cout << "    Min mass: " << value.cut_ES.mass_min << std::endl;
+
     std::cout << "" << std::endl;
 
     std::cout << "TagAndProbe flags:" << std::endl;
