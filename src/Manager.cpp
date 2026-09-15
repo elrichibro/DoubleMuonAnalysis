@@ -76,7 +76,7 @@ void OutputSelManager::Run() {
 
     std::unique_ptr<TFile> file_plots = nullptr;
     if (save_sel_plots) {
-        file_plots = std::make_unique<TFile>(o_file_plots.c_str(), "RECREATE");
+        file_plots = std::make_unique<TFile>(o_file_plots.c_str(), "UPDATE");
         std::cout << "Saving plots in file: " <<  o_file_plots << std::endl;
     }
 
@@ -94,6 +94,7 @@ void OutputSelManager::Run() {
 
         // Visualization option
         if (visualize) {
+
             std::string c_name = "c_" + it->GetName();
             TCanvas* vis_canvas = new TCanvas(c_name.c_str(), it->GetName().c_str(), canv.width, canv.height);
             
@@ -137,7 +138,6 @@ void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& 
 
     std::string title_eta = ";" + cfg.eta_plot.title_axis + ";Efficiency;";
     std::string name_eta = cfg.general.dataset + "_#eta";
-
     ROOT::RDF::TH1DModel model_1D_eta(name_eta.c_str(), title_eta.c_str(), cfg.eta_plot.nbins, cfg.eta_plot.axis_min, 
     cfg.eta_plot.axis_max);
 
@@ -150,7 +150,7 @@ void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& 
     std::string name_plot = cfg.general.dataset + "_#eta VS p_{T}";
     ROOT::RDF::TH2DModel model_2D(name_plot.c_str(), title.c_str(), cfg.eta_plot.nbins, cfg.eta_plot.axis_min, cfg.eta_plot.axis_max, 
     cfg.pt_plot.nbins, cfg.pt_plot.axis_min, cfg.pt_plot.axis_max);
-/*
+
     ROOT::RDF::TH2DModel model_2D_TP_Pt("h2_model_tp_pt", "; p_{T} Probe [GeV]; p_{T} Tag [GeV];", cfg.pt_plot.nbins, cfg.pt_plot.axis_min, cfg.pt_plot.axis_max,
     cfg.pt_plot.nbins, cfg.pt_plot.axis_min, cfg.pt_plot.axis_max);
 
@@ -162,7 +162,7 @@ void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& 
     
     ROOT::RDF::TH2DModel model_2D_RM_Eta("h2_model2", "; #eta gen; #eta rec;", cfg.eta_plot.nbins, cfg.eta_plot.axis_min, cfg.eta_plot.axis_max,
     cfg.eta_plot.nbins, cfg.eta_plot.axis_min, cfg.eta_plot.axis_max);
-*/
+
     // vector needed for Snapshot operation
 
     if ((cfg.general.operation_mode.find("Selection") != std::string::npos) && (cfg.selection.selection_mode == "TagAndProbe")) {
@@ -197,7 +197,7 @@ void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& 
 
         column_names.insert(column_names.end(), names.begin(), names.end());
 
-    } else if ((cfg.general.operation_mode.find("Selection") != std::string::npos) && (cfg.selection.selection_mode == "ResponseMatrix")) {
+    } else if ((cfg.general.operation_mode.find("Selection") != std::string::npos) && (cfg.selection.selection_mode == "RespMatrix")) {
         
         // ----------
         // Histograms
@@ -206,11 +206,7 @@ void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& 
         auto h1_pt_gen = node.Histo1D(model_1D_pt, "Gen_Pt");
         auto h1_pt_rec = node.Histo1D(model_1D_pt, "Rec_Pt");
 
-        auto h1_eta_gen = node.Histo1D(model_1D_eta, "Gen_Eta");
-        auto h1_eta_rec = node.Histo1D(model_1D_eta, "Rec_Eta");
-
-        //auto h2_pt_gen_rec = node.Histo2D(model_2D_RM_Pt, "Gen_Pt", "Rec_Pt");
-        //auto h2_eta_gen_rec = node.Histo2D(model_2D_RM_Eta, "Gen_Eta", "Rec_Eta");
+        auto h2_pt_gen_rec = node.Histo2D(model_2D_RM_Pt, "Gen_Pt", "Rec_Pt");
 
         // --------
         // Pipeline
@@ -219,13 +215,9 @@ void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& 
         AddToPipeline("P_{t} Generated distribution", h1_pt_gen);
         AddToPipeline("P_{t} Reconstructed distribution", h1_pt_rec);
 
-        AddToPipeline("#eta Generated distribution", h1_eta_gen);
-        AddToPipeline("#eta Reconstructed distribution", h1_eta_rec);
-
-        //AddToPipeline("Response Matrix P_{t}", h2_pt_gen_rec);
-        //AddToPipeline("Response Matrix #eta", h2_eta_gen_rec);
+        AddToPipeline("Response Matrix P_{t}", h2_pt_gen_rec);
         
-        std::vector<std::string> names = {"Gen_Pt", "Rec_Pt", "Gen_Eta", "Rec_Eta"};
+        std::vector<std::string> names = {"Gen_Pt", "Rec_Pt"};
         column_names.insert(column_names.end(), names.begin(), names.end());
     
     } else if ((cfg.general.operation_mode.find("Analysis") != std::string::npos) && (cfg.selection.selection_mode == "TagAndProbe")) {

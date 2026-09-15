@@ -70,26 +70,35 @@ struct MuonFlags_TP {
 
 /// @brief Results of the Response Matrix calculus.
 struct ResultsRespMatrix {
-    ROOT::RVec<float> pt_gen_RM;// Transverse momentum of the selected generated muons.
-    ROOT::RVec<float> pt_rec_RM;// Transverse momentum of the selected reconstructed muons.
-    ROOT::RVec<float> eta_gen_RM;// Pseudorapidity of the selected generated muons.
-    ROOT::RVec<float> eta_rec_RM;// Pseudorapidity of the selected reconstructed muons.
+    float mll_rec;
+    float mll_gen;
+    
+    float pt_gen;
+    float pt_rec;
+    
+    float y_gen;
+    float y_rec;
+    
+    float phis_gen;
+    float phis_rec;
 };
 
 /// @brief Kinematical quantities for Response Matrix calculus -> GENerated and REConstructed muons.
 struct MuonKinematics_RM {
-    const ROOT::RVec<float>& pt_gen;// Transeverse momentum of generated level muons.
-    const ROOT::RVec<float>& eta_gen;// Pseudorapidity of generated level muons.
-    const ROOT::RVec<float>& pt_rec;// Transeverse momentum of reconstructed level muons.
-    const ROOT::RVec<float>& eta_rec;// Pseudorapidity of reconstructed level muons.
+    const ROOT::RVec<float>& pt;
+    const ROOT::RVec<float>& eta;
+    const ROOT::RVec<float>& phi;
+    const ROOT::RVec<float>& mass;
+    const ROOT::RVec<int>& charge;
 };
 
 /// @brief Muon flags for Response Matrix calculus -> REConstructed/GENerated pairing.
 struct MuonFlags_RM {
-    const ROOT::RVec<int>& gen_flav_rec;// Flavour of genParticle for MC matching to status==1 muons.
-    const ROOT::RVec<int>& pair_idx_rec;// Index into genParticle list for MC matching to status==1 muons
-    const ROOT::RVec<int>& status_gen;// Generated particle status -> stable = 1.
-    const ROOT::RVec<int>& pdg_id_gen;// PDG id of the particle.
+    const ROOT::RVec<bool>& reco_tight;// Muon_tightId flag.
+    const ROOT::RVec<int>& reco_flav_gen;// Flavour of genParticle for MC matching to status==1 muons.
+    const ROOT::RVec<int>& reco_idx_gen;// Index into genParticle list for MC matching to status==1 muons
+    const ROOT::RVec<int>& gen_status;// Generated particle status -> stable = 1.
+    const ROOT::RVec<int>& gen_pdg_idx;// PDG id of the particle.
 };
 
 
@@ -130,7 +139,7 @@ const cuts_config cfg_c);
 /// @param cfg_f Contains the kinematical flags. Passed by value -> small struct -> L1/L2 catche
 /// @param cfg_c Stores the cuts values.
 /// @return Struct containing the transverse momentum and pseudorapidity of muons that pass the selection.
-ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin, const MuonFlags_RM& flags, const flags_config cfg_f, 
+ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin_rec, const MuonKinematics_RM& kin_gen, const MuonFlags_RM& flags, const flags_config cfg_f, 
 const cuts_config cfg_c);
 
 // ------------------------------------------------------------------------------------------------------------------------------------

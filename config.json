@@ -1,9 +1,9 @@
 {
   "general": { 
-    "dataset": "DATA",
-    "operation_mode":"Analysis",
+    "dataset": "MC",
+    "operation_mode":"Selection",
     "verbose": 1,
-    "visualize":false
+    "visualize":true
   },
   
   "io": {
@@ -15,10 +15,10 @@
   },
 
   "selection": {
-    "selection_mode": "TagAndProbe",
+    "selection_mode": "RespMatrix",
     "save_sel_data":false,
     "save_sel_plots":false,
-    "visual_sel":false,
+    "visual_sel":true,
     "o_sel_file_plots":"../output/risultati_plots.root",
     "o_sel_file_data":"../output/risultati_data.root"
   },
