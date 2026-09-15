@@ -5,6 +5,7 @@
 #include <ROOT/RDataFrame.hxx>
 
 #include <TMath.h>
+#include <Math/Vector4D.h>
 
 #include <cmath>
 #include <cstdint>
@@ -90,13 +91,27 @@ T CalculatePhiStar(const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi) {
 }
 
 template <typename T>
+T CalculatePhiStar_Pair(const T eta1, const T eta2, const T phi1, const T phi2) {
+    T delta_phi = std::abs(ROOT::VecOps::DeltaPhi(phi1, phi2));
+    T delta_eta = std::abs(eta1 - eta2);
+
+    T cos = std::tanh(delta_eta / 2.0);
+    T sin = std::sqrt(1.0 - (cos * cos));
+
+    return std::tan((TMath::Pi() - delta_phi) / 2.0) * sin;
+}
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+template <typename T>
 T CalculatePtZ0(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi, const ROOT::RVec<T>& mass) {
     ROOT::Math::PtEtaPhiMVector mu1(pt[0], eta[0], phi[0], mass[0]);
     ROOT::Math::PtEtaPhiMVector mu2(pt[1], eta[1], phi[1], mass[1]);
         
-    auto z_boson = mu1 + mu2;
-        
-    return static_cast<T>(z_boson.Pt());
+    auto z0 = mu1 + mu2;   
+    T pt_Z0 = static_cast<T>(z0.Pt()); 
+    
+    return pt_Z0;
 }
 
 template <typename T>
@@ -119,4 +134,46 @@ T CalculatePtZ0_Raw_Pair(const T pt1, const T pt2, const T phi1, const T phi2) {
     return pt_Z0;
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+template <typename T>
+T CalculateRapidityZ0(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi, const ROOT::RVec<T>& mass) {
+    ROOT::Math::PtEtaPhiMVector mu1(pt[0], eta[0], phi[0], mass[0]);
+    ROOT::Math::PtEtaPhiMVector mu2(pt[1], eta[1], phi[1], mass[1]);
+        
+    auto z0 = mu1 + mu2;
+
+    T y_Z0 = static_cast<T>(z0.Rapidity());
+    return y_Z0; 
+}
+
+template <typename T>
+T CalculateRapidityZ0_Raw(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi, const ROOT::RVec<T>& mass) {
+    ROOT::RVec<T> pz_mu = pt * std::sinh(eta);
+
+    ROOT::RVec<T> E = std::sqrt((pt * pt) + (pz_mu * pz_mu) + (mass * mass));
+    
+    T E_tot = E[0] + E[1];
+    T pz_tot = pz_mu[0] + pz_mu[1];
+
+    T y_Z0 = static_cast<T>(0.5 * std::log((E_tot + pz_tot) / (E_tot - pz_tot)));
+    
+    return y_Z0; 
+}
+
+template <typename T>
+T CalculateRapidityZ0_Raw_Pair(const T pt1, const T pt2, const T eta1, const T eta2, const T phi1, const T phi2, const T mass1, const T mass2) {
+    T pz_mu1 = pt1 * std::sinh(eta1);
+    T pz_mu2 = pt2 * std::sinh(eta2);
+
+    T E1 = std::sqrt((pt1 * pt1) + (pz_mu1 * pz_mu1) + (mass1 * mass1));
+    T E2 = std::sqrt((pt2 * pt2) + (pz_mu2 * pz_mu2) + (mass2 * mass2));
+    
+    T E_tot = E1 + E2;
+    T pz_tot = pz_mu1 + pz_mu2;
+
+    T y_Z0 = static_cast<T>(0.5 * std::log((E_tot + pz_tot) / (E_tot - pz_tot)));
+    
+    return y_Z0; 
+}
 #endif
