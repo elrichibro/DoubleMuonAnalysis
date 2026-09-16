@@ -14,7 +14,6 @@
 
 /// @brief Stores general settup status.
 struct general_config {
-    std::string dataset = "MC";// Dataset.
     std::string operation_mode = "";// Operation mode: Selection, Template, Analysis.
 
     int verbose = 1;// General verbose flag.
@@ -30,8 +29,13 @@ struct io_config {
     std::string val_file = "";// Validation json file path.
 };
 
+struct acceptance_config {
+    std::string dataset = "MC";// Dataset.
+};
+
 /// @brief Selection mode settup
 struct selection_config {
+    std::string dataset = "MC";// Dataset.
     std::string selection_mode = "";// TagAndProbe or RespMatrix.
     bool save_sel_plots = false;// Flag for saving selection plots.
     bool save_sel_data = false;// Flag for saving selection data.
@@ -42,9 +46,10 @@ struct selection_config {
 
 /// @brief Template mode settup
 struct template_config {
+    std::string dataset = "MC";// Dataset.
+    std::string template_type = "";// DATA or HISTO unbinned or binned throughtput.    
     std::string bins_settup = "";// Name of bins status
     std::string o_template_file_data = "";// Output file path for template mode.
-    std::string template_type = "";// DATA or HISTO unbinned or binned throughtput.
     std::vector<float> pt_bins;// Vector of pt bins.
     std::vector<float> eta_bins;// Vector of eta bins.
     float mll_bins = 0;// Number of Invariant Mass bins.
@@ -64,8 +69,10 @@ struct analysis_params {
 
 /// @brief Analysis mode settup
 struct analysis_config {
+    std::string analysis_mode = "";
     bool pre_fit = false;// Flag for prefit option.
     std::string o_fit_file = "";// Fit output file path.
+    std::string bins_settup = "";
     std::string sample_pass_data = "";// Data format.
     std::string sample_pass_mc = "";// Data format.
     std::string sample_fail_data = "";// Data format.
@@ -109,14 +116,17 @@ struct config_struct {
     general_config general;
     io_config io;
 
+    acceptance_config acceptance;
     selection_config selection;
     template_config templ;
     analysis_config analysis;
 
     flags_config flag_ES;
     cuts_config cut_ES;
+
     flags_config flag_TP;
     cuts_config cut_TP;
+
     flags_config flag_RM;
     cuts_config cut_RM;
     

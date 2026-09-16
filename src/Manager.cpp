@@ -75,9 +75,15 @@ void OutputSelManager::Run() {
     }
 
     std::unique_ptr<TFile> file_plots = nullptr;
-    if (save_sel_plots) {
-        file_plots = std::make_unique<TFile>(o_file_plots.c_str(), "UPDATE");
-        std::cout << "Saving plots in file: " <<  o_file_plots << std::endl;
+    
+    if ((config.selection.save_sel_plots) && (config.general.operation_mode == "Selection")) {
+        file_plots = std::make_unique<TFile>(config.selection.o_sel_file_plots.c_str(), "UPDATE");
+        std::cout << "Saving plots in file: " <<  config.selection.o_sel_file_plots << std::endl;
+    
+    } else if ((config.selection.save_sel_plots) && (config.general.operation_mode == "Analysis")) {
+        file_plots = std::make_unique<TFile>(config.analysis.o_fit_file.c_str(), "UPDATE");
+        std::cout << "Saving plots in file: " <<  config.analysis.o_fit_file << std::endl;
+    
     }
 
     int i = 0;
@@ -87,16 +93,16 @@ void OutputSelManager::Run() {
         it->Process();
 
         // Saving plots
-        if (save_sel_plots) {
+        if (config.selection.save_sel_plots) {
             // if save plots is enabled starts the Event Loop
             it->Write(*file_plots);
         }
 
         // Visualization option
-        if (visualize) {
+        if (config.selection.visual_sel) {
 
             std::string c_name = "c_" + it->GetName();
-            TCanvas* vis_canvas = new TCanvas(c_name.c_str(), it->GetName().c_str(), canv.width, canv.height);
+            TCanvas* vis_canvas = new TCanvas(c_name.c_str(), it->GetName().c_str(), config.canvas.width, config.canvas.height);
             
             it->Draw(*vis_canvas);
             vis_canvas->Update();
@@ -127,29 +133,9 @@ void OutputSelManager::Run() {
 
 void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg) {
     
-    // -------------------------
-    // Defining histogram models
-    // -------------------------
-
-    std::string title_pt = ";" + cfg.pt_plot.title_axis + ";Efficiency;";
-    std::string name_pt = cfg.general.dataset + "_p_{T}";
-    ROOT::RDF::TH1DModel model_1D_pt(name_pt.c_str(), title_pt.c_str(), cfg.pt_plot.nbins, cfg.pt_plot.axis_min, 
-    cfg.pt_plot.axis_max);
-
-    std::string title_eta = ";" + cfg.eta_plot.title_axis + ";Efficiency;";
-    std::string name_eta = cfg.general.dataset + "_#eta";
-    ROOT::RDF::TH1DModel model_1D_eta(name_eta.c_str(), title_eta.c_str(), cfg.eta_plot.nbins, cfg.eta_plot.axis_min, 
-    cfg.eta_plot.axis_max);
-
-    std::string title_mll = ";" + cfg.mll_plot.title_axis + ";Efficiency;";
-    std::string name_mll = cfg.general.dataset + "_m_{#mu+#mu-}";
-    ROOT::RDF::TH1DModel model_1D_mll(name_mll.c_str(), title_mll.c_str(), cfg.mll_plot.nbins, cfg.mll_plot.axis_min, 
-    cfg.mll_plot.axis_max);
-
-    std::string title = ";" + cfg.eta_plot.title_axis + ";" + cfg.pt_plot.title_axis + ";";
-    std::string name_plot = cfg.general.dataset + "_#eta VS p_{T}";
-    ROOT::RDF::TH2DModel model_2D(name_plot.c_str(), title.c_str(), cfg.eta_plot.nbins, cfg.eta_plot.axis_min, cfg.eta_plot.axis_max, 
-    cfg.pt_plot.nbins, cfg.pt_plot.axis_min, cfg.pt_plot.axis_max);
+    // ---------------------------------
+    // Defining general histogram models
+    // ---------------------------------
 
     ROOT::RDF::TH2DModel model_2D_TP_Pt("h2_model_tp_pt", "; p_{T} Probe [GeV]; p_{T} Tag [GeV];", cfg.pt_plot.nbins, cfg.pt_plot.axis_min, cfg.pt_plot.axis_max,
     cfg.pt_plot.nbins, cfg.pt_plot.axis_min, cfg.pt_plot.axis_max);
@@ -166,17 +152,41 @@ void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& 
     // vector needed for Snapshot operation
 
     if ((cfg.general.operation_mode.find("Selection") != std::string::npos) && (cfg.selection.selection_mode == "TagAndProbe")) {
+        
+        // ------------
+        // Histo Models
+        // ------------
+
+        std::string title_pt = ";" + cfg.pt_plot.title_axis + ";Efficiency;";
+        std::string name_pt = cfg.selection.dataset + "_p_{T}";
+        ROOT::RDF::TH1DModel model_1D_pt(name_pt.c_str(), title_pt.c_str(), cfg.pt_plot.nbins, cfg.pt_plot.axis_min, 
+        cfg.pt_plot.axis_max);
+
+        std::string title_eta = ";" + cfg.eta_plot.title_axis + ";Efficiency;";
+        std::string name_eta = cfg.selection.dataset + "_#eta";
+        ROOT::RDF::TH1DModel model_1D_eta(name_eta.c_str(), title_eta.c_str(), cfg.eta_plot.nbins, cfg.eta_plot.axis_min, 
+        cfg.eta_plot.axis_max);
+
+        std::string title_mll = ";" + cfg.mll_plot.title_axis + ";Efficiency;";
+        std::string name_mll = cfg.selection.dataset + "_m_{#mu+#mu-}";
+        ROOT::RDF::TH1DModel model_1D_mll(name_mll.c_str(), title_mll.c_str(), cfg.mll_plot.nbins, cfg.mll_plot.axis_min, 
+        cfg.mll_plot.axis_max);
+
+        std::string title = ";" + cfg.eta_plot.title_axis + ";" + cfg.pt_plot.title_axis + ";";
+        std::string name_plot = cfg.selection.dataset + "_#eta VS p_{T}";
+        ROOT::RDF::TH2DModel model_2D(name_plot.c_str(), title.c_str(), cfg.eta_plot.nbins, cfg.eta_plot.axis_min, cfg.eta_plot.axis_max, 
+        cfg.pt_plot.nbins, cfg.pt_plot.axis_min, cfg.pt_plot.axis_max);
 
         // ----------
         // Histograms
         // ----------
 
-        auto h1_probe_pt = node.Histo1D(model_1D_pt, cfg.general.dataset + "_Probe_Pt");
-        auto h1_probe_eta  = node.Histo1D(model_1D_eta, cfg.general.dataset + "_Probe_Eta");
+        auto h1_probe_pt = node.Histo1D(model_1D_pt, cfg.selection.dataset + "_Probe_Pt");
+        auto h1_probe_eta  = node.Histo1D(model_1D_eta, cfg.selection.dataset + "_Probe_Eta");
 
-        auto h1_mll = node.Histo1D(model_1D_mll, cfg.general.dataset + "_Mll");    
+        auto h1_mll = node.Histo1D(model_1D_mll, cfg.selection.dataset + "_Mll");    
 
-        auto h2_eta_pt = node.Histo2D(model_2D, cfg.general.dataset + "_Probe_Eta", cfg.general.dataset + "_Probe_Pt");
+        auto h2_eta_pt = node.Histo2D(model_2D, cfg.selection.dataset + "_Probe_Eta", cfg.selection.dataset + "_Probe_Pt");
 
         // --------
         // Pipeline
@@ -192,13 +202,18 @@ void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& 
         // Saving Column names
         // -------------------
 
-        std::vector<std::string> names = {cfg.general.dataset + "_Probe_Pt", cfg.general.dataset + "_Probe_Eta", 
-            cfg.general.dataset + "_Mll", cfg.general.dataset + "_Mask_Pass"};
+        std::vector<std::string> names = {cfg.selection.dataset + "_Probe_Pt", cfg.selection.dataset + "_Probe_Eta", 
+            cfg.selection.dataset + "_Mll", cfg.selection.dataset + "_Mask_Pass"};
 
         column_names.insert(column_names.end(), names.begin(), names.end());
 
     } else if ((cfg.general.operation_mode.find("Selection") != std::string::npos) && (cfg.selection.selection_mode == "RespMatrix")) {
         
+        std::string title_pt = ";" + cfg.pt_plot.title_axis + ";Efficiency;";
+        std::string name_pt = cfg.selection.dataset + "_p_{T}";
+        ROOT::RDF::TH1DModel model_1D_pt(name_pt.c_str(), title_pt.c_str(), cfg.pt_plot.nbins, cfg.pt_plot.axis_min, 
+        cfg.pt_plot.axis_max);
+
         // ----------
         // Histograms
         // ----------
@@ -217,10 +232,14 @@ void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& 
 
         AddToPipeline("Response Matrix P_{t}", h2_pt_gen_rec);
         
-        std::vector<std::string> names = {"Gen_Pt", "Rec_Pt"};
+        // -------------------
+        // Saving Column names
+        // -------------------
+
+        std::vector<std::string> names = {"Rec_InvMass", "Gen_InvMass", "Gen_Pt", "Rec_Pt", "Rec_Y", "Gen_Y", "Rec_Phis", "Gen_Phis"};
         column_names.insert(column_names.end(), names.begin(), names.end());
     
-    } else if ((cfg.general.operation_mode.find("Analysis") != std::string::npos) && (cfg.selection.selection_mode == "TagAndProbe")) {
+    } else if ((cfg.general.operation_mode.find("Analysis") != std::string::npos) && (cfg.analysis.analysis_mode == "TagAndProbe_MC")) {
         
         // Efficiency MonteCarlo
         std::vector<float> pt_bins = cfg.templ.pt_bins;
@@ -233,17 +252,17 @@ void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& 
         pt_bins.size() - 1, pt_bins.data());
 
         ROOT::RDF::RNode node_eff = node
-            .Define(cfg.general.dataset + "_Probe_Pt_Pass", cfg.general.dataset + "_Probe_Pt[" + cfg.general.dataset + "_Mask_Pass]")
-            .Define(cfg.general.dataset + "_Probe_Eta_Pass", cfg.general.dataset + "_Probe_Eta[" + cfg.general.dataset + "_Mask_Pass]");
+            .Define("MC_Probe_Pt_Pass", "MC_Probe_Pt[MC_Mask_Pass]")
+            .Define("MC_Probe_Eta_Pass", "MC_Probe_Eta[MC_Mask_Pass]");
 
-        auto h1_probe_pt_pass = node_eff.Histo1D(model_Eff_pt, cfg.general.dataset + "_Probe_Pt_Pass");
-        auto h1_eff_probe_pt_all = node_eff.Histo1D(model_Eff_pt, cfg.general.dataset + "_Probe_Pt");
+        auto h1_probe_pt_pass = node_eff.Histo1D(model_Eff_pt, "MC_Probe_Pt_Pass");
+        auto h1_eff_probe_pt_all = node_eff.Histo1D(model_Eff_pt, "MC_Probe_Pt");
 
-        auto h1_probe_eta_pass = node_eff.Histo1D(model_Eff_eta, cfg.general.dataset + "_Probe_Eta_Pass");
-        auto h1_eff_probe_eta_all = node_eff.Histo1D(model_Eff_eta, cfg.general.dataset + "_Probe_Eta");
+        auto h1_probe_eta_pass = node_eff.Histo1D(model_Eff_eta, "MC_Probe_Eta_Pass");
+        auto h1_eff_probe_eta_all = node_eff.Histo1D(model_Eff_eta, "MC_Probe_Eta");
 
-        auto h2_probe_eta_pt_pass = node_eff.Histo2D(model_2D, cfg.general.dataset + "_Probe_Eta_Pass", cfg.general.dataset + "_Probe_Pt_Pass");
-        auto h2_probe_eta_pt_all = node_eff.Histo2D(model_2D, cfg.general.dataset + "_Probe_Eta", cfg.general.dataset + "_Probe_Pt");
+        auto h2_probe_eta_pt_pass = node_eff.Histo2D(model_2D, "MC_Probe_Eta_Pass", "MC_Probe_Pt_Pass");
+        auto h2_probe_eta_pt_all = node_eff.Histo2D(model_2D, "MC_Probe_Eta", "MC_Probe_Pt");
 
         AddToPipeline("Efficiency pt", h1_probe_pt_pass, h1_eff_probe_pt_all);
         AddToPipeline("Efficiency eta", h1_probe_eta_pass, h1_eff_probe_eta_all);
@@ -254,18 +273,18 @@ void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& 
     // Snapshot option
     // ---------------
 
-    if (save_sel_data) {
+    if (config.selection.save_sel_data) {
 
         ROOT::RDF::RSnapshotOptions snapshot_opts;
         snapshot_opts.fMode = "UPDATE";
         snapshot_opts.fLazy = true;
         snapshot_opts.fOverwriteIfExists = true;
 
-        std::string snaphot_name = cfg.general.dataset + "_" + cfg.selection.selection_mode + "_Tree";
+        std::string snaphot_name = cfg.selection.dataset + "_" + cfg.selection.selection_mode + "_Tree";
         
-        auto snapshot = node.Snapshot(snaphot_name, o_file_data, column_names, snapshot_opts);
+        auto snapshot = node.Snapshot(snaphot_name, config.selection.o_sel_file_data, column_names, snapshot_opts);
         
-        std::cout << "Saving data selected from " << cfg.selection.selection_mode << " in file " << o_file_data << std::endl;
+        std::cout << "Saving data selected from " << cfg.selection.selection_mode << " in file " << config.selection.o_sel_file_data << std::endl;
     
         snapshot_vec.push_back(snapshot);// Needed for scope visibility -> Smart pointer for Event Loop action
     }

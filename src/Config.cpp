@@ -21,7 +21,6 @@ int Configure(config_struct& value, const std::string& json_path) {
         if (json_obj.contains("general")) {
             const auto& j = json_obj["general"];
 
-            value.general.dataset = j.value("dataset", value.general.dataset);
             value.general.operation_mode = j.value("operation_mode", value.general.operation_mode);
             value.general.verbose = j.value("verbose", value.general.verbose);
             value.general.visualize = j.value("visualize", value.general.visualize);
@@ -37,9 +36,15 @@ int Configure(config_struct& value, const std::string& json_path) {
             value.io.val_file = j.value("val_file", value.io.val_file);
         }
 
+        if (json_obj.contains("acceptance")) {
+            const auto& j = json_obj["acceptance"];
+            value.acceptance.dataset = j.value("dataset", value.acceptance.dataset);
+        }
+
         if (json_obj.contains("selection")) {
             const auto& j = json_obj["selection"];
 
+            value.selection.dataset = j.value("dataset", value.selection.dataset);
             value.selection.selection_mode = j.value("selection_mode", value.selection.selection_mode);
             value.selection.save_sel_plots = j.value("save_sel_plots", value.selection.save_sel_plots);
             value.selection.save_sel_data = j.value("save_sel_data", value.selection.save_sel_data);
@@ -50,10 +55,11 @@ int Configure(config_struct& value, const std::string& json_path) {
 
         if (json_obj.contains("template")) {
             const auto& j = json_obj["template"];
-
+            
+            value.templ.dataset = j.value("dataset", value.templ.dataset);
+            value.templ.template_type = j.value("template_type", value.templ.template_type);
             value.templ.bins_settup = j.value("bins_settup", value.templ.bins_settup);
             value.templ.o_template_file_data = j.value("o_template_file_data", value.templ.o_template_file_data);
-            value.templ.template_type = j.value("template_type", value.templ.template_type);
 
             if (j.contains("pt_bins")) {
                 value.templ.pt_bins = j["pt_bins"].get<std::vector<float>>();
@@ -66,9 +72,11 @@ int Configure(config_struct& value, const std::string& json_path) {
 
         if (json_obj.contains("analysis")) {
             const auto& j = json_obj["analysis"];
-            
-            value.analysis.pre_fit = j.value("pre_fit", value.analysis.pre_fit);
+
+            value.analysis.analysis_mode = j.value("analysis_mode", value.analysis.analysis_mode);            
             value.analysis.o_fit_file = j.value("o_fit_file", value.analysis.o_fit_file);
+            value.analysis.bins_settup = j.value("bins_settup", value.analysis.bins_settup);
+            value.analysis.pre_fit = j.value("pre_fit", value.analysis.pre_fit);
 
             value.analysis.sample_pass_data = j.value("sample_pass_data", value.analysis.sample_pass_data);
             value.analysis.sample_pass_mc = j.value("sample_pass_mc", value.analysis.sample_pass_mc);
@@ -196,7 +204,6 @@ void Verbose_config(const config_struct& value) {
     std::cout << "" << std::endl;
 
     std::cout << "General settings:" << std::endl;
-    std::cout << "    Dataset used: " << value.general.dataset << std::endl;
     std::cout << "    Operation mode: " << value.general.operation_mode << std::endl;
     std::cout << "    Verbose mode: " << value.general.verbose << std::endl;
     std::cout << "    Visualize flag: " << value.general.visualize << std::endl;
@@ -216,7 +223,15 @@ void Verbose_config(const config_struct& value) {
     std::cout << "--------------------------------------------------------------------" << std::endl;
     std::cout << "" << std::endl;
 
+    std::cout << "Acceptance settup:" << std::endl;
+    std::cout << "    Dataset: " << value.acceptance.dataset << std::endl;
+
+    std::cout << "" << std::endl;
+    std::cout << "--------------------------------------------------------------------" << std::endl;
+    std::cout << "" << std::endl;
+
     std::cout << "Selection settup:" << std::endl;
+    std::cout << "    Dataset: " << value.selection.dataset << std::endl;
     std::cout << "    Mode: " << value.selection.selection_mode << std::endl;
     std::cout << "    Save plots: " << value.selection.save_sel_plots << std::endl;
     std::cout << "    Save data: " << value.selection.save_sel_data << std::endl;
@@ -229,9 +244,10 @@ void Verbose_config(const config_struct& value) {
     std::cout << "" << std::endl;
 
     std::cout << "Template options: " << std::endl;
+    std::cout << "    Dataset: " << value.templ.dataset << std::endl;
+    std::cout << "    Template output type: " << value.templ.template_type << std::endl;    
     std::cout << "    Bins settup: " << value.templ.bins_settup << std::endl;
     std::cout << "    Output template file path: " << value.templ.o_template_file_data << std::endl;
-    std::cout << "    Template output type: " << value.templ.template_type << std::endl;
 
     std::cout << "    Pt bins intervals: ";
     for (auto it : value.templ.pt_bins) {
@@ -250,8 +266,11 @@ void Verbose_config(const config_struct& value) {
     std::cout << "" << std::endl;
     
     std::cout << "Analysis settup:" << std::endl;
-    std::cout << "    Pre-Fit flag option: " << value.analysis.pre_fit << std::endl;
+    std::cout << "    Analysis Mode: " << value.analysis.analysis_mode << std::endl;
     std::cout << "    Fit results file path: " << value.analysis.o_fit_file << std::endl;
+    std::cout << "    Bins settup: " << value.analysis.bins_settup << std::endl;
+    std::cout << "    Pre-Fit flag option: " << value.analysis.pre_fit << std::endl;
+
     std::cout << "    Sample Data Pass: " << value.analysis.sample_pass_data << std::endl;
     std::cout << "    Sample MC Pass: " << value.analysis.sample_pass_mc << std::endl;
     std::cout << "    Sample Data Fail: " << value.analysis.sample_fail_data << std::endl;

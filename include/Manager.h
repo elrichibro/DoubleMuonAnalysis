@@ -119,7 +119,7 @@ class ObjectTEff : public PipelineObj {
             // Checked at runtime -> template usage to determinate the histogram dimension.
             if constexpr (std::is_same<T, TH2D>::value) {
                 canvas.SetRightMargin(0.15);
-                eff_obj->Draw("TEXT COLZ");
+                eff_obj->Draw("TEXTE COLZ");
             } else {
                 eff_obj->Draw("AP");
             }
@@ -148,20 +148,11 @@ class OutputSelManager {
 
         std::vector<std::string> column_names;
         
-        bool visualize = false;
-
-        bool save_sel_plots = false;
-        bool save_sel_data = false;
-
-        std::string o_file_plots = "";// Output plots file
-        std::string o_file_data = "";// Output Snapshot file
-
-        canvas_config canv;
+        const config_struct& config;
     public:
         /// @brief OutputManager class constructor.
         /// @param cfg Main configuration struct.
-        OutputSelManager(const config_struct& cfg) : o_file_plots(cfg.selection.o_sel_file_plots), o_file_data(cfg.selection.o_sel_file_data), visualize(cfg.selection.visual_sel), 
-        save_sel_plots(cfg.selection.save_sel_plots), save_sel_data(cfg.selection.save_sel_data), canv(cfg.canvas) {};
+        OutputSelManager(const config_struct& cfg) : config(cfg) {};
         
         ~OutputSelManager(){};
     

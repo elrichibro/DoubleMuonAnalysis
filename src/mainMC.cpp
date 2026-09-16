@@ -59,17 +59,6 @@ int main(int argc, char* argv[]) {
     verbose = cfg.general.verbose;
     visualize = cfg.general.visualize;
 
-    std::string dataset_tree = "";
-    std::string dataset_file = "";
-
-    if (cfg.general.dataset == "DATA") {
-        dataset_tree = cfg.io.tree_data_name;
-        dataset_file = cfg.io.in_data_file;
-    } else if (cfg.general.dataset == "MC") {
-        dataset_tree = cfg.io.tree_mc_name;
-        dataset_file = cfg.io.in_mc_file;
-    }
-
     // Verbose JSON configuration
     if (verbose) {
         Verbose_config(cfg);
@@ -87,6 +76,9 @@ int main(int argc, char* argv[]) {
 
     validation_type validation_map = Validation_load(cfg.io.val_file);
     std::cout << "Validation Map created." << std::endl;
+
+    std::string dataset_tree = "";
+    std::string dataset_file = "";
     
     // ------------------------------------------------------------------------------------------------------------------------------------
     // VISUALIZATION OPTION
@@ -98,37 +90,62 @@ int main(int argc, char* argv[]) {
         app = new TApplication("app", &argc, argv);
     }
 
+    // ----------
+    // Acceptance
+    // ----------
+
     if (cfg.general.operation_mode.find("Acceptance") != std::string::npos) {
-            ROOT::EnableImplicitMT();// MultiThread option: ON
 
-            ROOT::RDataFrame data_frame(cfg.io.tree_mc_name, cfg.io.in_mc_file);
+        if (cfg.acceptance.dataset == "DATA") {
+            std::cout << "ERROR: Invalid dataset with Acceptance Operation Mode, only MC is permitted, exiting..." << std::endl;
+            return 1;
+        } else if (cfg.acceptance.dataset == "MC") {
+            dataset_tree = cfg.io.tree_mc_name;
+            dataset_file = cfg.io.in_mc_file;
+        }
 
-            if (verbose){ 
-                std::cout << "RDataFrame object created, unpacking tree: " << dataset_tree 
-                << ", from file: " << dataset_file << ", starting selection ..." << std::endl;
-            }
+        ROOT::EnableImplicitMT();// MultiThread option: ON
+
+        ROOT::RDataFrame data_frame(dataset_tree, dataset_file);
+
+        if (verbose){ 
+            std::cout << "RDataFrame object created, unpacking tree: " << dataset_tree 
+            << ", from file: " << dataset_file << ", starting selection ..." << std::endl;
+        }
             
-            ROOT::RDF::RNode node_ACC = data_frame;
+        ROOT::RDF::RNode node_ACC = data_frame;
 
-            std::vector<float> results = CalculateAcceptance(node_ACC, "aFSR", 2);
-            if(results.size() != 2) {
-                std::cout << "ERROR: invalid results size: " << results.size() << ", exiting.." << std::endl;
-                return 1;
-            }
-                
-            std::cout << "Geometrical acceptance: " << results.at(0) << "+-" << results.at(1) << std::endl;
+        std::vector<float> results = CalculateAcceptance(node_ACC, "aFSR", 2);
+        
+        if (results.size() != 2) {
+            std::cout << "ERROR: invalid results size: " << results.size() << ", exiting.." << std::endl;
+            return 1;
+        }
+            
+        std::cout << "Geometrical acceptance: " << results.at(0) << "+-" << results.at(1) << std::endl;
     }
+
+    // ---------
+    // Selection
+    // ---------
 
     if (cfg.general.operation_mode.find("Selection") != std::string::npos) {
         try {
             ROOT::EnableImplicitMT();// MultiThread option: ON
 
-            ROOT::RDataFrame data_frame(dataset_tree, dataset_file);
-            
-            if (verbose){ 
-                std::cout << "RDataFrame object created, unpacking tree: " << dataset_tree 
-                << " from file: " << dataset_file << ", starting selection ..." << std::endl;
+            if (cfg.selection.dataset == "DATA") {
+                dataset_tree = cfg.io.tree_data_name;
+                dataset_file = cfg.io.in_data_file;
+                
+                std::cout << "Initializing Selection operation in DATA." << std::endl;
+            } else if (cfg.selection.dataset == "MC") {
+                dataset_tree = cfg.io.tree_mc_name;
+                dataset_file = cfg.io.in_mc_file;
+                
+                std::cout << "Initializing Selection operation in MC." << std::endl;
             }
+
+            ROOT::RDataFrame data_frame(dataset_tree, dataset_file);
 
             /*
             // ------------------------------------------------------------------------------------------------------------------------------------
@@ -145,13 +162,17 @@ int main(int argc, char* argv[]) {
             auto h_mass_ll_aFSR = node_InvMass_aFSR.Histo1D({"m_ll_aFSR", "Massa invariante dileptoni After FSR; m_{#mu^{+}#mu^{-}}; Events", 100, 60, 120}, "InvMass_aFSR");
             */
             
-            // ------------------------------------------------------------------------------------------------------------------------------------
+            // ----------
             // RespMatrix
-            // ------------------------------------------------------------------------------------------------------------------------------------
+            // ----------
             
             ROOT::RDF::RNode node_RM = data_frame;
             
             if (cfg.selection.selection_mode.find("RespMatrix") != std::string::npos) {
+                if (cfg.general.verbose) {
+                    std::cout << "Executing Response Matrix selection." << std::endl;
+                }
+
                 node_RM = node_RM
                     .Define("RespMatrix_mask", [flags_RM, cuts_RM](const ROOT::RVec<float>& pt_rec, const ROOT::RVec<float>& eta_rec, const ROOT::RVec<float>& phi_rec,
                     const ROOT::RVec<float>& mass_rec, const ROOT::RVec<int>& charge_rec,  const ROOT::RVec<float>& pt_gen, const ROOT::RVec<float>& eta_gen,
@@ -182,15 +203,19 @@ int main(int argc, char* argv[]) {
 
                 }
             
-            // ------------------------------------------------------------------------------------------------------------------------------------
+            // -------------
             // Tag and Probe
-            // ------------------------------------------------------------------------------------------------------------------------------------
+            // -------------
             
             ROOT::RDF::RNode node_TP = data_frame;
             
             if (cfg.selection.selection_mode.find("TagAndProbe") != std::string::npos) {
+                
+                if (cfg.general.verbose) {
+                    std::cout << "Executing TagAndProbe selection." << std::endl;
+                }
 
-                if (cfg.general.dataset == "MC") {    
+                if (cfg.selection.dataset == "MC") {    
                     
                     node_TP = node_TP
                         .Define("TP_Result",
@@ -210,7 +235,7 @@ int main(int argc, char* argv[]) {
                         }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_charge", "Muon_tightId", "Muon_isStandalone", "Muon_isGlobal", "Muon_pfRelIso04_all",
                            "HLT_Mu17", "Muon_tightId", "Muon_genPartFlav", "Muon_genPartIdx", "GenPart_status", "GenPart_pdgId", "GenPart_eta", "GenPart_phi"});
                 
-                } else if (cfg.general.dataset == "DATA") {
+                } else if (cfg.selection.dataset == "DATA") {
                     node_TP = ApplyValidationFilter(node_TP, validation_map, "run", "luminosityBlock");
                     
                     node_TP = node_TP
@@ -229,63 +254,79 @@ int main(int argc, char* argv[]) {
             
 
                 node_TP = node_TP
-                    .Define(cfg.general.dataset + "_Probe_Pt", [](const ResultsTagAndProbe& res) { return res.pt; }, {"TP_Result"})
-                    .Define(cfg.general.dataset + "_Probe_Eta", [](const ResultsTagAndProbe& res) { return res.eta; }, {"TP_Result"})
-                    .Define(cfg.general.dataset + "_Mll", [](const ResultsTagAndProbe& res) { return res.mll; }, {"TP_Result"})
+                    .Define(cfg.selection.dataset + "_Probe_Pt", [](const ResultsTagAndProbe& res) { return res.pt; }, {"TP_Result"})
+                    .Define(cfg.selection.dataset + "_Probe_Eta", [](const ResultsTagAndProbe& res) { return res.eta; }, {"TP_Result"})
+                    .Define(cfg.selection.dataset + "_Mll", [](const ResultsTagAndProbe& res) { return res.mll; }, {"TP_Result"})
                     
-                    //.Define(cfg.general.dataset + "_Tag_Pt", [](const ResultsTagAndProbe& res) { return res.tag_pt_pass; }, {"TP_Result"})
-                    //.Define(cfg.general.dataset + "_Tag_Eta", [](const ResultsTagAndProbe& res) { return res.tag_eta_pass; }, {"TP_Result"})
-                    .Define(cfg.general.dataset + "_Mask_Pass", [](const ResultsTagAndProbe& res) { return res.mask_pass; }, {"TP_Result"});    
+                    //.Define(cfg.selection.dataset + "_Tag_Pt", [](const ResultsTagAndProbe& res) { return res.tag_pt_pass; }, {"TP_Result"})
+                    //.Define(cfg.selection.dataset + "_Tag_Eta", [](const ResultsTagAndProbe& res) { return res.tag_eta_pass; }, {"TP_Result"})
+                    .Define(cfg.selection.dataset + "_Mask_Pass", [](const ResultsTagAndProbe& res) { return res.mask_pass; }, {"TP_Result"});    
             }
-            // ------------------------------------------------------------------------------------------------------------------------------------
+
+            // --------------
             // Output Manager
-            // ------------------------------------------------------------------------------------------------------------------------------------
+            // --------------
 
             OutputSelManager manager(cfg);
 
             if (cfg.selection.selection_mode == "TagAndProbe") {
+                std::cout << "Starting TagAndProbe booking." << std::endl;
                 manager.BookAnalysis(node_TP, cfg);
-                std::cout << "Starting TagAndProbe booking" << std::endl;
             } else if (cfg.selection.selection_mode == "RespMatrix") {
-                std::cout << "Starting RespMatrix booking" << std::endl;
+                std::cout << "Starting RespMatrix booking." << std::endl;
                 manager.BookAnalysis(node_RM, cfg);
             }
 
+            if (cfg.general.verbose) {
+                std::cout << "Starting Output Selection Manager, running..." << std::endl;
+            }
             manager.Run();
 
             if ((cfg.selection.visual_sel) && (app != nullptr)) {
-                std::cout << "Initializing visualization ..." << std::endl;
+                std::cout << "Starting visualization..." << std::endl;
                 app->Run();
                 
                 delete app; 
             } else {
-                std::cout << "No visualization booked.\n" << std::endl;
+                std::cout << "No visualization booked." << std::endl;
             }
 
         } catch (const std::exception& except) {
-            std::cerr << "Error nature: " << except.what() << std::endl;
+            std::cout << "Error nature: " << except.what() << std::endl;
             return 1;
         }
     }
+
+    // --------
+    // Template
+    // --------
 
     if (cfg.general.operation_mode.find("Template") != std::string::npos) {
         ROOT::EnableImplicitMT();
         
         if (verbose) {
-            std::cout << "Initilizing Template operation mode..." << std::endl;
+            std::cout << "Initializating Template Operation Mode..." << std::endl;
         }
 
-        if(cfg.templ.template_type.find("DATA") != std::string::npos) {
-            if (cfg.general.dataset == "DATA") {
-                std::string tree = cfg.general.dataset + "_TagAndProbe_Tree";
+        if (cfg.templ.template_type.find("UNBINNED") != std::string::npos) {
+            if (cfg.templ.dataset == "DATA") {
+                if (cfg.general.verbose) {
+                    std::cout << "Transforming Selected: TagAndProbe data into -> UNBINNED data from -> DATA dataset" << std::endl;
+                }
+                std::string tree = cfg.templ.dataset + "_TagAndProbe_Tree";
+                
                 ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
                 ROOT::RDF::RNode node = data_frame;
             
                 int chec_roll = UnbinnedTemplateMaker(node, cfg);  
             }
 
-            if (cfg.general.dataset == "MC") {
-                std::string tree = cfg.general.dataset + "_TagAndProbe_Tree";
+            if (cfg.templ.dataset == "MC") {
+                if (cfg.general.verbose) {
+                    std::cout << "Transforming Selected: TagAndProbe data into -> UNBINNED data from -> MC dataset" << std::endl;
+                }
+                std::string tree = cfg.templ.dataset + "_TagAndProbe_Tree";
+                
                 ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
                 ROOT::RDF::RNode node = data_frame;
             
@@ -293,20 +334,26 @@ int main(int argc, char* argv[]) {
             }
         }
         
-        if (cfg.templ.template_type.find("HISTO") != std::string::npos) {
-            if ((cfg.general.dataset == "DATA")) {
+        if (cfg.templ.template_type.find("BINNED") != std::string::npos) {
+            if ((cfg.templ.dataset == "DATA")) {
+                if (cfg.general.verbose) {
+                    std::cout << "Transforming Selected: TagAndProbe data into -> BINNED data from -> DATA dataset" << std::endl;
+                }
                 std::string tree = "DATA_TagAndProbe_Tree";
+                
                 ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
-
                 ROOT::RDF::RNode node = data_frame;
                 
                 int chec_maker = BinnedTemplateMaker(node, cfg, 1);
             }
 
-            if ((cfg.general.dataset == "MC")) {
+            if ((cfg.templ.dataset == "MC")) {
+                if (cfg.general.verbose) {
+                    std::cout << "Transforming Selected: TagAndProbe data into -> BINNED data from -> MC dataset" << std::endl;
+                }
                 std::string tree = "MC_TagAndProbe_Tree";
+                
                 ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
-
                 ROOT::RDF::RNode node = data_frame;
                 
                 int check_maker = BinnedTemplateMaker(node, cfg, 2);
@@ -314,14 +361,19 @@ int main(int argc, char* argv[]) {
         }
 
         if (cfg.general.verbose) {
-            std::cout << "Templates successfully been written to: " << cfg.templ.o_template_file_data 
-            << "[" << cfg.templ.bins_settup << "]" <<  std::endl;
+            std::cout << "Template successfully writted into: " << cfg.templ.o_template_file_data 
+            << " -> [ " << cfg.templ.bins_settup << " ]" <<  std::endl;
         }
     }
 
+    // --------
+    // Analysis
+    // --------
+
     if (cfg.general.operation_mode == "Analysis") {
-        if(cfg.general.dataset == "DATA") {
-            try {        
+        if (cfg.analysis.analysis_mode == "TagAndProbe_DATA") {
+            
+            try {     
                 ROOT::EnableImplicitMT();
 
                 TFile o_template_file(cfg.templ.o_template_file_data.c_str(), "UPDATE");// Template file -> read intput
@@ -329,16 +381,21 @@ int main(int argc, char* argv[]) {
                 std::vector<Template_RooF> template_container;
                 std::vector<FitResult> fit_results;
 
+                if (cfg.general.verbose) {
+                    std::cout << "Loading template..." << std::endl;
+                }
+
                 if (LoadBinnedTemplate(cfg, template_container) != 0) {
                     std::cout << "ERROR: Load operations fails, exiting." << std::endl;
                     return 1;
                 }
                 
                 TFile o_fit_file(cfg.analysis.o_fit_file.c_str(), "UPDATE");// Current writing file
-
                 o_fit_file.cd();
 
-                std::cout << "Starting Fit operation..." << std::endl;
+                if (cfg.general.verbose) {
+                    std::cout << "Starting Fit operation..." << std::endl;
+                }
 
                 int check_fit = EfficiencyFitter(template_container, cfg, fit_results, &o_fit_file);
 
@@ -346,9 +403,12 @@ int main(int argc, char* argv[]) {
                     std::cout << "ERROR: Fit operation fails." << std::endl;
                     return 1;
                 }
-                    
-                std::vector<std::string> booked_values = {"efficiency", "n_tot", "fit_status", "mu", "sigma", "lambda_pass", "lambda_fail"};
+                
+                if (cfg.general.verbose) {
+                    std::cout << "Fit operation finished." << std::endl;
+                }
 
+                std::vector<std::string> booked_values = {"efficiency", "n_tot", "fit_status", "mu", "sigma", "lambda_pass", "lambda_fail"};
                 int check = SaveMapFittedValues(&o_fit_file, fit_results, cfg, booked_values);
 
                 if (check != 0) {
@@ -357,47 +417,51 @@ int main(int argc, char* argv[]) {
                 }
                 
                 int i = 1;
+                
+                if (cfg.general.verbose) {
+                    std::cout << "Fit results: " << std::endl;
+                    for (const auto& it : fit_results) {
+                        std::cout << "" << std::endl;
+                        std::cout << "Fit number: " << i << ", status: " << it.fit_status << std::endl; 
+                        std::cout << "" << std::endl;
+                        
+                        std::cout << "    Efficiency: " << it.efficiency << " +- " << it.efficiency_err << std::endl;
+                        std::cout << "    Total signal events: " << it.n_tot << " +- " << it.n_tot_err << std::endl;
 
-                for (const auto& it : fit_results) {
-                    std::cout << "" << std::endl;
-                    std::cout << "Fit number: " << i << ", status: " << it.fit_status << std::endl; 
-                    std::cout << "" << std::endl;
-                    
-                    std::cout << "    Efficiency: " << it.efficiency << " +- " << it.efficiency_err << std::endl;
-                    std::cout << "    Total signal events: " << it.n_tot << " +- " << it.n_tot_err << std::endl;
+                        std::cout << "    Mean: " << it.mu << " +- " << it.mu_err << std::endl;
+                        std::cout << "    Sigma: " << it.sigma << " +- " << it.sigma_err << std::endl;
+                        
+                        std::cout << "    Lambda pass: " << it.lambda_pass << " +- " << it.lambda_pass_err << std::endl;
+                        std::cout << "    Lambda fail: " << it.lambda_fail << " +- " << it.lambda_fail_err << std::endl;
 
-                    std::cout << "    Mean: " << it.mu << " +- " << it.mu_err << std::endl;
-                    std::cout << "    Sigma: " << it.sigma << " +- " << it.sigma_err << std::endl;
-                    
-                    std::cout << "    Lambda pass: " << it.lambda_pass << " +- " << it.lambda_pass_err << std::endl;
-                    std::cout << "    Lambda fail: " << it.lambda_fail << " +- " << it.lambda_fail_err << std::endl;
-
-                    i++;
+                        i++;
+                    }
                 }
+                
             } catch (const std::exception& except) {
                 std::cerr << "Error nature: " << except.what() << std::endl;
                 return 1;
             }
-
-        } else if (cfg.general.dataset == "MC") {
-
-        }
-            /*
+            
+        } else if (cfg.analysis.analysis_mode == "TagAndProbe_MC") {
+            
             TFile o_fit_file(cfg.analysis.o_fit_file.c_str(), "UPDATE");// Current writing file
 
             o_fit_file.cd();
-            std::string tree = cfg.general.dataset + "_" + cfg.general.analysis_mode + "_Tree";
-            ROOT::RDataFrame data_frame(tree, cfg.io.o_file_data);
+            std::string tree = "MC_TagAndProbe_Tree";
             
-            if (verbose){ 
-                std::cout << "RDataFrame object created, unpacking " << cfg.general.analysis_mode
-                << " tree from " <<  cfg.io.o_file_data << " file, starting analysis ..." << std::endl;
+            ROOT::RDataFrame data_frame(tree, cfg.selection.o_sel_file_data);
+            
+            if (verbose) { 
+                std::cout << "RDataFrame object created, unpacking " << "MC_" + cfg.selection.selection_mode + "_Tree"
+                << " from " <<  cfg.selection.o_sel_file_data << " file, starting analysis ..." << std::endl;
             }
 
-            OutputSelManager Amanager(cfg);
+            OutputSelManager Analysis_manager(cfg);
 
-            Amanager.BookAnalysis(data_frame, cfg);
-            Amanager.Run();
+            Analysis_manager.BookAnalysis(data_frame, cfg);
+            
+            Analysis_manager.Run();
             
             if (visualize && app != nullptr) {
                 std::cout << "Initializing visualization ..." << std::endl;
@@ -407,9 +471,10 @@ int main(int argc, char* argv[]) {
             } else {
                 std::cout << "No visualization booked.\n" << std::endl;
             }
-            */
-
+        
+        } else if (cfg.analysis.analysis_mode == "Event") {
+            return 0;
+        } 
     }
-
     return 0;
 }

@@ -1,7 +1,6 @@
 {
   "general": { 
-    "dataset": "MC",
-    "operation_mode":"Selection",
+    "operation_mode":"Analysis",
     "verbose": 1,
     "visualize":true
   },
@@ -14,18 +13,24 @@
     "val_file":"../data/validation_muon_run.json"
   },
 
+  "acceptance":{
+    "dataset":"MC"
+  },
+
   "selection": {
+    "dataset": "MC",
     "selection_mode": "RespMatrix",
     "save_sel_data":false,
-    "save_sel_plots":false,
+    "save_sel_plots":true,
     "visual_sel":true,
     "o_sel_file_plots":"../output/risultati_plots.root",
     "o_sel_file_data":"../output/risultati_data.root"
   },
 
   "template": {
+    "dataset": "MC",
     "bins_settup":"0_Set_Pt4_Eta4_Mll70",
-    "template_type":"HISTO",
+    "template_type":"BINNED_UNBINNED",
     "o_template_file_data":"../output/risultati_template.root",
     "pt_bins": [25.0, 30.0, 35.0, 40.0, 50.0],
     "eta_bins": [-2.4, -0.9, 0.0, 0.9, 2.4],
@@ -33,12 +38,14 @@
   },
   
   "analysis": {
-    "pre_fit":true,
+    "analysis_mode":"TagAndProbe_MC",
     "o_fit_file":"../output/risultati_fit.root",
-    "sample_pass_data":"histo",
-    "sample_pass_mc":"histo",
-    "sample_fail_data":"histo",
-    "sample_fail_mc":"data",
+    "bins_settup":"0_Set_Pt4_Eta4_Mll70",
+    "pre_fit":true,
+    "sample_pass_data":"binned",
+    "sample_pass_mc":"binned",
+    "sample_fail_data":"binned",
+    "sample_fail_mc":"unbinned",
     "params": {
       "efficiency":[0.9, 0.4, 1.0],
       "n_tot":[0,0,0],
