@@ -78,7 +78,7 @@ int BinnedTemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg, const i
         .Define(sample + "_Probe_Eta_Fail", sample + "_Probe_Eta[!" + sample + "_Mask_Pass]")
         .Define(sample + "_Mll_Fail", sample + "_Mll[!" + sample + "_Mask_Pass]");
 
-    if (cfg.templ.template_type.find("HISTO") != std::string::npos) {
+    if (cfg.templ.template_type.find("BINNED") != std::string::npos) {
 
         // Creating Smart Pointers
         auto h3_pass = node_hist.Histo3D(model_pass, sample + "_Probe_Eta_Pass", sample + "_Probe_Pt_Pass", sample + "_Mll_Pass");
@@ -153,7 +153,7 @@ int UnbinnedTemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg) {
                     pass_fail[slot].push_back(RV_pass_fail[i]);
                 }
             }
-        }, {cfg.general.dataset + "_Probe_Pt", cfg.general.dataset + "_Probe_Eta", cfg.general.dataset + "_Mll", cfg.general.dataset + "_Mask_Pass"}
+        }, {cfg.templ.dataset + "_Probe_Pt", cfg.templ.dataset + "_Probe_Eta", cfg.templ.dataset + "_Mll", cfg.templ.dataset + "_Mask_Pass"}
     );
     
     std::cout << "RDF phase done." << std::endl;
@@ -210,7 +210,7 @@ int UnbinnedTemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg) {
 
     o_template_file.cd();
 
-    std::string tree_name = "Tree_" + cfg.general.dataset + "_Flat";
+    std::string tree_name = "Tree_" + cfg.templ.dataset + "_Flat";
     TTree tree(tree_name.c_str(), "Flattened tree");
 
     float b_pt, b_eta, b_mll;
@@ -257,27 +257,27 @@ int LoadBinnedTemplate(const config_struct& cfg, std::vector<Template_RooF>& con
     bool d_data_pass = false;
     bool d_data_fail = false;
  
-    if (cfg.analysis.sample_pass_mc == "histo") {
+    if (cfg.analysis.sample_pass_mc == "binned") {
         h_mc_pass = true;
-    } else if (cfg.analysis.sample_pass_mc == "data") {
+    } else if (cfg.analysis.sample_pass_mc == "unbinned") {
         d_mc_pass = true;
     }
     
-    if (cfg.analysis.sample_pass_data == "histo") {
+    if (cfg.analysis.sample_pass_data == "binned") {
         h_data_pass = true;
-    } else if (cfg.analysis.sample_pass_data == "data") {
+    } else if (cfg.analysis.sample_pass_data == "unbinned") {
         d_data_pass = true;
     }
     
-    if (cfg.analysis.sample_fail_mc == "histo") {
+    if (cfg.analysis.sample_fail_mc == "binned") {
         h_mc_fail = true;
-    } else if (cfg.analysis.sample_fail_mc == "data") {
+    } else if (cfg.analysis.sample_fail_mc == "unbinned") {
         d_mc_fail = true;
     }
     
-    if (cfg.analysis.sample_fail_data == "histo") {
+    if (cfg.analysis.sample_fail_data == "binned") {
         h_data_fail = true;
-    } else if (cfg.analysis.sample_fail_data == "data") {
+    } else if (cfg.analysis.sample_fail_data == "unbinned") {
         d_data_fail = true;
     }
     
@@ -442,13 +442,13 @@ int LoadUnbinnedTemplate(TTree* tree, const config_struct& cfg, const int datase
     bool process_fail = false;
 
     if (dataset == 1) {
-        process_pass = (cfg.analysis.sample_pass_data == "data");
-        process_fail = (cfg.analysis.sample_fail_data == "data");
+        process_pass = (cfg.analysis.sample_pass_data == "unbinned");
+        process_fail = (cfg.analysis.sample_fail_data == "unbinned");
     }
 
     if (dataset == 2) {
-        process_pass = (cfg.analysis.sample_pass_mc == "data");
-        process_fail = (cfg.analysis.sample_fail_mc == "data");
+        process_pass = (cfg.analysis.sample_pass_mc == "unbinned");
+        process_fail = (cfg.analysis.sample_fail_mc == "unbinned");
     }  
 
     int n_bins = (pt_bins.size() - 1) * (eta_bins.size() - 1);
@@ -555,25 +555,25 @@ int SaveMapFittedValues(TFile* o_file, const std::vector<FitResult>& results, co
 
     std::string dir_name = "Plots_" + cfg.templ.bins_settup;
     
-    if (cfg.analysis.sample_pass_data == "histo") {
+    if (cfg.analysis.sample_pass_data == "binned") {
         dir_name = dir_name + "_h";
     } else {
         dir_name = dir_name + "_d";
     }
 
-    if (cfg.analysis.sample_pass_mc == "histo") {
+    if (cfg.analysis.sample_pass_mc == "binned") {
         dir_name = dir_name + "_h";
     } else {
         dir_name = dir_name + "_d";
     }
 
-    if (cfg.analysis.sample_fail_data == "histo") {
+    if (cfg.analysis.sample_fail_data == "binned") {
         dir_name = dir_name + "_h";
     } else {
         dir_name = dir_name + "_d";
     }
 
-    if (cfg.analysis.sample_fail_mc == "histo") {
+    if (cfg.analysis.sample_fail_mc == "binned") {
         dir_name = dir_name + "_h";
     } else {
         dir_name = dir_name + "_d";
@@ -661,25 +661,25 @@ void SaveBinFitCanvas(RooRealVar& mll, RooCategory& sample, RooAbsData& data, Ro
 
     std::string dir_name = "Plots_" + cfg.templ.bins_settup;
     
-    if (cfg.analysis.sample_pass_data == "histo") {
+    if (cfg.analysis.sample_pass_data == "binned") {
         dir_name = dir_name + "_h";
     } else {
         dir_name = dir_name + "_d";
     }
 
-    if (cfg.analysis.sample_pass_mc == "histo") {
+    if (cfg.analysis.sample_pass_mc == "binned") {
         dir_name = dir_name + "_h";
     } else {
         dir_name = dir_name + "_d";
     }
 
-    if (cfg.analysis.sample_fail_data == "histo") {
+    if (cfg.analysis.sample_fail_data == "binned") {
         dir_name = dir_name + "_h";
     } else {
         dir_name = dir_name + "_d";
     }
 
-    if (cfg.analysis.sample_fail_mc == "histo") {
+    if (cfg.analysis.sample_fail_mc == "binned") {
         dir_name = dir_name + "_h";
     } else {
         dir_name = dir_name + "_d";
@@ -828,14 +828,14 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
         std::unique_ptr<RooAbsPdf> mc_pass_pdf{nullptr};
         std::unique_ptr<RooDataHist> hist_mc_pass{nullptr};
 
-        if (cfg.analysis.sample_pass_mc == "data") {
+        if (cfg.analysis.sample_pass_mc == "unbinned") {
             mc_pass_pdf = std::make_unique<RooKeysPdf>("mc_pass_pdf", "MC Pass KeysPdf", mll, *it.d_MC_pass, RooKeysPdf::NoMirror, 1.5);
 
             if (!mc_pass_pdf) {
                 std::cout << "ERROR: invalid mc_pass_pdf pointer, exiting..." << std::endl; 
                 return 1;
             }
-        } else if (cfg.analysis.sample_pass_mc == "histo") {
+        } else if (cfg.analysis.sample_pass_mc == "binned") {
             hist_mc_pass = std::make_unique<RooDataHist>("hist_mc_pass", "Pass data histogram", mll, it.h_MC_pass.get());
             auto hist_pdf = std::make_unique<RooHistPdf>("hist_mc_pass_pdf", "Pass data pdf", mll, *hist_mc_pass);
             
@@ -855,14 +855,14 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
         std::unique_ptr<RooAbsPdf> mc_fail_pdf = nullptr;
         std::unique_ptr<RooDataHist> hist_mc_fail = nullptr;
 
-        if (cfg.analysis.sample_fail_mc == "data") {            
+        if (cfg.analysis.sample_fail_mc == "unbinned") {            
             mc_fail_pdf = std::make_unique<RooKeysPdf>("mc_fail_pdf", "MC Fail KeysPdf", mll, *it.d_MC_fail, RooKeysPdf::NoMirror, 1.5);
 
             if (!mc_fail_pdf) {
                 std::cout << "ERROR: invalid mc_fail_pdf pointer, exiting..." << std::endl; 
                 return 1;
             }
-        } else if (cfg.analysis.sample_fail_mc == "histo") {
+        } else if (cfg.analysis.sample_fail_mc == "binned") {
             hist_mc_fail = std::make_unique<RooDataHist>("hist_mc_fail", "Pass fail histogram", mll, it.h_MC_fail.get());
             auto hist_pdf = std::make_unique<RooHistPdf>("hist_mc_fail_pdf", "Pass fail pdf", mll, *hist_mc_fail);
             
@@ -878,7 +878,7 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
         // DATA container
         std::unique_ptr<RooAbsData> sig_data;
 
-        if ((cfg.analysis.sample_pass_data == "data") && (cfg.analysis.sample_fail_data == "data")) {    
+        if ((cfg.analysis.sample_pass_data == "unbinned") && (cfg.analysis.sample_fail_data == "unbinned")) {    
             sig_data = std::make_unique<RooDataSet>("sig_data", "Signal data unbinned", RooArgSet(mll), 
             
             RooFit::Index(sample),
@@ -890,7 +890,7 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
                 return 1;
             }
             
-        } else if ((cfg.analysis.sample_pass_data == "histo") && (cfg.analysis.sample_fail_data == "histo")){
+        } else if ((cfg.analysis.sample_pass_data == "binned") && (cfg.analysis.sample_fail_data == "binned")){
             std::cout << "Data binned loaded" << std::endl;
         
             std::map<std::string, TH1*> map_hist_data;
@@ -909,7 +909,7 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
         }
 
         // For initial parameter value -> n_tot 
-        bool is_data_unbinned = (cfg.analysis.sample_pass_data == "data");
+        bool is_data_unbinned = (cfg.analysis.sample_pass_data == "unbinned");
 
         double data_pass_entries = (is_data_unbinned) ? it.d_DATA_pass->sumEntries() : it.h_DATA_pass->Integral();
         double data_fail_entries = (is_data_unbinned) ? it.d_DATA_fail->sumEntries() : it.h_DATA_fail->Integral();
