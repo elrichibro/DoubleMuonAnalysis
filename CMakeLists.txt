@@ -18,6 +18,7 @@ set(COMMON_SRCS
     src/Checks.cpp
     src/Manager.cpp
     src/AnalysisTools.cpp
+    src/Unfold.cpp
 )
 
 set(COMMON_LIBS
