@@ -181,7 +181,7 @@ const cuts_config cfg_c) {
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 ResultsTagAndProbe CalculateTagAndProbe_MC(const MuonKinematics_TP& kin, const MuonFlags_TP& flags, const flags_config cfg_f, 
-const cuts_config cfg_c, const MuonFlags_RM& DeltaR_flags, const ROOT::RVec<float> gen_eta, const ROOT::RVec<float> gen_phi) {
+const cuts_config cfg_c, const MuonFlags& DeltaR_flags, const ROOT::RVec<float> gen_eta, const ROOT::RVec<float> gen_phi) {
     // Results container
     ResultsTagAndProbe results;
 
@@ -302,112 +302,6 @@ const cuts_config cfg_c, const MuonFlags_RM& DeltaR_flags, const ROOT::RVec<floa
     return results;
 }
 
-// ------------------------------------------------------------------------------------------------------------------------------------
-ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin_rec, const MuonKinematics_RM& kin_gen, const MuonFlags_RM& flags, const flags_config cfg_f, 
-const cuts_config cfg_c) {
-    
-    ResultsRespMatrix results;
-
-    // Number reconstructed muons
-    const int n_muons_rec = kin_rec.pt.size();
-    
-    int n_tight = ROOT::VecOps::Sum(flags.reco_tight);
-
-    if (n_tight != 2) {
-        return results;
-    }
-
-    // Loop on reconstructed muons.
-    for (int i = 0; i < n_muons_rec - 1; i++) {
-        
-        // gen_flav_rec == 1 -> GenPart muon is : prompt muon. (!= -> fast exit)
-        if ((flags.reco_flav_gen[i] != 1) || (flags.reco_tight[i] != 1)) {
-            continue;
-        }
-        
-        // Relative GenPart index for this reconstructed muon "i".
-        int j = flags.reco_idx_gen[i];
-        
-        // Not valid index -> fast exit
-        if ((j < 0) || (j >= kin_gen.pt.size())) {
-            continue;
-        }
-        // Generated particle status must be 1 + (Pdg index == 13/-13)
-        if (flags.gen_status[j] != 1 || (std::abs(flags.gen_pdg_idx[j]) != 13)) {
-            continue;
-        }
-
-        for (int k = i + 1; k < n_muons_rec; k++) {
-            
-            if (!flags.reco_tight[k] || flags.reco_flav_gen[k] != 1) {
-                continue;
-            }
-
-            int l = flags.reco_idx_gen[k];
-            
-            if ((l < 0) || (l >= kin_gen.pt.size())) {
-                continue;
-            }
-            
-            if ((flags.gen_status[l] != 1) || (std::abs(flags.gen_pdg_idx[l]) != 13)) {
-                continue;
-            }
-
-            if (kin_rec.charge[i] == kin_rec.charge[k]) {
-                continue;
-            }
-            
-            if (flags.gen_pdg_idx[j] == flags.gen_pdg_idx[l]) {
-                continue;
-            }
-
-            // Kinematic cuts
-            bool pass_recos = ((kin_rec.pt[i] > cfg_c.pt_cut) && (kin_rec.pt[k] > cfg_c.pt_cut) && 
-            (std::abs(kin_rec.eta[i]) < cfg_c.eta_cut) && (std::abs(kin_rec.eta[k]) < cfg_c.eta_cut)) || (!(cfg_f.en_kinematics));
-            
-            bool pass_gens = ((kin_gen.pt[j] > cfg_c.pt_cut) && (kin_gen.pt[l] > cfg_c.pt_cut) && 
-            (std::abs(kin_gen.eta[j]) < cfg_c.eta_cut) && (std::abs(kin_gen.eta[l]) < cfg_c.eta_cut)) || (!(cfg_f.en_kinematics));
-            
-            if ((!pass_recos) || (!pass_gens)) {    
-               continue;
-            }
-            
-            float m_rec = CalculateInvariantMass_Pair<float>(kin_rec.pt[i], kin_rec.pt[k], kin_rec.eta[i], kin_rec.eta[k], kin_rec.phi[i],
-            kin_rec.phi[k], kin_rec.mass[i], kin_rec.mass[k]);
-        
-            float m_gen = CalculateInvariantMass_Pair<float>(kin_gen.pt[j], kin_gen.pt[l], kin_gen.eta[j], kin_gen.eta[l], kin_gen.phi[j],
-            kin_gen.phi[l], kin_gen.mass[j], kin_gen.mass[l]);
-
-            if (cfg_f.en_mass_window) {
-                if ((m_rec < cfg_c.mass_min || m_rec > cfg_c.mass_max) || (m_gen < cfg_c.mass_min || m_gen > cfg_c.mass_max)){
-                     continue;
-                }
-            }
-
-            float pt_z_rec = CalculatePtZ0_Raw_Pair<float>(kin_rec.pt[i], kin_rec.pt[k], kin_rec.phi[i], kin_rec.phi[k]);
-            float pt_z_gen = CalculatePtZ0_Raw_Pair<float>(kin_gen.pt[j], kin_gen.pt[l], kin_gen.phi[j], kin_gen.phi[l]);
-
-            float y_z_rec = CalculateRapidityZ0_Raw_Pair<float>(kin_rec.pt[i], kin_rec.pt[k], kin_rec.eta[i], kin_rec.eta[k],
-            kin_rec.phi[i], kin_rec.phi[k],  kin_rec.mass[i], kin_rec.mass[k]);
-
-            float y_z_gen = CalculateRapidityZ0_Raw_Pair<float>(kin_gen.pt[j], kin_gen.pt[l], kin_gen.eta[j], kin_gen.eta[l],
-            kin_gen.phi[j], kin_gen.phi[l],  kin_gen.mass[j], kin_gen.mass[l]);
-
-            float phis_rec = CalculatePhiStar_Pair<float>(kin_rec.eta[i], kin_rec.eta[k], kin_rec.phi[i], kin_rec.phi[k]);
-            float phis_gen = CalculatePhiStar_Pair<float>(kin_gen.eta[j], kin_gen.eta[l], kin_gen.phi[j], kin_gen.phi[l]);
-
-            results.mll_rec = m_rec;
-            results.mll_gen = m_gen;
-            results.pt_rec = pt_z_rec;
-            results.pt_gen = pt_z_gen;
-            results.y_rec = y_z_rec;
-            results.y_gen = y_z_gen;
-            results.phis_rec = phis_rec;
-            results.phis_gen = phis_gen;
-        }
-    }
-    return results;
-}
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 

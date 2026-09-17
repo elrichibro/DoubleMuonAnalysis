@@ -13,6 +13,7 @@
 #include "Checks.h"
 #include "Manager.h"
 #include "AnalysisTools.h"
+#include "Unfold.h"
 
 int main(int argc, char* argv[]) {
 
@@ -177,16 +178,22 @@ int main(int argc, char* argv[]) {
                     .Define("RespMatrix_mask", [flags_RM, cuts_RM](const ROOT::RVec<float>& pt_rec, const ROOT::RVec<float>& eta_rec, const ROOT::RVec<float>& phi_rec,
                     const ROOT::RVec<float>& mass_rec, const ROOT::RVec<int>& charge_rec,  const ROOT::RVec<float>& pt_gen, const ROOT::RVec<float>& eta_gen,
                     const ROOT::RVec<float>& phi_gen, const ROOT::RVec<float>& mass_gen, const ROOT::RVec<int>& charge_gen, const ROOT::RVec<bool>& reco_tight, 
-                    const ROOT::RVec<UChar_t>& reco_flav_gen, const ROOT::RVec<Int_t>& reco_idx_gen, const ROOT::RVec<Int_t>& gen_status, const ROOT::RVec<Int_t>& gen_pdg_idx) {
+                    const ROOT::RVec<int>& reco_idx_gen, const ROOT::RVec<int>& gen_pdg_idx, const ROOT::RVec<int>& gen_status_flg) {
                         
                         MuonKinematics_RM kin_rec{pt_rec, eta_rec, phi_rec, mass_rec, charge_rec};
                         MuonKinematics_RM kin_gen{pt_gen, eta_gen, phi_gen, mass_gen, charge_gen};
-                        MuonFlags_RM val{reco_tight, reco_flav_gen, reco_idx_gen, gen_status, gen_pdg_idx};
+                        MuonFlags_RM val{reco_tight, reco_idx_gen, gen_pdg_idx, gen_status_flg};
                         
                         return CalculateRespMatrix(kin_rec, kin_gen, val, flags_RM, cuts_RM);
                     
                     }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_charge", "GenPart_pt", "GenPart_eta", "GenPart_phi", 
-                        "GenPart_mass", "Muon_charge", "Muon_tightId", "Muon_genPartFlav", "Muon_genPartIdx", "GenPart_status", "GenPart_pdgId"});
+                        "GenPart_mass", "Muon_charge", "Muon_tightId", "Muon_genPartIdx", "GenPart_pdgId", "GenPart_statusFlags"});
+                
+                node_RM = node_RM
+                    .Define("Matched", [](const ResultsRespMatrix& resp){ return resp.match; }, {"RespMatrix_mask"})
+                    .Define("Missed", [](const ResultsRespMatrix& resp){ return resp.miss; }, {"RespMatrix_mask"})
+                    .Define("Faked", [](const ResultsRespMatrix& resp){ return resp.fake; }, {"RespMatrix_mask"})
+                    .Filter("Matched || Missed || Faked"); 
 
                 node_RM = node_RM
                     .Define("Rec_InvMass", [](const ResultsRespMatrix& res) { return res.mll_rec; }, {"RespMatrix_mask"})
@@ -201,8 +208,16 @@ int main(int argc, char* argv[]) {
                     .Define("Rec_Phis", [](const ResultsRespMatrix& res) { return res.phis_rec; }, {"RespMatrix_mask"})
                     .Define("Gen_Phis", [](const ResultsRespMatrix& res) { return res.phis_gen; }, {"RespMatrix_mask"});
 
-                }
-            
+                node_RM = node_RM
+                    .Define("Rec_Pt_Unf", [](bool miss, float pt_rec){ return miss ? -1.0 : pt_rec; }, {"Missed","Rec_Pt"})
+                    .Define("Gen_Pt_Unf", [](bool fake, float pt_gen){ return fake ? -1.0 : pt_gen; }, {"Faked","Gen_Pt"})
+
+                    .Define("Rec_Y_Unf",  [](bool miss, float y_rec){ return miss ? -100.0 : y_rec; }, {"Missed","Rec_Y"})
+                    .Define("Gen_Y_Unf",  [](bool fake, float y_gen){ return fake ? -100.0 : y_gen; }, {"Faked","Gen_Y"})
+
+                    .Define("Rec_Phis_Unf",[](bool miss, float phis_rec){ return miss ? -1.0 : phis_rec; }, {"Missed","Rec_Phis"})
+                    .Define("Gen_Phis_Unf",[](bool fake, float phis_gen){ return fake ? -1.0 : phis_gen; }, {"Faked","Gen_Phis"});
+            }
             // -------------
             // Tag and Probe
             // -------------
@@ -227,7 +242,7 @@ int main(int argc, char* argv[]) {
                             
                             MuonKinematics_TP kin{pt, eta, phi, mass, charge};
                             MuonFlags_TP flags{tag, probe, glob, iso, hlt};
-                            MuonFlags_RM val{reco_tight, reco_flav_gen, reco_idx_gen, gen_status, gen_pdg_idx};
+                            MuonFlags val{reco_tight, reco_flav_gen, reco_idx_gen, gen_status, gen_pdg_idx};
 
                             
                             return CalculateTagAndProbe_MC(kin, flags, flags_TP, cuts_TP, val, gen_eta, gen_phi);
