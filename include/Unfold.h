@@ -7,6 +7,9 @@
 #include <ROOT/RVec.hxx>
 #include <ROOT/RDataFrame.hxx>
 
+#include "TUnfold.h"
+#include "TUnfoldDensity.h"
+
 /// @brief Results of the Response Matrix calculus.
 struct ResultsRespMatrix {
     bool match = false;
@@ -26,8 +29,21 @@ struct ResultsRespMatrix {
     float phis_rec = -1;
 };
 
+struct RespMatrixHisto {
+    ROOT::RDF::RResultPtr<TH2D> histo_pt;
+    ROOT::RDF::RResultPtr<TH2D> histo_y;
+    ROOT::RDF::RResultPtr<TH2D> histo_phis;
+};
+
+struct UnfoldDensities {
+    std::unique_ptr<TUnfoldDensity> pt_unf;
+    std::unique_ptr<TUnfoldDensity> y_unf;
+    std::unique_ptr<TUnfoldDensity> phis_unf;
+};
+
+
 /// @brief Kinematical quantities for Response Matrix calculus -> GENerated and REConstructed muons.
-struct MuonKinematics_RM {
+struct MuonKinematics_REC {
     const ROOT::RVec<float>& pt;
     const ROOT::RVec<float>& eta;
     const ROOT::RVec<float>& phi;
@@ -35,11 +51,20 @@ struct MuonKinematics_RM {
     const ROOT::RVec<int>& charge;
 };
 
+/// @brief Kinematical quantities for Response Matrix calculus -> GENerated and REConstructed muons.
+struct MuonKinematics_GEN {
+    const ROOT::RVec<float>& pt;
+    const ROOT::RVec<float>& eta;
+    const ROOT::RVec<float>& phi;
+    const ROOT::RVec<float>& mass;
+};
+
 /// @brief Muon flags for Response Matrix calculus -> REConstructed/GENerated pairing.
 struct MuonFlags_RM {
     const ROOT::RVec<bool>& reco_tight;// Muon_tightId flag.
     const ROOT::RVec<int>& reco_idx_gen;// Index into genParticle list for MC matching to status==1 muons
     const ROOT::RVec<int>& gen_pdg_idx;// PDG id of the particle.
+    const ROOT::RVec<int>& gen_status;
     const ROOT::RVec<int>& gen_status_flg;
 };
 
@@ -49,10 +74,13 @@ struct MuonFlags_RM {
 /// @param cfg_f Contains the kinematical flags. Passed by value -> small struct -> L1/L2 catche
 /// @param cfg_c Stores the cuts values.
 /// @return Struct containing the transverse momentum and pseudorapidity of muons that pass the selection.
-ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_RM& kin_rec, const MuonKinematics_RM& kin_gen, const MuonFlags_RM& flags, const flags_config cfg_f, 
+ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_REC& kin_rec, const MuonKinematics_GEN& kin_gen, const MuonFlags_RM& flags, const flags_config cfg_f, 
 const cuts_config cfg_c);
 
-ROOT::RDF::RNode ApplyUnfold(ROOT::RDF::RNode node);
+ROOT::RDF::RNode CalculateRespMatrixWrapper(ROOT::RDF::RNode node, const flags_config& flags_RM, const cuts_config& cuts_RM);
 
+RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node);
+
+UnfoldDensities CreateUnfoldDensity(RespMatrixHisto& histo);
 
 #endif
