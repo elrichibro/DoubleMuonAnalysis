@@ -99,6 +99,62 @@ ROOT::RDF::RNode ApplyKinematicalBinDivision(ROOT::RDF::RNode node, const config
     return node_kin_cut;
 }
 
+
+
+ROOT::RDF::RNode CalculateTagAndProbeWrapper(ROOT::RDF::RNode node, const validation_type& validation_map, const selection_config& selection, 
+    const flags_config& flags_TP, const cuts_config& cuts_TP) {
+
+    ROOT::RDF::RNode node_TP = node;
+    
+    if (selection.dataset == "MC") {
+        node_TP = node_TP
+            .Define("TP_Result",
+            [flags_TP, cuts_TP] (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
+            const ROOT::RVec<float>& mass, const ROOT::RVec<int>& charge,  const ROOT::RVec<bool>& tag, const ROOT::RVec<bool>& probe, const ROOT::RVec<bool>& glob, 
+            const ROOT::RVec<float>& iso, const ROOT::RVec<bool>& hlt, const ROOT::RVec<bool>& reco_tight, const ROOT::RVec<UChar_t>& reco_flav_gen,
+            const ROOT::RVec<Int_t>& reco_idx_gen, const ROOT::RVec<Int_t>& gen_status, const ROOT::RVec<Int_t>& gen_pdg_idx, 
+            const ROOT::RVec<float> gen_eta, const ROOT::RVec<float> gen_phi) {
+                
+                MuonKinematics_TP kin{pt, eta, phi, mass, charge};
+                MuonFlags_TP flags{tag, probe, glob, iso, hlt};
+                MuonFlags val{reco_tight, reco_flav_gen, reco_idx_gen, gen_status, gen_pdg_idx};
+
+                
+                return CalculateTagAndProbe_MC(kin, flags, flags_TP, cuts_TP, val, gen_eta, gen_phi);
+
+            }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_charge", "Muon_tightId", "Muon_isStandalone", "Muon_isGlobal", "Muon_pfRelIso04_all",
+                "HLT_Mu17", "Muon_tightId", "Muon_genPartFlav", "Muon_genPartIdx", "GenPart_status", "GenPart_pdgId", "GenPart_eta", "GenPart_phi"});
+    
+    } else if (selection.dataset == "DATA") {
+        node_TP = ApplyValidationFilter(node_TP, validation_map, "run", "luminosityBlock");
+        
+        node_TP = node_TP
+            .Define("TP_Result",
+            [flags_TP, cuts_TP] (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
+            const ROOT::RVec<float>& mass, const ROOT::RVec<int>& charge,  const ROOT::RVec<bool>& tag, const ROOT::RVec<bool>& probe, 
+            const ROOT::RVec<bool>& glob, const ROOT::RVec<float>& iso, const ROOT::RVec<bool>& hlt) {
+                
+                MuonKinematics_TP kin{pt, eta, phi, mass, charge};
+                MuonFlags_TP flags{tag, probe, glob, iso, hlt};
+                
+                return CalculateTagAndProbe_DATA(kin, flags, flags_TP, cuts_TP);
+
+            }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_charge", "Muon_tightId", "Muon_isStandalone", "Muon_isGlobal", "Muon_pfRelIso04_all", "HLT_Mu17"});
+    }
+
+
+    node_TP = node_TP
+        .Define(selection.dataset + "_Probe_Pt", [](const ResultsTagAndProbe& res) { return res.pt; }, {"TP_Result"})
+        .Define(selection.dataset + "_Probe_Eta", [](const ResultsTagAndProbe& res) { return res.eta; }, {"TP_Result"})
+        .Define(selection.dataset + "_Mll", [](const ResultsTagAndProbe& res) { return res.mll; }, {"TP_Result"})
+        
+        //.Define(selection.dataset + "_Tag_Pt", [](const ResultsTagAndProbe& res) { return res.tag_pt_pass; }, {"TP_Result"})
+        //.Define(selection.dataset + "_Tag_Eta", [](const ResultsTagAndProbe& res) { return res.tag_eta_pass; }, {"TP_Result"})
+        .Define(selection.dataset + "_Mask_Pass", [](const ResultsTagAndProbe& res) { return res.mask_pass; }, {"TP_Result"});    
+
+    return node_TP;
+}
+
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 ResultsTagAndProbe CalculateTagAndProbe_DATA(const MuonKinematics_TP& kin, const MuonFlags_TP& flags, const flags_config cfg_f, 
