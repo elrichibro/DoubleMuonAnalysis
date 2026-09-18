@@ -84,6 +84,9 @@ struct MuonFlags {
 // Functions
 // ---------
 
+ROOT::RDF::RNode CalculateTagAndProbeWrapper(ROOT::RDF::RNode node, const validation_type& validation_map, const selection_config& selection, 
+    const flags_config& flags_TP, const cuts_config& cuts_TP);
+
 /// @brief TagAndProbe function selection for MonteCarlo sample (by adding a DeltaR selection)
 /// @param kin Muon kinematic event values.
 /// @param flags Muon event flags.

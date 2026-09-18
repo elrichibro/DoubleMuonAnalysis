@@ -7,7 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(ROOT REQUIRED COMPONENTS ROOTDataFrame Core Hist Tree RIO MathCore RooFit RooFitCore Minuit)
+find_package(ROOT REQUIRED COMPONENTS ROOTDataFrame Core Hist Tree RIO MathCore RooFit RooFitCore Minuit Unfold)
 find_package(nlohmann_json REQUIRED)
 
 include_directories(include)
@@ -32,6 +32,7 @@ set(COMMON_LIBS
     ROOT::RooFit 
     ROOT::RooFitCore
     ROOT::Minuit
+    ROOT::Unfold
 )
 
 include(FetchContent)

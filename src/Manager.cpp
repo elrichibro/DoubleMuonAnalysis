@@ -5,6 +5,7 @@
 
 #include <chrono>
 
+#include "Unfold.h"
 /*
 Classes:
     - ObjectTH1
@@ -214,29 +215,21 @@ void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& 
         ROOT::RDF::TH1DModel model_1D_pt(name_pt.c_str(), title_pt.c_str(), cfg.pt_plot.nbins, cfg.pt_plot.axis_min, 
         cfg.pt_plot.axis_max);
 
-        // ----------
-        // Histograms
-        // ----------
-        
-        auto h1_pt_gen = node.Histo1D(model_1D_pt, "Gen_Pt");
-        auto h1_pt_rec = node.Histo1D(model_1D_pt, "Rec_Pt");
-
-        auto h2_pt_gen_rec = node.Histo2D(model_2D_RM_Pt, "Gen_Pt", "Rec_Pt");
+        RespMatrixHisto histo = BuildRespMatrixHisto(node);
 
         // --------
         // Pipeline
         // --------
 
-        AddToPipeline("P_{t} Generated distribution", h1_pt_gen);
-        AddToPipeline("P_{t} Reconstructed distribution", h1_pt_rec);
-
-        AddToPipeline("Response Matrix P_{t}", h2_pt_gen_rec);
-        
+        AddToPipeline("P_{t, Z0} Response Matrix", histo.histo_pt);
+        AddToPipeline("Y_{Z0}", histo.histo_y);
+        AddToPipeline("#Phi_{Z0}^{*}", histo.histo_phis);
+ 
         // -------------------
         // Saving Column names
         // -------------------
 
-        std::vector<std::string> names = {"Rec_InvMass", "Gen_InvMass", "Gen_Pt", "Rec_Pt", "Rec_Y", "Gen_Y", "Rec_Phis", "Gen_Phis"};
+        std::vector<std::string> names = {"Rec_InvMass", "Gen_InvMass", "Rec_Pt", "Gen_Pt", "Rec_Y", "Gen_Y", "Rec_Phis", "Gen_Phis"};
         column_names.insert(column_names.end(), names.begin(), names.end());
     
     } else if ((cfg.general.operation_mode.find("Analysis") != std::string::npos) && (cfg.analysis.analysis_mode == "TagAndProbe_MC")) {

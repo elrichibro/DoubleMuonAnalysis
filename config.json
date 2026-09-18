@@ -1,6 +1,6 @@
 {
   "general": { 
-    "operation_mode":"Analysis",
+    "operation_mode":"Selection",
     "verbose": 1,
     "visualize":true
   },
@@ -54,6 +54,10 @@
       "lambda_pass":[-0.04, -3.0, 0.0],
       "lambda_fail":[-0.04, -3.0, 0.0]
     }
+  },
+
+  "unfold": {
+    
   },
 
   "flag_ES": {
