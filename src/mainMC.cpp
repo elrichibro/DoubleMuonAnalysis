@@ -72,8 +72,8 @@ int main(int argc, char* argv[]) {
     const flags_config flags_TP = cfg.flag_TP;
     const cuts_config cuts_TP = cfg.cut_TP;
 
-    const flags_config flags_RM = cfg.flag_TP;
-    const cuts_config cuts_RM = cfg.cut_TP;
+    const flags_config flags_RM = cfg.flag_RM;
+    const cuts_config cuts_RM = cfg.cut_RM;
 
     validation_type validation_map = Validation_load(cfg.io.val_file);
     std::cout << "Validation Map created." << std::endl;
@@ -147,21 +147,6 @@ int main(int argc, char* argv[]) {
             }
 
             ROOT::RDataFrame data_frame(dataset_tree, dataset_file);
-
-            /*
-            // ------------------------------------------------------------------------------------------------------------------------------------
-            // Invariant Mass
-            // ------------------------------------------------------------------------------------------------------------------------------------
-
-            auto node_InvMass_bFSR = CalculateInvMass(data_frame, "bFSR", 1);
-            auto node_InvMass_aFSR = CalculateInvMass(data_frame, "aFSR", 2);
-            
-            auto report_bFSR = node_InvMass_bFSR.Report();
-            auto report_aFSR = node_InvMass_aFSR.Report();
-
-            auto h_mass_ll_bFSR = node_InvMass_bFSR.Histo1D({"m_ll_bFSR", "Massa invariante dileptoni Before FSR; m_{#mu^{+}#mu^{-}}; Events", 100, 60, 120}, "InvMass_bFSR");        
-            auto h_mass_ll_aFSR = node_InvMass_aFSR.Histo1D({"m_ll_aFSR", "Massa invariante dileptoni After FSR; m_{#mu^{+}#mu^{-}}; Events", 100, 60, 120}, "InvMass_aFSR");
-            */
             
             // ----------
             // RespMatrix
@@ -170,54 +155,19 @@ int main(int argc, char* argv[]) {
             ROOT::RDF::RNode node_RM = data_frame;
             
             if (cfg.selection.selection_mode.find("RespMatrix") != std::string::npos) {
+                if (cfg.selection.dataset == "DATA") {
+                    std::cout << "ERROR: invalid Selection dataset for Response Matrix Calculus, pls select MC dataset in Selection settup, exiting..."
+                     << std::endl;
+                    return 1; 
+                }
+
                 if (cfg.general.verbose) {
                     std::cout << "Executing Response Matrix selection." << std::endl;
                 }
-
-                node_RM = node_RM
-                    .Define("RespMatrix_mask", [flags_RM, cuts_RM](const ROOT::RVec<float>& pt_rec, const ROOT::RVec<float>& eta_rec, const ROOT::RVec<float>& phi_rec,
-                    const ROOT::RVec<float>& mass_rec, const ROOT::RVec<int>& charge_rec,  const ROOT::RVec<float>& pt_gen, const ROOT::RVec<float>& eta_gen,
-                    const ROOT::RVec<float>& phi_gen, const ROOT::RVec<float>& mass_gen, const ROOT::RVec<int>& charge_gen, const ROOT::RVec<bool>& reco_tight, 
-                    const ROOT::RVec<int>& reco_idx_gen, const ROOT::RVec<int>& gen_pdg_idx, const ROOT::RVec<int>& gen_status_flg) {
-                        
-                        MuonKinematics_RM kin_rec{pt_rec, eta_rec, phi_rec, mass_rec, charge_rec};
-                        MuonKinematics_RM kin_gen{pt_gen, eta_gen, phi_gen, mass_gen, charge_gen};
-                        MuonFlags_RM val{reco_tight, reco_idx_gen, gen_pdg_idx, gen_status_flg};
-                        
-                        return CalculateRespMatrix(kin_rec, kin_gen, val, flags_RM, cuts_RM);
-                    
-                    }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_charge", "GenPart_pt", "GenPart_eta", "GenPart_phi", 
-                        "GenPart_mass", "Muon_charge", "Muon_tightId", "Muon_genPartIdx", "GenPart_pdgId", "GenPart_statusFlags"});
-                
-                node_RM = node_RM
-                    .Define("Matched", [](const ResultsRespMatrix& resp){ return resp.match; }, {"RespMatrix_mask"})
-                    .Define("Missed", [](const ResultsRespMatrix& resp){ return resp.miss; }, {"RespMatrix_mask"})
-                    .Define("Faked", [](const ResultsRespMatrix& resp){ return resp.fake; }, {"RespMatrix_mask"})
-                    .Filter("Matched || Missed || Faked"); 
-
-                node_RM = node_RM
-                    .Define("Rec_InvMass", [](const ResultsRespMatrix& res) { return res.mll_rec; }, {"RespMatrix_mask"})
-                    .Define("Gen_InvMass", [](const ResultsRespMatrix& res) { return res.mll_gen; }, {"RespMatrix_mask"})
-                        
-                    .Define("Rec_Pt", [](const ResultsRespMatrix& res) { return res.pt_rec; }, {"RespMatrix_mask"})
-                    .Define("Gen_Pt", [](const ResultsRespMatrix& res) { return res.pt_gen; }, {"RespMatrix_mask"})
-                    
-                    .Define("Rec_Y", [](const ResultsRespMatrix& res) { return res.y_rec; }, {"RespMatrix_mask"})
-                    .Define("Gen_Y", [](const ResultsRespMatrix& res) { return res.y_gen; }, {"RespMatrix_mask"})
-
-                    .Define("Rec_Phis", [](const ResultsRespMatrix& res) { return res.phis_rec; }, {"RespMatrix_mask"})
-                    .Define("Gen_Phis", [](const ResultsRespMatrix& res) { return res.phis_gen; }, {"RespMatrix_mask"});
-
-                node_RM = node_RM
-                    .Define("Rec_Pt_Unf", [](bool miss, float pt_rec){ return miss ? -1.0 : pt_rec; }, {"Missed","Rec_Pt"})
-                    .Define("Gen_Pt_Unf", [](bool fake, float pt_gen){ return fake ? -1.0 : pt_gen; }, {"Faked","Gen_Pt"})
-
-                    .Define("Rec_Y_Unf",  [](bool miss, float y_rec){ return miss ? -100.0 : y_rec; }, {"Missed","Rec_Y"})
-                    .Define("Gen_Y_Unf",  [](bool fake, float y_gen){ return fake ? -100.0 : y_gen; }, {"Faked","Gen_Y"})
-
-                    .Define("Rec_Phis_Unf",[](bool miss, float phis_rec){ return miss ? -1.0 : phis_rec; }, {"Missed","Rec_Phis"})
-                    .Define("Gen_Phis_Unf",[](bool fake, float phis_gen){ return fake ? -1.0 : phis_gen; }, {"Faked","Gen_Phis"});
+            
+                node_RM = CalculateRespMatrixWrapper(node_RM, flags_RM, cuts_RM);
             }
+
             // -------------
             // Tag and Probe
             // -------------
@@ -230,52 +180,7 @@ int main(int argc, char* argv[]) {
                     std::cout << "Executing TagAndProbe selection." << std::endl;
                 }
 
-                if (cfg.selection.dataset == "MC") {    
-                    
-                    node_TP = node_TP
-                        .Define("TP_Result",
-                        [flags_TP, cuts_TP](const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
-                        const ROOT::RVec<float>& mass, const ROOT::RVec<int>& charge,  const ROOT::RVec<bool>& tag, const ROOT::RVec<bool>& probe, const ROOT::RVec<bool>& glob, 
-                        const ROOT::RVec<float>& iso, const ROOT::RVec<bool>& hlt, const ROOT::RVec<bool>& reco_tight, const ROOT::RVec<UChar_t>& reco_flav_gen,
-                        const ROOT::RVec<Int_t>& reco_idx_gen, const ROOT::RVec<Int_t>& gen_status, const ROOT::RVec<Int_t>& gen_pdg_idx, 
-                        const ROOT::RVec<float> gen_eta, const ROOT::RVec<float> gen_phi) {
-                            
-                            MuonKinematics_TP kin{pt, eta, phi, mass, charge};
-                            MuonFlags_TP flags{tag, probe, glob, iso, hlt};
-                            MuonFlags val{reco_tight, reco_flav_gen, reco_idx_gen, gen_status, gen_pdg_idx};
-
-                            
-                            return CalculateTagAndProbe_MC(kin, flags, flags_TP, cuts_TP, val, gen_eta, gen_phi);
-
-                        }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_charge", "Muon_tightId", "Muon_isStandalone", "Muon_isGlobal", "Muon_pfRelIso04_all",
-                           "HLT_Mu17", "Muon_tightId", "Muon_genPartFlav", "Muon_genPartIdx", "GenPart_status", "GenPart_pdgId", "GenPart_eta", "GenPart_phi"});
-                
-                } else if (cfg.selection.dataset == "DATA") {
-                    node_TP = ApplyValidationFilter(node_TP, validation_map, "run", "luminosityBlock");
-                    
-                    node_TP = node_TP
-                        .Define("TP_Result",
-                        [flags_TP, cuts_TP] (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
-                        const ROOT::RVec<float>& mass, const ROOT::RVec<int>& charge,  const ROOT::RVec<bool>& tag, const ROOT::RVec<bool>& probe, 
-                        const ROOT::RVec<bool>& glob, const ROOT::RVec<float>& iso, const ROOT::RVec<bool>& hlt) {
-                            
-                            MuonKinematics_TP kin{pt, eta, phi, mass, charge};
-                            MuonFlags_TP flags{tag, probe, glob, iso, hlt};
-                            
-                            return CalculateTagAndProbe_DATA(kin, flags, flags_TP, cuts_TP);
-
-                        }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_charge", "Muon_tightId", "Muon_isStandalone", "Muon_isGlobal", "Muon_pfRelIso04_all", "HLT_Mu17"});
-                }
-            
-
-                node_TP = node_TP
-                    .Define(cfg.selection.dataset + "_Probe_Pt", [](const ResultsTagAndProbe& res) { return res.pt; }, {"TP_Result"})
-                    .Define(cfg.selection.dataset + "_Probe_Eta", [](const ResultsTagAndProbe& res) { return res.eta; }, {"TP_Result"})
-                    .Define(cfg.selection.dataset + "_Mll", [](const ResultsTagAndProbe& res) { return res.mll; }, {"TP_Result"})
-                    
-                    //.Define(cfg.selection.dataset + "_Tag_Pt", [](const ResultsTagAndProbe& res) { return res.tag_pt_pass; }, {"TP_Result"})
-                    //.Define(cfg.selection.dataset + "_Tag_Eta", [](const ResultsTagAndProbe& res) { return res.tag_eta_pass; }, {"TP_Result"})
-                    .Define(cfg.selection.dataset + "_Mask_Pass", [](const ResultsTagAndProbe& res) { return res.mask_pass; }, {"TP_Result"});    
+                node_TP = CalculateTagAndProbeWrapper(node_TP, validation_map, cfg.selection, flags_TP, cuts_TP);
             }
 
             // --------------
@@ -295,9 +200,10 @@ int main(int argc, char* argv[]) {
             if (cfg.general.verbose) {
                 std::cout << "Starting Output Selection Manager, running..." << std::endl;
             }
+
             manager.Run();
 
-            if ((cfg.selection.visual_sel) && (app != nullptr)) {
+            if ((cfg.selection.visual_sel) && (app != nullptr)) {                
                 std::cout << "Starting visualization..." << std::endl;
                 app->Run();
                 
