@@ -80,6 +80,18 @@ struct analysis_config {
     analysis_params params;// Struct of analysis parameters.
 };
 
+struct bins {
+    std::vector<float> reco;
+    std::vector<float> gen;
+};
+
+struct unfold_config {
+    bool use_bins = false;
+    bins pt_bins;
+    bins y_bins;
+    bins phis_bins;
+};
+
 /// @brief Flags for enabling/disablig specifics selections cuts.
 struct flags_config {
     bool en_kinematics = false;// Enables/Disables the kinematic cut, composed by transverse momentum and pseudorapidity cuts.  
@@ -120,6 +132,8 @@ struct config_struct {
     selection_config selection;
     template_config templ;
     analysis_config analysis;
+
+    unfold_config unfold;
 
     flags_config flag_ES;
     cuts_config cut_ES;
