@@ -457,10 +457,9 @@ ROOT::RDF::RNode EventSelection(ROOT::RDF::RNode node, const config_struct& cfg)
             
             return static_cast<float>(ROOT::VecOps::InvariantMass(pt, eta, phi, mass));
         
-        }, {"GM_Pt", "GM_Eta", "GM_Phi", "GM_Mass"})
-        .Define("OneInvMass", "Sum(InvariantMass) == 1");
+        }, {"GM_Pt", "GM_Eta", "GM_Phi", "GM_Mass"});
 
-    std::string event_cut = "GoodEvent && OneInvMass";
+    std::string event_cut = "GoodEvent";
     if (cfg.flag_ES.en_mass_window) {
         event_cut += " && (InvariantMass > " + std::to_string(cfg.cut_ES.mass_min) + " && InvariantMass < " 
         + std::to_string(cfg.cut_ES.mass_max) + ")";
@@ -470,4 +469,42 @@ ROOT::RDF::RNode EventSelection(ROOT::RDF::RNode node, const config_struct& cfg)
         .Filter(event_cut, "InvMass selection -> Good Event");
 
     return node_event;
+}
+
+EventHisto BuildEventHisto(ROOT::RDF::RNode node) {
+    ROOT::RDF::RNode node_event = node;
+    EventHisto histo;
+
+    node_event = node_event
+        .Define("Pt_Z", [] (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
+         const ROOT::RVec<float>& mass) {
+            
+            float pt_Z = CalculatePtZ0<float>(pt, eta, phi, mass);
+            return pt_Z;
+        
+        }, {"GM_Pt", "GM_Eta", "GM_Phi", "GM_Mass"})
+        
+        .Define("Y_Z", [] (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
+         const ROOT::RVec<float>& mass) {
+            
+            float y_Z = CalculateRapidityZ0<float>(pt, eta, phi, mass);
+            return y_Z;
+        
+        }, {"GM_Pt", "GM_Eta", "GM_Phi", "GM_Mass"})
+        
+        .Define("Phis_Z", [] (const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi) {
+            
+            float phis_Z = CalculatePhiStar<float>(eta, phi);
+            return phis_Z;
+        
+        }, {"GM_Eta", "GM_Phi"});
+
+        std::vector<float> phis_bins = {0.001, 0.004, 0.008, 0.012, 0.016, 0.02, 0.03, 0.04, 0.06, 0.08, 0.1, 0.15, 0.2, 0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0};
+        ROOT::RDF::TH1DModel model_phis("h1_phis", "", phis_bins.size() - 1, phis_bins.data());
+
+        histo.h1_pt = node_event.Histo1D({"hResp_pt","", 50, 0.0, 100.0}, "Pt_Z");
+        histo.h1_y = node_event.Histo1D({"hResp_y","", 50, -2.5, 2.5}, "Y_Z");
+        histo.h1_phis = node_event.Histo1D(model_phis, "Phis_Z");
+
+    return histo;
 }

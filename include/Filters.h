@@ -77,6 +77,12 @@ struct MuonFlags {
     const ROOT::RVec<int>& gen_pdg_idx;// PDG id of the particle.
 };
 
+struct EventHisto{
+    ROOT::RDF::RResultPtr<TH1D> h1_pt;
+    ROOT::RDF::RResultPtr<TH1D> h1_y;
+    ROOT::RDF::RResultPtr<TH1D> h1_phis;
+};
+
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
@@ -126,5 +132,7 @@ std::vector<float> CalculateAcceptance(ROOT::RDF::RNode node, const std::string&
 /// @param cfg 
 /// @return 
 ROOT::RDF::RNode EventSelection(ROOT::RDF::RNode node, const config_struct& cfg);
+
+EventHisto BuildEventHisto(ROOT::RDF::RNode node);
 
 #endif

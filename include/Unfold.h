@@ -79,7 +79,7 @@ const cuts_config cfg_c);
 
 ROOT::RDF::RNode CalculateRespMatrixWrapper(ROOT::RDF::RNode node, const flags_config& flags_RM, const cuts_config& cuts_RM);
 
-RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node);
+RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct& cfg);
 
 UnfoldDensities CreateUnfoldDensity(RespMatrixHisto& histo);
 

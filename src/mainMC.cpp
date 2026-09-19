@@ -394,8 +394,25 @@ int main(int argc, char* argv[]) {
             }
         
         } else if (cfg.analysis.analysis_mode == "Event") {
-            return 0;
-        } 
+            ROOT::RDataFrame mc_frame(cfg.io.tree_mc_name, cfg.io.in_mc_file);
+            ROOT::RDF::RNode node_RM = mc_frame;
+                        
+            ROOT::RDataFrame data_frame(cfg.io.tree_data_name, cfg.io.in_data_file);
+            ROOT::RDF::RNode node_event = data_frame;
+
+            node_RM = CalculateRespMatrixWrapper(node_RM, flags_RM, cuts_RM);
+
+            // First Event Loop
+            RespMatrixHisto histo = BuildRespMatrixHisto(node_RM, cfg);
+            UnfoldDensities density = CreateUnfoldDensity(histo);
+
+            node_event = EventSelection(node_event, cfg);
+            
+
+ 
+
+        }
     }
+
     return 0;
 }
