@@ -215,7 +215,7 @@ void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& 
         ROOT::RDF::TH1DModel model_1D_pt(name_pt.c_str(), title_pt.c_str(), cfg.pt_plot.nbins, cfg.pt_plot.axis_min, 
         cfg.pt_plot.axis_max);
 
-        RespMatrixHisto histo = BuildRespMatrixHisto(node);
+        RespMatrixHisto histo = BuildRespMatrixHisto(node, cfg);
 
         // --------
         // Pipeline
