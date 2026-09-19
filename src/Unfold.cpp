@@ -230,30 +230,49 @@ ROOT::RDF::RNode CalculateRespMatrixWrapper(ROOT::RDF::RNode node, const flags_c
 }
 
 
-RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node) {
-    RespMatrixHisto histo;
+RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
     
     ROOT::RDF::RNode node_unf = node;
+    RespMatrixHisto histo;
 
-    int reco_bins_pt = 30;
-    int gen_bins_pt = 30;
+    if (cfg.unfold.use_bins == true) {
+        std::vector<float> reco_bins_pt = cfg.unfold.pt_bins.reco;
+        std::vector<float> gen_bins_pt = cfg.unfold.pt_bins.gen;
+        
+        std::vector<float> reco_bins_y = cfg.unfold.y_bins.reco;
+        std::vector<float> gen_bins_y = cfg.unfold.y_bins.gen;
+        
+        std::vector<float> reco_bins_phis = cfg.unfold.phis_bins.reco;
+        std::vector<float> gen_bins_phis = cfg.unfold.phis_bins.gen;
+
+        int r_bins_pt = reco_bins_pt.size() - 1;
+        int g_bins_pt = gen_bins_pt.size() - 1;
+
+        int r_bins_y = reco_bins_y.size() - 1;
+        int g_bins_y = gen_bins_y.size() - 1;
+
+        int r_bins_phis = reco_bins_phis.size() - 1;
+        int g_bins_phis = gen_bins_phis.size() - 1;
+
+        histo.histo_pt = node_unf.Histo2D({"hResp_pt","", r_bins_pt, reco_bins_pt.data(), g_bins_pt, gen_bins_pt.data()}, "Rec_Pt_Unf",
+        "Gen_Pt_Unf", "weight");
+
+        histo.histo_y = node_unf.Histo2D({"hResp_y","", r_bins_y, reco_bins_y.data(), g_bins_y, gen_bins_y.data()}, "Rec_Y_Unf", "Gen_Y_Unf",
+        "weight");
+
+        histo.histo_phis = node_unf.Histo2D({"hResp_phis","", r_bins_phis, reco_bins_phis.data(), g_bins_phis, gen_bins_phis.data()}, 
+        "Rec_Phis_Unf", "Gen_Phis_Unf", "weight");
     
-    int reco_bins_y = 30;
-    int gen_bins_y = 30;
-    
-    int reco_bins_phis = 30;
-    int gen_bins_phis = 30;
+    } else {
+        histo.histo_pt = node_unf.Histo2D({"hResp_pt","", 50, 0.0, 100.0, 30, 0.0, 100.0}, "Rec_Pt_Unf", "Gen_Pt_Unf", "weight");
+        histo.histo_y = node_unf.Histo2D({"hResp_y","", 50, -2.5, 2.5, 30, -2.5, 2.5}, "Rec_Y_Unf", "Gen_Y_Unf", "weight");
 
-    auto hResp_pt = node_unf.Histo2D({"hResp_pt","", reco_bins_pt, 0.0, 100.0, gen_bins_pt, 0.0, 100.0}, "Rec_Pt_Unf", "Gen_Pt_Unf", "weight");
+        std::vector<float> phis_bins_reco = {0.001, 0.004, 0.008, 0.012, 0.016, 0.02, 0.03, 0.04, 0.06, 0.08, 0.1, 0.15, 0.2, 0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0};
+        std::vector<float> phis_bins_gen = {0.001, 0.005, 0.010, 0.016, 0.02, 0.035, 0.06, 0.09, 0.15, 0.3, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0};
 
-    auto hResp_y = node_unf.Histo2D({"hResp_y","", reco_bins_y, -2.5, 2.5, gen_bins_y, -2.5, 2.5}, "Rec_Y_Unf", "Gen_Y_Unf", "weight");
-
-    auto hResp_phis = node_unf.Histo2D({"hResp_phis","", reco_bins_phis, 0.0, 3.0, gen_bins_phis, 0.0, 3.0}, "Rec_Phis_Unf", 
-    "Gen_Phis_Unf", "weight");
-
-    histo.histo_pt = hResp_pt;
-    histo.histo_y = hResp_y;
-    histo.histo_phis = hResp_phis;
+        ROOT::RDF::TH2DModel model_2D("hResp_phis", "", phis_bins_reco.size() - 1, phis_bins_reco.data(), phis_bins_gen.size() - 1, phis_bins_gen.data());
+        histo.histo_phis = node_unf.Histo2D(model_2D, "Rec_Phis_Unf", "Gen_Phis_Unf", "weight");
+    }
 
     return histo;
 }
