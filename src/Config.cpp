@@ -97,27 +97,49 @@ int Configure(config_struct& value, const std::string& json_path) {
         if (json_obj.contains("unfold")) {
             const auto& j = json_obj["unfold"];
 
+            if (j.contains("l_scan")) {
+                const auto& j_l = j["l_scan"];
+
+                value.unfold.scan.n_iter = j_l.value("n_iter", value.unfold.scan.n_iter);
+                value.unfold.scan.tau_min = j_l.value("tau_min", value.unfold.scan.tau_min);
+                value.unfold.scan.tau_max = j_l.value("tau_max", value.unfold.scan.tau_max);
+            }
+
             value.unfold.use_bins = j.value("use_bins", value.unfold.use_bins);
 
             if (j.contains("pt_bins")) {
                 const auto& j_p = j["pt_bins"];
                 
-                value.unfold.pt_bins.reco = j_p["reco"].get<std::vector<float>>();
-                value.unfold.pt_bins.gen = j_p["gen"].get<std::vector<float>>();
+                value.unfold.pt_bins.reco_bins = j_p.value("reco_bins", value.unfold.pt_bins.reco_bins);
+                value.unfold.pt_bins.gen_bins = j_p.value("gen_bins", value.unfold.pt_bins.gen_bins);
+                value.unfold.pt_bins.min = j_p.value("min", value.unfold.pt_bins.min);
+                value.unfold.pt_bins.max = j_p.value("max", value.unfold.pt_bins.max);
+                value.unfold.pt_bins.distribution = j_p.value("distribution", value.unfold.pt_bins.distribution);
+                value.unfold.pt_bins.split = j_p.value("split", value.unfold.pt_bins.split);
+
             }
 
             if (j.contains("y_bins")) {
                 const auto& j_y = j["y_bins"];
                 
-                value.unfold.y_bins.reco = j_y["reco"].get<std::vector<float>>();
-                value.unfold.y_bins.gen = j_y["gen"].get<std::vector<float>>();
+                value.unfold.y_bins.reco_bins = j_y.value("reco_bins", value.unfold.y_bins.reco_bins);
+                value.unfold.y_bins.gen_bins = j_y.value("gen_bins", value.unfold.y_bins.gen_bins);
+                value.unfold.y_bins.min = j_y.value("min", value.unfold.y_bins.min);
+                value.unfold.y_bins.max = j_y.value("max", value.unfold.y_bins.max);
+                value.unfold.y_bins.distribution = j_y.value("distribution", value.unfold.y_bins.distribution);
+                value.unfold.y_bins.split = j_y.value("split", value.unfold.y_bins.split);
+
             }
 
             if (j.contains("phis_bins")) {
                 const auto& j_phis = j["phis_bins"];
                 
-                value.unfold.phis_bins.reco = j_phis["reco"].get<std::vector<float>>();
-                value.unfold.phis_bins.gen = j_phis["gen"].get<std::vector<float>>();
+                value.unfold.phis_bins.reco_bins = j_phis.value("reco_bins", value.unfold.phis_bins.reco_bins);
+                value.unfold.phis_bins.gen_bins = j_phis.value("gen_bins", value.unfold.phis_bins.gen_bins);
+                value.unfold.phis_bins.min = j_phis.value("min", value.unfold.phis_bins.min);
+                value.unfold.phis_bins.max = j_phis.value("max", value.unfold.phis_bins.max);
+                value.unfold.phis_bins.distribution = j_phis.value("distribution", value.unfold.phis_bins.distribution);
+                value.unfold.phis_bins.split = j_phis.value("split", value.unfold.phis_bins.split);
             }
         }
 
@@ -345,44 +367,47 @@ void Verbose_config(const config_struct& value) {
     std::cout << "" << std::endl;
 
     std::cout << "Unfold settup: " << std::endl;
-    std::cout << "    Use JSON bins flag: " << value.unfold.use_bins << std::endl;
+
+    std::cout << "" << std::endl;
+
+    std::cout << "    L-Scan: " << std::endl;
+    std::cout << "        Iterations number: " << value.unfold.scan.n_iter << std::endl;
+    std::cout << "        Tau min value: " << value.unfold.scan.tau_min << std::endl;
+    std::cout << "        Tau max value: " << value.unfold.scan.tau_max << std::endl;
+
+    std::cout << "" << std::endl;
+    std::cout << "    Use bins option: " << value.unfold.use_bins << std::endl;
+    std::cout << "" << std::endl;
+
     std::cout << "    Pt bins: " << std::endl;
-    std::cout << "        Reconstructed: ";
-    for (auto it : value.unfold.pt_bins.reco) {
-        std::cout << it << " ";
-    }
+    std::cout << "        Reconstructed bins: " << value.unfold.pt_bins.reco_bins << std::endl;
+    std::cout << "        Generated bins: " << value.unfold.pt_bins.gen_bins << std::endl;
+    std::cout << "        Min bin: " << value.unfold.pt_bins.min << std::endl;
+    std::cout << "        Max bin: " << value.unfold.pt_bins.max << std::endl;
+    std::cout << "        Distribution of bins: " << value.unfold.pt_bins.distribution << std::endl;
+    std::cout << "        Split option: " << value.unfold.pt_bins.split << std::endl;
 
     std::cout << "" << std::endl;
-    std::cout << "        Generated: ";
-    for (auto it : value.unfold.pt_bins.gen) {
-        std::cout << it << " ";
-    }
-    std::cout << std::endl;
-    
-    std::cout << "    Y bins: " << std::endl;
-    std::cout << "        Reconstructed: ";
-    for (auto it : value.unfold.y_bins.reco) {
-        std::cout << it << " ";
-    }
-    std::cout << "" << std::endl;
-    
-    std::cout << "        Generated: ";
-    for (auto it : value.unfold.y_bins.gen) {
-        std::cout << it << " ";
-    }
+
+    std::cout << "    Rapidity bins: " << std::endl;
+    std::cout << "        Reconstructed bins: " << value.unfold.y_bins.reco_bins << std::endl;
+    std::cout << "        Generated bins: " << value.unfold.y_bins.gen_bins << std::endl;
+    std::cout << "        Min bin: " << value.unfold.y_bins.min << std::endl;
+    std::cout << "        Max bin: " << value.unfold.y_bins.max << std::endl;
+    std::cout << "        Distribution of bins: " << value.unfold.y_bins.distribution << std::endl;
+    std::cout << "        Split option: " << value.unfold.y_bins.split << std::endl;
+
+
     std::cout << "" << std::endl;
 
-    std::cout << "    Phis bins: " << std::endl;
-    std::cout << "        Reconstructed: ";
-    for (auto it : value.unfold.phis_bins.reco) {
-        std::cout << it << " ";
-    }
-    std::cout << "" << std::endl;
-    
-    std::cout << "        Generated: ";
-    for (auto it : value.unfold.phis_bins.gen) {
-        std::cout << it << " ";
-    }
+    std::cout << "    Phi Star bins: " << std::endl;
+    std::cout << "        Reconstructed bins: " << value.unfold.phis_bins.reco_bins << std::endl;
+    std::cout << "        Generated bins: " << value.unfold.phis_bins.gen_bins << std::endl;
+    std::cout << "        Min bin: " << value.unfold.phis_bins.min << std::endl;
+    std::cout << "        Max bin: " << value.unfold.phis_bins.max << std::endl;
+    std::cout << "        Distribution of bins: " << value.unfold.phis_bins.distribution << std::endl;
+    std::cout << "        Split option: " << value.unfold.phis_bins.split << std::endl;
+
     std::cout << "" << std::endl;
 
     std::cout << "" << std::endl;
