@@ -471,7 +471,7 @@ ROOT::RDF::RNode EventSelection(ROOT::RDF::RNode node, const config_struct& cfg)
     return node_event;
 }
 
-EventHisto BuildEventHisto(ROOT::RDF::RNode node) {
+EventHisto BuildEventHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
     ROOT::RDF::RNode node_event = node;
     EventHisto histo;
 
@@ -498,13 +498,43 @@ EventHisto BuildEventHisto(ROOT::RDF::RNode node) {
             return phis_Z;
         
         }, {"GM_Eta", "GM_Phi"});
+        
+        
 
-        std::vector<float> phis_bins = {0.001, 0.004, 0.008, 0.012, 0.016, 0.02, 0.03, 0.04, 0.06, 0.08, 0.1, 0.15, 0.2, 0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0};
-        ROOT::RDF::TH1DModel model_phis("h1_phis", "", phis_bins.size() - 1, phis_bins.data());
+        if (cfg.unfold.use_bins == true) {
+            std::vector<float> bins_pt = CreateBins(cfg.unfold.pt_bins.reco_bins, cfg.unfold.pt_bins.min, cfg.unfold.pt_bins.max, cfg.unfold.pt_bins.distribution, cfg.unfold.pt_bins.split);
+            
+            std::vector<float> bins_y = CreateBins(cfg.unfold.y_bins.reco_bins, cfg.unfold.y_bins.min, cfg.unfold.y_bins.max, cfg.unfold.y_bins.distribution, cfg.unfold.y_bins.split);
+            
+            std::vector<float> bins_phis = CreateBins(cfg.unfold.phis_bins.reco_bins, cfg.unfold.phis_bins.min, cfg.unfold.phis_bins.max, cfg.unfold.phis_bins.distribution, cfg.unfold.phis_bins.split);
 
-        histo.h1_pt = node_event.Histo1D({"hResp_pt","", 50, 0.0, 100.0}, "Pt_Z");
-        histo.h1_y = node_event.Histo1D({"hResp_y","", 50, -2.5, 2.5}, "Y_Z");
-        histo.h1_phis = node_event.Histo1D(model_phis, "Phis_Z");
+            histo.h1_mll = node_event.Histo1D({"hInvMass_fit","", 70, 60.0, 120.0}, "InvariantMass");
+            
+            histo.h1_pt = node_event.Histo1D({"hPt_event","", cfg.unfold.pt_bins.reco_bins, bins_pt.data()}, "Pt_Z");
+            histo.h1_y = node_event.Histo1D({"hRapidity_event","", cfg.unfold.y_bins.reco_bins, bins_y.data()}, "Y_Z");
+            histo.h1_phis = node_event.Histo1D({"hPhis_event","", cfg.unfold.phis_bins.reco_bins, bins_phis.data()}, "Phis_Z");
+
+        } else {
+            std::vector<float> bins_pt = {0.0, 2.5, 5.0, 7.5, 10.0, 12.5, 15.0, 17.5, 20.0, 23.0, 26.0, 30.0, 35.0, 40.0, 48.0, 56.0,
+            65.0, 75.0, 90.0, 110.0, 135.0, 165.0, 200.0, 250.0};
+                
+            std::vector<float> bins_y = {-2.4, -2.2, -2.0, -1.8, -1.6, -1.4, -1.2, -1.0, -0.8, -0.6, -0.4, -0.2, 0.0, 0.2, 0.4, 0.6,
+            0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4};
+            
+            std::vector<float> bins_phis = { 0.001, 0.005, 0.010, 0.018, 0.028, 0.040, 0.055, 0.072, 0.090, 0.110, 0.135, 0.165, 
+            0.200, 0.245, 0.300, 0.370, 0.450, 0.550, 0.680, 0.840, 1.050, 1.300, 1.600, 2.000};
+            
+            
+            int n_pt = static_cast<int>(bins_pt.size()) - 1;
+            int n_y = static_cast<int>(bins_y.size()) - 1;
+            int n_phis = static_cast<int>(bins_phis.size()) - 1;
+
+            histo.h1_mll = node_event.Histo1D({"hInvMass_fit","", 70, 60.0, 120.0}, "InvariantMass");
+            
+            histo.h1_pt = node_event.Histo1D({"hPt_event","", n_pt, bins_pt.data()}, "Pt_Z");
+            histo.h1_y = node_event.Histo1D({"hRapidity_event","", n_y, bins_y.data()}, "Y_Z");
+            histo.h1_phis = node_event.Histo1D({"hPhis_event","", n_phis, bins_phis.data()}, "Phis_Z");
+        }
 
     return histo;
 }
