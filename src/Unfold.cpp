@@ -3,6 +3,9 @@
 
 #include <vector>
 
+#include <TGraph.h>
+#include <TSpline.h>
+
 /*
 Reconstructed Muon:
     - Tight flag
@@ -236,43 +239,68 @@ RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct&
     RespMatrixHisto histo;
 
     if (cfg.unfold.use_bins == true) {
-        std::vector<float> reco_bins_pt = cfg.unfold.pt_bins.reco;
-        std::vector<float> gen_bins_pt = cfg.unfold.pt_bins.gen;
-        
-        std::vector<float> reco_bins_y = cfg.unfold.y_bins.reco;
-        std::vector<float> gen_bins_y = cfg.unfold.y_bins.gen;
-        
-        std::vector<float> reco_bins_phis = cfg.unfold.phis_bins.reco;
-        std::vector<float> gen_bins_phis = cfg.unfold.phis_bins.gen;
+        std::vector<float> reco_bins_pt = CreateBins(cfg.unfold.pt_bins.reco_bins, cfg.unfold.pt_bins.min, cfg.unfold.pt_bins.max, cfg.unfold.pt_bins.distribution, cfg.unfold.pt_bins.split);
+        std::vector<float> gen_bins_pt = CreateBins(cfg.unfold.pt_bins.gen_bins, cfg.unfold.pt_bins.min, cfg.unfold.pt_bins.max, cfg.unfold.pt_bins.distribution, cfg.unfold.pt_bins.split);
+            
+        std::vector<float> reco_bins_y = CreateBins(cfg.unfold.y_bins.reco_bins, cfg.unfold.y_bins.min, cfg.unfold.y_bins.max, cfg.unfold.y_bins.distribution, cfg.unfold.y_bins.split);
+        std::vector<float> gen_bins_y = CreateBins(cfg.unfold.y_bins.gen_bins, cfg.unfold.y_bins.min, cfg.unfold.y_bins.max, cfg.unfold.y_bins.distribution, cfg.unfold.y_bins.split);
+            
+        std::vector<float> reco_bins_phis = CreateBins(cfg.unfold.phis_bins.reco_bins, cfg.unfold.phis_bins.min, cfg.unfold.phis_bins.max, cfg.unfold.phis_bins.distribution, cfg.unfold.phis_bins.split);
+        std::vector<float> gen_bins_phis = CreateBins(cfg.unfold.phis_bins.gen_bins, cfg.unfold.phis_bins.min, cfg.unfold.phis_bins.max, cfg.unfold.phis_bins.distribution, cfg.unfold.phis_bins.split);
 
-        int r_bins_pt = reco_bins_pt.size() - 1;
-        int g_bins_pt = gen_bins_pt.size() - 1;
 
-        int r_bins_y = reco_bins_y.size() - 1;
-        int g_bins_y = gen_bins_y.size() - 1;
+        auto node_matched = node_unf.Filter("Matched");
+        histo.h1_pt_test = node_matched.Histo1D({"h_rec_pt_matched", "", cfg.unfold.pt_bins.reco_bins, reco_bins_pt.data()}, "Rec_Pt");
+        histo.h1_y_test = node_matched.Histo1D({"h_rec_y_matched", "", cfg.unfold.y_bins.reco_bins, reco_bins_y.data()}, "Rec_Y");
+        histo.h1_phis_test = node_matched.Histo1D({"h_rec_phis_matched", "", cfg.unfold.phis_bins.reco_bins, reco_bins_phis.data()}, "Rec_Phis");
 
-        int r_bins_phis = reco_bins_phis.size() - 1;
-        int g_bins_phis = gen_bins_phis.size() - 1;
 
-        histo.histo_pt = node_unf.Histo2D({"hResp_pt","", r_bins_pt, reco_bins_pt.data(), g_bins_pt, gen_bins_pt.data()}, "Rec_Pt_Unf",
+        histo.histo_pt = node_unf.Histo2D({"hResp_pt","", cfg.unfold.pt_bins.reco_bins, reco_bins_pt.data(), cfg.unfold.pt_bins.gen_bins , gen_bins_pt.data()}, "Rec_Pt_Unf",
         "Gen_Pt_Unf", "weight");
 
-        histo.histo_y = node_unf.Histo2D({"hResp_y","", r_bins_y, reco_bins_y.data(), g_bins_y, gen_bins_y.data()}, "Rec_Y_Unf", "Gen_Y_Unf",
+        histo.histo_y = node_unf.Histo2D({"hResp_y","", cfg.unfold.y_bins.reco_bins, reco_bins_y.data(), cfg.unfold.y_bins.gen_bins, gen_bins_y.data()}, "Rec_Y_Unf", "Gen_Y_Unf",
         "weight");
 
-        histo.histo_phis = node_unf.Histo2D({"hResp_phis","", r_bins_phis, reco_bins_phis.data(), g_bins_phis, gen_bins_phis.data()}, 
+        histo.histo_phis = node_unf.Histo2D({"hResp_phis","", cfg.unfold.phis_bins.reco_bins, reco_bins_phis.data(), cfg.unfold.phis_bins.gen_bins, gen_bins_phis.data()}, 
         "Rec_Phis_Unf", "Gen_Phis_Unf", "weight");
-    
+
     } else {
-        histo.histo_pt = node_unf.Histo2D({"hResp_pt","", 50, 0.0, 100.0, 30, 0.0, 100.0}, "Rec_Pt_Unf", "Gen_Pt_Unf", "weight");
-        histo.histo_y = node_unf.Histo2D({"hResp_y","", 50, -2.5, 2.5, 30, -2.5, 2.5}, "Rec_Y_Unf", "Gen_Y_Unf", "weight");
+            std::vector<float> reco_bins_pt = {0.0, 2.5, 5.0, 7.5, 10.0, 12.5, 15.0, 17.5, 20.0, 23.0, 26.0, 30.0, 35.0, 40.0, 48.0, 56.0,
+            65.0, 75.0, 90.0, 110.0, 135.0, 165.0, 200.0, 250.0};
+            std::vector<float> gen_bins_pt = {0.0, 5.0, 10.0, 15.0, 20.0, 28.0, 38.0, 50.0, 68.0, 90.0, 125.0, 175.0, 250.0};
+                
+            std::vector<float> reco_bins_y = {-2.4, -2.2, -2.0, -1.8, -1.6, -1.4, -1.2, -1.0, -0.8, -0.6, -0.4, -0.2, 0.0, 0.2, 0.4, 0.6,
+            0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4};
+            std::vector<float> gen_bins_y = {-2.4, -2.0, -1.6, -1.2, -0.8, -0.4, 0.0, 0.4, 0.8, 1.2, 1.6, 2.0, 2.4};
+            
+            std::vector<float> reco_bins_phis = {0.001, 0.005, 0.010, 0.018, 0.028, 0.040, 0.055, 0.072, 0.090, 0.110, 0.135, 0.165, 
+            0.200, 0.245, 0.300, 0.370, 0.450, 0.550, 0.680, 0.840, 1.050, 1.300, 1.600, 2.000};
+            std::vector<float> gen_bins_phis = {0.001, 0.012, 0.030, 0.060, 0.100, 0.150, 0.230, 0.350, 0.520, 0.780, 1.150, 1.600, 2.000};
 
-        std::vector<float> phis_bins_reco = {0.001, 0.004, 0.008, 0.012, 0.016, 0.02, 0.03, 0.04, 0.06, 0.08, 0.1, 0.15, 0.2, 0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0};
-        std::vector<float> phis_bins_gen = {0.001, 0.005, 0.010, 0.016, 0.02, 0.035, 0.06, 0.09, 0.15, 0.3, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0};
+            int n_reco_pt = static_cast<int>(reco_bins_pt.size()) - 1;
+            int n_gen_pt  = static_cast<int>(gen_bins_pt.size()) - 1;
 
-        ROOT::RDF::TH2DModel model_2D("hResp_phis", "", phis_bins_reco.size() - 1, phis_bins_reco.data(), phis_bins_gen.size() - 1, phis_bins_gen.data());
-        histo.histo_phis = node_unf.Histo2D(model_2D, "Rec_Phis_Unf", "Gen_Phis_Unf", "weight");
-    }
+            int n_reco_y = static_cast<int>(reco_bins_y.size()) - 1;
+            int n_gen_y  = static_cast<int>(gen_bins_y.size()) - 1;
+
+            int n_reco_phis = static_cast<int>(reco_bins_phis.size()) - 1;
+            int n_gen_phis  = static_cast<int>(gen_bins_phis.size()) - 1;
+
+            
+            auto node_matched = node_unf.Filter("Matched");
+            histo.h1_pt_test = node_matched.Histo1D({"h_rec_pt_matched", "", n_reco_pt, reco_bins_pt.data()}, "Rec_Pt");
+            histo.h1_y_test = node_matched.Histo1D({"h_rec_y_matched", "", n_reco_y, reco_bins_y.data()}, "Rec_Y");
+            histo.h1_phis_test = node_matched.Histo1D({"h_rec_phis_matched", "", n_reco_phis, reco_bins_phis.data()}, "Rec_Phis");
+
+            histo.histo_pt = node_unf.Histo2D({"hResp_pt","", n_reco_pt, reco_bins_pt.data(), n_gen_pt, gen_bins_pt.data()}, "Rec_Pt_Unf",
+            "Gen_Pt_Unf", "weight");
+
+            histo.histo_y = node_unf.Histo2D({"hResp_y","", n_reco_y, reco_bins_y.data(), n_gen_y, gen_bins_y.data()}, "Rec_Y_Unf", "Gen_Y_Unf",
+            "weight");
+
+            histo.histo_phis = node_unf.Histo2D({"hResp_phis","", n_reco_phis, reco_bins_phis.data(), n_gen_phis, gen_bins_phis.data()}, 
+            "Rec_Phis_Unf", "Gen_Phis_Unf", "weight");
+        }
 
     return histo;
 }
@@ -291,4 +319,35 @@ UnfoldDensities CreateUnfoldDensity(RespMatrixHisto& histo) {
 
     return densities;
 
+}
+
+UnfoldResult ApplyUnfold(UnfoldDensities& densities, EventHisto& event_histo, const config_struct& cfg, RespMatrixHisto& resp_histo) {
+    UnfoldResult results;
+
+    results.unf_density = std::move(densities.pt_unf); 
+
+    // Starting the Second Event Loop on DATA
+    results.unf_density->SetInput(resp_histo.h1_pt_test.GetPtr());
+
+    TGraph *lc = nullptr;
+    TSpline *sx = nullptr;
+    TSpline *sy = nullptr;
+
+    results.idx_best = results.unf_density->ScanLcurve(cfg.unfold.scan.n_iter, cfg.unfold.scan.tau_min, cfg.unfold.scan.tau_max, &lc, &sx, &sy);// CORE
+
+    results.LCurveScan.reset(lc);
+    
+    results.logTauX.reset(sx);
+    results.logTauY.reset(sy);
+
+    results.tau = results.unf_density->GetTau();
+    
+    results.h1_out_unf.reset(results.unf_density->GetOutput("hUnfolded_Pt"));
+    results.h2_out_cov.reset(results.unf_density->GetEmatrixTotal("hCov_Pt"));
+
+    results.chi2A = results.unf_density->GetChi2A();
+    results.chi2L = results.unf_density->GetChi2L();
+    results.ndf = results.unf_density->GetNdf();
+
+    return results;
 }

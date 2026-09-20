@@ -33,12 +33,30 @@ struct RespMatrixHisto {
     ROOT::RDF::RResultPtr<TH2D> histo_pt;
     ROOT::RDF::RResultPtr<TH2D> histo_y;
     ROOT::RDF::RResultPtr<TH2D> histo_phis;
+
+    ROOT::RDF::RResultPtr<TH1D> h1_pt_test;
+    ROOT::RDF::RResultPtr<TH1D> h1_y_test;
+    ROOT::RDF::RResultPtr<TH1D> h1_phis_test;
 };
 
 struct UnfoldDensities {
     std::unique_ptr<TUnfoldDensity> pt_unf;
     std::unique_ptr<TUnfoldDensity> y_unf;
     std::unique_ptr<TUnfoldDensity> phis_unf;
+};
+
+struct UnfoldResult {
+    std::unique_ptr<TUnfoldDensity> unf_density;
+    std::unique_ptr<TH1> h1_out_unf;
+    std::unique_ptr<TH2> h2_out_cov;
+    std::unique_ptr<TGraph> LCurveScan;
+    std::unique_ptr<TSpline> logTauX;
+    std::unique_ptr<TSpline> logTauY;
+    double tau = 0.0;
+    int idx_best = -1;
+    double chi2A = 0.0;
+    double chi2L = 0.0;
+    int ndf = 0;
 };
 
 
@@ -82,5 +100,7 @@ ROOT::RDF::RNode CalculateRespMatrixWrapper(ROOT::RDF::RNode node, const flags_c
 RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct& cfg);
 
 UnfoldDensities CreateUnfoldDensity(RespMatrixHisto& histo);
+
+UnfoldResult ApplyUnfold(UnfoldDensities& densities, EventHisto& event_histo, const config_struct& cfg, RespMatrixHisto& resp_histo);
 
 #endif

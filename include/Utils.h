@@ -10,6 +10,9 @@
 #include <cmath>
 #include <cstdint>
 
+#include <vector>
+#include <string>
+
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 /*
@@ -176,4 +179,7 @@ T CalculateRapidityZ0_Raw_Pair(const T pt1, const T pt2, const T eta1, const T e
     
     return y_Z0; 
 }
+
+std::vector<float> CreateBins(int nbins, float min, float max, const std::string& distribution, float split);
+
 #endif

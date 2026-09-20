@@ -81,15 +81,27 @@ struct analysis_config {
 };
 
 struct bins {
-    std::vector<float> reco;
-    std::vector<float> gen;
+    int reco_bins = 50;
+    int gen_bins = 30;
+    float min = 0.0f;
+    float max = 200.0f;
+    std::string distribution = "";
+    float split = -1.0;
 };
 
+struct l_scan {
+    int n_iter = 100;
+    float tau_min = 0.0f;
+    float tau_max = 100.0f; 
+};
+
+
 struct unfold_config {
-    bool use_bins = false;
+    l_scan scan;
+    bool use_bins;
     bins pt_bins;
     bins y_bins;
-    bins phis_bins;
+    bins phis_bins;    
 };
 
 /// @brief Flags for enabling/disablig specifics selections cuts.
