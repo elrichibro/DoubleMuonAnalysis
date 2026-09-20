@@ -5,6 +5,8 @@
 
 #include <TApplication.h>
 #include <TCanvas.h>
+#include <TLegend.h>
+#include <TMarker.h>
 #include "TEfficiency.h"
 
 #include "Config.h"
@@ -402,15 +404,93 @@ int main(int argc, char* argv[]) {
 
             node_RM = CalculateRespMatrixWrapper(node_RM, flags_RM, cuts_RM);
 
-            // First Event Loop
+            // First Event Loop on MonteCarlo
             RespMatrixHisto histo = BuildRespMatrixHisto(node_RM, cfg);
             UnfoldDensities density = CreateUnfoldDensity(histo);
 
+
             node_event = EventSelection(node_event, cfg);
+            EventHisto event_histo = BuildEventHisto(node_event, cfg);
+
+            // Second Event Loop on DATA
+            UnfoldResult res_pt = ApplyUnfold(density, event_histo, cfg, histo);
+
+
+            //res_pt.h1_out_unf->SetDirectory(nullptr);
+            //res_pt.h2_out_cov->SetDirectory(nullptr);
             
+            if (visualize && app != nullptr) {
+                /*
+                TCanvas c1("c1", "", 800, 600);
+                event_histo.h1_mll->Draw("HIST E");
 
- 
+                TCanvas c2("c2", "", 800, 600);
+                event_histo.h1_pt->Draw("HIST E");
 
+                TCanvas c3("c3", "", 800, 600);
+                event_histo.h1_y->Draw("HIST E");
+
+                TCanvas c4("c4", "", 800, 600);
+                event_histo.h1_phis->Draw("HIST E");
+                */
+                
+                std::cout << "Initializing visualization ..." << std::endl;
+                std::cout << "tau scelto = " << res_pt.tau << " (indice " << res_pt.idx_best << ")\n";
+                std::cout << "chi2A = " << res_pt.chi2A
+                        << "  chi2L = " << res_pt.chi2L
+                        << "  ndf = "   << res_pt.ndf << "\n";
+
+                /*
+                TCanvas c1("c1_response", "Response matrix pT_Z", 800, 600);
+                c1.SetLogz();
+                histo.histo_pt->Draw("COLZ");
+                histo.histo_pt->GetXaxis()->SetTitle("p_{T}^{Z} reco [GeV]");
+                histo.histo_pt->GetYaxis()->SetTitle("p_{T}^{Z} gen [GeV]");
+                */
+                TCanvas c2("c2_lcurve", "L-curve pT_Z", 800, 600);
+                res_pt.LCurveScan->SetTitle("L-curve;log_{10}(#chi^{2}_{data});log_{10}(curvature)");
+                res_pt.LCurveScan->Draw("ALP");
+
+                double xBest, yBest;
+                res_pt.LCurveScan->GetPoint(res_pt.idx_best, xBest, yBest);
+                TMarker *mBest = new TMarker(xBest, yBest, 20);
+                mBest->SetMarkerColor(kRed);
+                mBest->SetMarkerSize(1.5);
+                mBest->Draw("SAME");
+
+                std::unique_ptr<TH1D> hTruth_pt((TH1D*) histo.histo_pt->ProjectionY("hTruth_pt"));
+                hTruth_pt->SetDirectory(nullptr);
+
+
+                std::cout << "Binning MC:" << hTruth_pt->GetNbinsX() << std::endl;
+                std::cout << "Binning Unfolded Truth:" << res_pt.h1_out_unf->GetNbinsX() << std::endl;
+
+                TCanvas c3("c3_closure", "Unfolded vs Truth pT_Z", 800, 600);
+                res_pt.h1_out_unf->SetLineColor(kRed);
+                res_pt.h1_out_unf->SetMarkerColor(kRed);
+                res_pt.h1_out_unf->SetMarkerStyle(20);
+                res_pt.h1_out_unf->Scale(1,"width");
+                res_pt.h1_out_unf->Draw("E");
+
+                hTruth_pt->SetLineColor(kBlue);
+                hTruth_pt->SetLineWidth(2);
+                hTruth_pt->Scale(1,"width");
+                hTruth_pt->Draw("HIST SAME");
+
+                TLegend leg(0.6, 0.7, 0.88, 0.88);
+                leg.AddEntry(res_pt.h1_out_unf.get(), "Unfolded", "lep");
+                leg.AddEntry(hTruth_pt.get(), "MC Truth (gen)", "l");
+                leg.Draw();
+                /*
+                TCanvas c4("c4_cov", "Covariance matrix pT_Z", 800, 600);
+                res_pt.h2_out_cov->Draw("COLZ");
+                */
+                app->Run();
+                
+                delete app; 
+            } else {
+                std::cout << "No visualization booked.\n" << std::endl;
+            }
         }
     }
 
