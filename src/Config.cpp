@@ -97,6 +97,8 @@ int Configure(config_struct& value, const std::string& json_path) {
         if (json_obj.contains("unfold")) {
             const auto& j = json_obj["unfold"];
 
+            value.unfold.unfold_quantity = j.value("unfold_quantity", value.unfold.unfold_quantity);
+
             if (j.contains("l_scan")) {
                 const auto& j_l = j["l_scan"];
 
@@ -315,58 +317,69 @@ void Verbose_config(const config_struct& value) {
     std::cout << "" << std::endl;
     
     std::cout << "Analysis settup:" << std::endl;
+
+    std::cout << "" << std::endl;
+
     std::cout << "    Analysis Mode: " << value.analysis.analysis_mode << std::endl;
     std::cout << "    Fit results file path: " << value.analysis.o_fit_file << std::endl;
     std::cout << "    Bins settup: " << value.analysis.bins_settup << std::endl;
     std::cout << "    Pre-Fit flag option: " << value.analysis.pre_fit << std::endl;
+
+    std::cout << "" << std::endl;
 
     std::cout << "    Sample Data Pass: " << value.analysis.sample_pass_data << std::endl;
     std::cout << "    Sample MC Pass: " << value.analysis.sample_pass_mc << std::endl;
     std::cout << "    Sample Data Fail: " << value.analysis.sample_fail_data << std::endl;
     std::cout << "    Sample MC Fail: " << value.analysis.sample_fail_mc << std::endl;
 
+    std::cout << "" << std::endl;
+
     std::cout << "    Fit parameters: " << std::endl;
-    std::cout << "        Efficiency: | ";
+    std::cout << "        Efficiency: ";
     for (auto it : value.analysis.params.efficiency) {
-        std::cout << it << " | ";
+        std::cout << " / " << it;
     }
-    std::cout << std::endl;
+    std::cout << " /" << std::endl;
     
-    std::cout << "        Signal Events: | ";
+    std::cout << "        Signal Events: ";
     for (auto it : value.analysis.params.n_tot) {
-        std::cout << it << " | ";
+        std::cout << " / " << it;
     }
-    std::cout << std::endl;
+    std::cout << " /" << std::endl;    
     
-    std::cout << "        Gaussian mean: | ";
+    std::cout << "        Gaussian mean: ";
     for (auto it : value.analysis.params.mu) {
-        std::cout << it << " | ";
+        std::cout << " / " << it;
     }
-    std::cout << std::endl;
+    std::cout << " /" << std::endl;    
     
-    std::cout << "        Gaussian sigma: | ";
+    std::cout << "        Gaussian sigma: ";
     for (auto it : value.analysis.params.sigma) {
-        std::cout << it << " | ";
+        std::cout << " / " << it;
     }
-    std::cout << std::endl;
+    std::cout << " /" << std::endl;    
     
-    std::cout << "        Lambda pass: | ";
+    std::cout << "        Lambda pass: ";
     for (auto it : value.analysis.params.lambda_pass) {
-        std::cout << it << " | ";
+        std::cout << " / " << it;
     }
-    std::cout << std::endl;
+    std::cout << " /" << std::endl;    
     
-    std::cout << "        Lambda fail: | ";
+    std::cout << "        Lambda fail: ";
     for (auto it : value.analysis.params.lambda_fail) {
-        std::cout << it << " | ";
+        std::cout << " / " << it;
     }
-    std::cout << std::endl;
+    std::cout << " /" << std::endl;
 
     std::cout << "" << std::endl;
     std::cout << "--------------------------------------------------------------------" << std::endl;
     std::cout << "" << std::endl;
 
     std::cout << "Unfold settup: " << std::endl;
+
+    std::cout << "" << std::endl;
+
+    std::cout << "    Unfold Quantity: " << value.unfold.unfold_quantity << std::endl;
 
     std::cout << "" << std::endl;
 
