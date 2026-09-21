@@ -1,11 +1,11 @@
 #include "Utils.h"
 
-std::vector<float> CreateBins(int nbins, float min, float max, const std::string& distribution, float split) {
-    std::vector<float> bins;
+std::vector<double> CreateBins(int nbins, double min, double max, const std::string& distribution, double split) {
+    std::vector<double> bins;
     bins.reserve(nbins + 1);
     
     if (distribution == "linear") {
-        float step = (max - min)/nbins;
+        double step = (max - min)/nbins;
 
         for (int i = 0; i <= nbins; i++){
             bins.push_back(min + i * step);
@@ -13,10 +13,10 @@ std::vector<float> CreateBins(int nbins, float min, float max, const std::string
 
     } else if (distribution == "log") {
 
-        float log_min = std::log10(min);
-        float log_max = std::log10(max);
+        double log_min = std::log10(min);
+        double log_max = std::log10(max);
         
-        float step = (log_max - log_min)/nbins;
+        double step = (log_max - log_min)/nbins;
 
         for (int i = 0; i <= nbins; i++){
             bins.push_back(std::pow(10, log_min + i * step));

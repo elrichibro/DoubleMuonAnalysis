@@ -83,10 +83,12 @@ struct analysis_config {
 struct bins {
     int reco_bins = 50;
     int gen_bins = 30;
-    float min = 0.0f;
-    float max = 200.0f;
+    double min = 0.0f;
+    double max = 200.0f;
     std::string distribution = "";
-    float split = -1.0;
+    double split = -1.0;
+    std::vector<double> reco_vec;
+    std::vector<double> gen_vec;
 };
 
 struct l_scan {
@@ -98,6 +100,7 @@ struct l_scan {
 
 struct unfold_config {
     std::string unfold_quantity = "";
+    bool check_plot = false;
     l_scan scan;
     bool use_bins;
     bins pt_bins;

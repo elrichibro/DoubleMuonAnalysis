@@ -506,9 +506,9 @@ EventHisto BuildEventHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
             const auto& y = cfg.unfold.y_bins;
             const auto& phis = cfg.unfold.phis_bins;
 
-            std::vector<float> bins_pt = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution, pt.split);
-            std::vector<float> bins_y = CreateBins(y.reco_bins, y.min, y.max, y.distribution, y.split);            
-            std::vector<float> bins_phis = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution, phis.split);
+            std::vector<double> bins_pt = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution, pt.split);
+            std::vector<double> bins_y = CreateBins(y.reco_bins, y.min, y.max, y.distribution, y.split);            
+            std::vector<double> bins_phis = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution, phis.split);
 
             histo.h1_mll = node_event.Histo1D({"hInvMass_fit","", 70, 60.0, 120.0}, "InvariantMass");
             
@@ -517,15 +517,9 @@ EventHisto BuildEventHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
             histo.h1_phis = node_event.Histo1D({"hPhis_event", "", phis.reco_bins, bins_phis.data()}, "Phis_Z");
 
         } else {
-            std::vector<float> bins_pt = {0.0, 2.5, 5.0, 7.5, 10.0, 12.5, 15.0, 17.5, 20.0, 23.0, 26.0, 30.0, 35.0, 40.0, 48.0, 56.0,
-            65.0, 75.0, 90.0, 110.0, 135.0, 165.0, 200.0, 250.0};
-                
-            std::vector<float> bins_y = {-2.4, -2.2, -2.0, -1.8, -1.6, -1.4, -1.2, -1.0, -0.8, -0.6, -0.4, -0.2, 0.0, 0.2, 0.4, 0.6,
-            0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4};
-            
-            std::vector<float> bins_phis = { 0.001, 0.005, 0.010, 0.018, 0.028, 0.040, 0.055, 0.072, 0.090, 0.110, 0.135, 0.165, 
-            0.200, 0.245, 0.300, 0.370, 0.450, 0.550, 0.680, 0.840, 1.050, 1.300, 1.600, 2.000};
-            
+            std::vector<double> bins_pt = cfg.unfold.pt_bins.reco_vec;
+            std::vector<double> bins_y = cfg.unfold.y_bins.reco_vec;
+            std::vector<double> bins_phis = cfg.unfold.phis_bins.reco_vec;
             
             int n_pt = static_cast<int>(bins_pt.size()) - 1;
             int n_y = static_cast<int>(bins_y.size()) - 1;

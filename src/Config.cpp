@@ -98,6 +98,7 @@ int Configure(config_struct& value, const std::string& json_path) {
             const auto& j = json_obj["unfold"];
 
             value.unfold.unfold_quantity = j.value("unfold_quantity", value.unfold.unfold_quantity);
+            value.unfold.check_plot = j.value("check_plot", value.unfold.check_plot);
 
             if (j.contains("l_scan")) {
                 const auto& j_l = j["l_scan"];
@@ -118,7 +119,8 @@ int Configure(config_struct& value, const std::string& json_path) {
                 value.unfold.pt_bins.max = j_p.value("max", value.unfold.pt_bins.max);
                 value.unfold.pt_bins.distribution = j_p.value("distribution", value.unfold.pt_bins.distribution);
                 value.unfold.pt_bins.split = j_p.value("split", value.unfold.pt_bins.split);
-
+                value.unfold.pt_bins.reco_vec = j_p["reco_vec"].get<std::vector<double>>();
+                value.unfold.pt_bins.gen_vec = j_p["gen_vec"].get<std::vector<double>>();
             }
 
             if (j.contains("y_bins")) {
@@ -130,7 +132,8 @@ int Configure(config_struct& value, const std::string& json_path) {
                 value.unfold.y_bins.max = j_y.value("max", value.unfold.y_bins.max);
                 value.unfold.y_bins.distribution = j_y.value("distribution", value.unfold.y_bins.distribution);
                 value.unfold.y_bins.split = j_y.value("split", value.unfold.y_bins.split);
-
+                value.unfold.y_bins.reco_vec = j_y["reco_vec"].get<std::vector<double>>();
+                value.unfold.y_bins.gen_vec = j_y["gen_vec"].get<std::vector<double>>();
             }
 
             if (j.contains("phis_bins")) {
@@ -142,6 +145,8 @@ int Configure(config_struct& value, const std::string& json_path) {
                 value.unfold.phis_bins.max = j_phis.value("max", value.unfold.phis_bins.max);
                 value.unfold.phis_bins.distribution = j_phis.value("distribution", value.unfold.phis_bins.distribution);
                 value.unfold.phis_bins.split = j_phis.value("split", value.unfold.phis_bins.split);
+                value.unfold.phis_bins.reco_vec = j_phis["reco_vec"].get<std::vector<double>>();
+                value.unfold.phis_bins.gen_vec = j_phis["gen_vec"].get<std::vector<double>>();
             }
         }
 
@@ -380,6 +385,7 @@ void Verbose_config(const config_struct& value) {
     std::cout << "" << std::endl;
 
     std::cout << "    Unfold Quantity: " << value.unfold.unfold_quantity << std::endl;
+    std::cout << "    Check Plots flag: " << value.unfold.check_plot << std::endl;
 
     std::cout << "" << std::endl;
 
@@ -399,6 +405,18 @@ void Verbose_config(const config_struct& value) {
     std::cout << "        Max bin: " << value.unfold.pt_bins.max << std::endl;
     std::cout << "        Distribution of bins: " << value.unfold.pt_bins.distribution << std::endl;
     std::cout << "        Split option: " << value.unfold.pt_bins.split << std::endl;
+    
+    std::cout << "        Custom Reco bins: ";
+    for (auto it : value.unfold.pt_bins.reco_vec) {
+        std::cout << it << " ";
+    }
+    std::cout << "" << std::endl;
+
+    std::cout << "        Custom Gen bins: ";
+    for (auto it : value.unfold.pt_bins.gen_vec) {
+        std::cout << it << " ";
+    }
+    std::cout << "" << std::endl;
 
     std::cout << "" << std::endl;
 
@@ -409,7 +427,17 @@ void Verbose_config(const config_struct& value) {
     std::cout << "        Max bin: " << value.unfold.y_bins.max << std::endl;
     std::cout << "        Distribution of bins: " << value.unfold.y_bins.distribution << std::endl;
     std::cout << "        Split option: " << value.unfold.y_bins.split << std::endl;
+    std::cout << "        Custom Reco bins: ";
+    for (auto it : value.unfold.y_bins.reco_vec) {
+        std::cout << it << " ";
+    }
+    std::cout << "" << std::endl;
 
+    std::cout << "        Custom Gen bins: ";
+    for (auto it : value.unfold.y_bins.gen_vec) {
+        std::cout << it << " ";
+    }
+    std::cout << "" << std::endl;
 
     std::cout << "" << std::endl;
 
@@ -420,7 +448,17 @@ void Verbose_config(const config_struct& value) {
     std::cout << "        Max bin: " << value.unfold.phis_bins.max << std::endl;
     std::cout << "        Distribution of bins: " << value.unfold.phis_bins.distribution << std::endl;
     std::cout << "        Split option: " << value.unfold.phis_bins.split << std::endl;
+    std::cout << "        Custom Reco bins: ";
+    for (auto it : value.unfold.phis_bins.reco_vec) {
+        std::cout << it << " ";
+    }
+    std::cout << "" << std::endl;
 
+    std::cout << "        Custom Gen bins: ";
+    for (auto it : value.unfold.phis_bins.gen_vec) {
+        std::cout << it << " ";
+    }
+    std::cout << "" << std::endl;
     std::cout << "" << std::endl;
 
     std::cout << "" << std::endl;
