@@ -4,7 +4,7 @@ std::vector<float> CreateBins(int nbins, float min, float max, const std::string
     std::vector<float> bins;
     bins.reserve(nbins + 1);
     
-    if (distribution == "uniform") {
+    if (distribution == "linear") {
         float step = (max - min)/nbins;
 
         for (int i = 0; i <= nbins; i++){

@@ -57,30 +57,31 @@
   },
 
   "unfold":{
+    "unfold_quantity" : "phis",
     "l_scan":{
-      "n_iter": 10000,
+      "n_iter": 100,
       "tau_min":1e-6,
-      "tau_max":1e2
+      "tau_max":1
     },
     "use_bins":true,
     "pt_bins":{
-      "reco_bins":20,
-      "gen_bins":15,
-      "min":0.1,
-      "max":250,
-      "distribution":"uniform",
+      "reco_bins":50,
+      "gen_bins":30,
+      "min":1,
+      "max":100,
+      "distribution":"linear",
       "split": 1
     },
     "y_bins":{
       "reco_bins":50,
       "gen_bins":30,
-      "min":-2.4,
-      "max":2.4,
-      "distribution":"uniform"
+      "min":-2.0,
+      "max":2.0,
+      "distribution":"linear"
     },
     "phis_bins":{
       "reco_bins":30,
-      "gen_bins":20,
+      "gen_bins":15,
       "min":0.001,
       "max":2.0,
       "distribution":"log",
