@@ -414,7 +414,7 @@ int main(int argc, char* argv[]) {
 
             // First Event Loop on MonteCarlo
             RespMatrixHisto resp_histo = BuildRespMatrixHisto(node_RM, cfg);
-            EffPurHisto eff_pur_histo = BuildEffPurHisto(node_RM, cfg);// HERE
+            ControlHisto control_histo = BuildControlHisto(node_RM, cfg);// HERE
 
             UnfoldDensities density = CreateUnfoldDensity(resp_histo);// OR HERE
 
@@ -453,7 +453,7 @@ int main(int argc, char* argv[]) {
 
             if (visualize && app != nullptr) {
                 
-                int check_control = VisualizeControlPlots(canvas, resp_histo, eff_pur_histo, cfg.unfold.unfold_quantity);
+                int check_control = VisualizeControlPlots(canvas, resp_histo, control_histo, cfg.unfold.unfold_quantity);
 
                 if (cfg.unfold.check_plot == false) {
                     int check = VisualizeUnfoldResults(canvas, result, resp_histo,cfg.unfold.unfold_quantity);

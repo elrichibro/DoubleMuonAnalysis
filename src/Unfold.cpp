@@ -343,9 +343,9 @@ RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct&
     return resp_histo;
 }
 
-EffPurHisto BuildEffPurHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
+ControlHisto BuildControlHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
     ROOT::RDF::RNode node_histo = node;
-    EffPurHisto eff_pur_histo;
+    ControlHisto control_histo;
 
     std::vector<double> reco_bins_pt, gen_bins_pt, reco_bins_y, gen_bins_y, reco_bins_phis, gen_bins_phis;
 
@@ -432,6 +432,42 @@ EffPurHisto BuildEffPurHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
             return (bin_reco != -1) && (bin_reco == bin_gen);
         }, {"Matched", "Gen_Phis", "Rec_Phis"});
 
+    node_histo = node_histo
+        .Define("Stability_Pt_Pass", [FindBinIndex, gen_bins_pt](bool matched, float gen, float reco) {
+            if (!matched) {
+                return false;
+            }
+
+            int bin_gen = FindBinIndex(gen, gen_bins_pt);
+            int bin_reco = FindBinIndex(reco, gen_bins_pt);
+            
+            return (bin_gen != -1) && (bin_reco == bin_gen);
+        }, {"Matched", "Gen_Phis", "Rec_Phis"});
+
+    node_histo = node_histo
+        .Define("Stability_Y_Pass", [FindBinIndex, gen_bins_y](bool matched, float gen, float reco) {
+            if (!matched) {
+                return false;
+            }
+
+            int bin_gen = FindBinIndex(gen, gen_bins_y);
+            int bin_reco = FindBinIndex(reco, gen_bins_y);
+            
+            return (bin_gen != -1) && (bin_reco == bin_gen);
+        }, {"Matched", "Gen_Phis", "Rec_Phis"});
+
+    node_histo = node_histo
+        .Define("Stability_Phis_Pass", [FindBinIndex, gen_bins_phis](bool matched, float gen, float reco) {
+            if (!matched) {
+                return false;
+            }
+
+            int bin_gen = FindBinIndex(gen, gen_bins_phis);
+            int bin_reco = FindBinIndex(reco, gen_bins_phis);
+            
+            return (bin_gen != -1) && (bin_reco == bin_gen);
+        }, {"Matched", "Gen_Phis", "Rec_Phis"});
+
     // -----
     // Pt_Z0
     // -----
@@ -453,6 +489,15 @@ EffPurHisto BuildEffPurHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
         .Filter("Matched && Purity_Pt_Pass")
         .Histo1D({"h_pur_num_pt", "", n_reco_pt, reco_bins_pt.data()}, "Rec_Pt", "weight");
 
+    // Stability
+    auto h_stab_den_pt = node_histo
+        .Filter("Matched")
+        .Histo1D({"h_stab_den_pt", "", n_gen_pt, gen_bins_pt.data()}, "Gen_Pt", "weight");
+    auto h_stab_num_pt = node_histo
+        .Filter("Matched && Stability_Pt_Pass")
+        .Histo1D({"h_stab_num_pt", "", n_gen_pt, gen_bins_pt.data()}, "Gen_Pt", "weight");
+
+
     // ----
     // Y_Z0
     // ----
@@ -473,6 +518,14 @@ EffPurHisto BuildEffPurHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
         .Filter("Matched && Purity_Y_Pass")
         .Histo1D({"h_pur_num_y", "", n_reco_y, reco_bins_y.data()}, "Rec_Y", "weight");
 
+    // Stability
+    auto h_stab_den_y = node_histo
+        .Filter("Matched")
+        .Histo1D({"h_stab_den_y", "", n_gen_y, gen_bins_y.data()}, "Gen_Y", "weight");
+    auto h_stab_num_y = node_histo
+        .Filter("Matched && Stability_Y_Pass")
+        .Histo1D({"h_stab_num_y", "", n_gen_y, gen_bins_y.data()}, "Gen_Y", "weight");
+
     // -------
     // Phis_Z0
     // -------
@@ -492,7 +545,14 @@ EffPurHisto BuildEffPurHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
     auto h_pur_num_phis = node_histo
         .Filter("Matched && Purity_Phis_Pass")
         .Histo1D({"h_pur_num_phis", "", n_reco_phis, reco_bins_phis.data()}, "Rec_Phis", "weight");
-
+    
+    // Stability
+    auto h_stab_den_phis = node_histo
+        .Filter("Matched")
+        .Histo1D({"h_stab_den_phis", "", n_gen_phis, gen_bins_phis.data()}, "Gen_Phis", "weight");
+    auto h_stab_num_phis = node_histo
+        .Filter("Matched && Stability_Phis_Pass")
+        .Histo1D({"h_stab_num_phis", "", n_gen_phis, gen_bins_phis.data()}, "Gen_Phis", "weight");
 
     auto CreateHistogrm = [](ROOT::RDF::RResultPtr<TH1D>& num, ROOT::RDF::RResultPtr<TH1D>& den, const std::string& name, const std::string& title) {
         auto h_result = std::unique_ptr<TH1D>(static_cast<TH1D*>(num->Clone(name.c_str())));
@@ -506,17 +566,19 @@ EffPurHisto BuildEffPurHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
         return h_result;
     };
 
-    eff_pur_histo.h1_Eff_pt = CreateHistogrm(h_eff_num_pt, h_eff_den_pt, "h1_Eff_pt", "Efficiency; Gen_Pt_Z0 [GeV]; Efficiency");
-    eff_pur_histo.h1_Pur_pt = CreateHistogrm(h_pur_num_pt,h_pur_den_pt, "h1_Pur_pt", "Purity; Rec_Pt_Z0 [GeV]; Purity");
+    control_histo.h1_Eff_pt = CreateHistogrm(h_eff_num_pt, h_eff_den_pt, "h1_Eff_pt", "Efficiency; Gen_Pt_Z0 [GeV]; Efficiency");
+    control_histo.h1_Pur_pt = CreateHistogrm(h_pur_num_pt,h_pur_den_pt, "h1_Pur_pt", "Purity; Rec_Pt_Z0 [GeV]; Purity");
+    control_histo.h1_Stab_pt = CreateHistogrm(h_stab_num_pt, h_stab_den_pt, "h1_Stab_pt", "Stability; Gen_Pt_Z0 [GeV]; Stability");
 
-    eff_pur_histo.h1_Eff_y = CreateHistogrm(h_eff_num_y, h_eff_den_y, "h1_Eff_y", "Efficiency; Gen_Y_Z0; Efficiency");
-    eff_pur_histo.h1_Pur_y = CreateHistogrm(h_pur_num_y, h_pur_den_y, "h1_Pur_y", "Purity; Rec_Y_Z0; Purity");
+    control_histo.h1_Eff_y = CreateHistogrm(h_eff_num_y, h_eff_den_y, "h1_Eff_y", "Efficiency; Gen_Y_Z0; Efficiency");
+    control_histo.h1_Pur_y = CreateHistogrm(h_pur_num_y, h_pur_den_y, "h1_Pur_y", "Purity; Rec_Y_Z0; Purity");
+    control_histo.h1_Stab_y = CreateHistogrm(h_stab_num_y, h_stab_den_y, "h1_Stab_y", "Stability; Gen_Y_Z0; Stability");
+    
+    control_histo.h1_Eff_phis = CreateHistogrm(h_eff_num_phis, h_eff_den_phis, "h1_Eff_phis", "Efficiency; Gen_Phis_Z0; Efficiency");
+    control_histo.h1_Pur_phis = CreateHistogrm(h_pur_num_phis, h_pur_den_phis, "h1_Pur_phis", "Purity; Rec_Phis_Z0; Purity");
+    control_histo.h1_Stab_phis = CreateHistogrm(h_stab_num_phis, h_stab_den_phis, "h1_Stab_phis", "Stability; Gen_Phis_Z0; Stability");
 
-    eff_pur_histo.h1_Eff_phis = CreateHistogrm(h_eff_num_phis, h_eff_den_phis, "h1_Eff_phis", "Efficiency; Gen_Phis_Z0; Efficiency");
-    eff_pur_histo.h1_Pur_phis = CreateHistogrm(h_pur_num_phis, h_pur_den_phis, "h1_Pur_phis", "Purity; Rec_Phis_Z0; Purity");
-
-
-    return eff_pur_histo;
+    return control_histo;
 }
 
 
@@ -541,7 +603,7 @@ UnfoldResult ApplyUnfold(std::unique_ptr<TUnfoldDensity> density, TH1D* event_hi
     results.unf_density = std::move(density); 
 
     // Starting the Second Event Loop on DATA !
-    results.unf_density->SetInput(resp_histo);
+    results.unf_density->SetInput(event_histo);
     
     // Subtracting fake background
     //results.unf_density->SubtractBackground(fake_histo, "Fake signal", 1.0, 0.05);
@@ -689,7 +751,7 @@ int VisualizeUnfoldResults(std::vector<std::unique_ptr<TCanvas>>& canvas, Unfold
 }
 
 
-int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMatrixHisto& resp_histo, EffPurHisto& eff_histo, const std::string& tag) {
+int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMatrixHisto& resp_histo, ControlHisto& control_histo, const std::string& tag) {
     // --------------------------
     // Canvas 1 - Response Matrix
     // --------------------------
@@ -723,19 +785,26 @@ int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMat
     auto c5 = std::make_unique<TCanvas>(name_c5.c_str(), name_c5.c_str(), 800, 600);
     TH1D* h_eff;
     TH1D* h_pur;
+    TH1D* h_stab;
 
     if (tag == "pt") {
-        h_eff = eff_histo.h1_Eff_pt.get();
-        h_pur = eff_histo.h1_Pur_pt.get();
+        h_eff = control_histo.h1_Eff_pt.get();
+        h_pur = control_histo.h1_Pur_pt.get();
+        h_stab = control_histo.h1_Stab_pt.get();
+
     } else if (tag == "y") {
-        h_eff = eff_histo.h1_Eff_y.get();
-        h_pur = eff_histo.h1_Pur_y.get();
+        h_eff = control_histo.h1_Eff_y.get();
+        h_pur = control_histo.h1_Pur_y.get();
+        h_stab = control_histo.h1_Stab_y.get();
+
     } else if (tag == "phis") {
-        h_eff = eff_histo.h1_Eff_phis.get();
-        h_pur = eff_histo.h1_Pur_phis.get();
+        h_eff = control_histo.h1_Eff_phis.get();
+        h_pur = control_histo.h1_Pur_phis.get();
+        h_stab = control_histo.h1_Stab_phis.get();
+    
     }
 
-    if (h_eff && h_pur) {
+    if (h_eff && h_pur && h_stab) {
         c5->cd();
         h_eff->SetLineColor(kRed);
         h_eff->SetLineWidth(2);
@@ -747,14 +816,20 @@ int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMat
         h_pur->SetLineWidth(2);
         h_pur->SetStats(0);
 
+        h_stab->SetLineColor(9);
+        h_stab->SetLineWidth(2);
+        h_stab->SetStats(0);
+
         h_eff->Draw("HIST");
         h_pur->Draw("HIST SAME");
+        h_stab->Draw("HIST SAME");
 
         auto leg = new TLegend(0.65, 0.75, 0.88, 0.88);
         leg->SetBorderSize(0);
         leg->SetFillStyle(0);
         leg->AddEntry(h_eff, "Efficiency", "l");
         leg->AddEntry(h_pur, "Purity", "l");
+        leg->AddEntry(h_stab, "Stability", "l");
         leg->Draw();
 
         c5->Update();
