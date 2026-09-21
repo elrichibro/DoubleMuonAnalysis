@@ -43,7 +43,7 @@ struct RespMatrixHisto {
     ROOT::RDF::RResultPtr<TH1D> h1_phis_test;
 };
 
-struct EffPurHisto {
+struct ControlHisto {
     std::unique_ptr<TH1D> h1_Eff_pt;
     std::unique_ptr<TH1D> h1_Pur_pt;
     std::unique_ptr<TH1D> h1_Stab_pt;
@@ -132,7 +132,7 @@ RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct&
 /// @param node 
 /// @param cfg 
 /// @return 
-EffPurHisto BuildEffPurHisto(ROOT::RDF::RNode node, const config_struct& cfg);
+ControlHisto BuildControlHisto(ROOT::RDF::RNode node, const config_struct& cfg);
 
 /// @brief 
 /// @param histo 
@@ -157,6 +157,6 @@ UnfoldResult ApplyUnfold(std::unique_ptr<TUnfoldDensity> density, TH1D* event_hi
 /// @return 
 int VisualizeUnfoldResults(std::vector<std::unique_ptr<TCanvas>>& canvas, UnfoldResult& results, RespMatrixHisto& resp_histo,  const std::string& tag);   
 
-int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMatrixHisto& resp_histo, EffPurHisto& eff_histo, const std::string& tag);
+int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMatrixHisto& resp_histo, ControlHisto& control_histo, const std::string& tag);
 
 #endif
