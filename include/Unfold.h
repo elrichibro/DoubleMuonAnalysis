@@ -30,13 +30,28 @@ struct ResultsRespMatrix {
 };
 
 struct RespMatrixHisto {
-    ROOT::RDF::RResultPtr<TH2D> histo_pt;
-    ROOT::RDF::RResultPtr<TH2D> histo_y;
-    ROOT::RDF::RResultPtr<TH2D> histo_phis;
+    ROOT::RDF::RResultPtr<TH2D> h2_pt;
+    ROOT::RDF::RResultPtr<TH2D> h2_y;
+    ROOT::RDF::RResultPtr<TH2D> h2_phis;
+
+    ROOT::RDF::RResultPtr<TH1D> h1_pt_fake;
+    ROOT::RDF::RResultPtr<TH1D> h1_y_fake;
+    ROOT::RDF::RResultPtr<TH1D> h1_phis_fake;
 
     ROOT::RDF::RResultPtr<TH1D> h1_pt_test;
     ROOT::RDF::RResultPtr<TH1D> h1_y_test;
     ROOT::RDF::RResultPtr<TH1D> h1_phis_test;
+};
+
+struct EffPurHisto {
+    std::unique_ptr<TH1D> h1_Eff_pt;
+    std::unique_ptr<TH1D> h1_Pur_pt;
+    
+    std::unique_ptr<TH1D> h1_Eff_y;
+    std::unique_ptr<TH1D> h1_Pur_y;
+
+    std::unique_ptr<TH1D> h1_Eff_phis;
+    std::unique_ptr<TH1D> h1_Pur_phis;
 };
 
 struct UnfoldDensities {
@@ -95,12 +110,46 @@ struct MuonFlags_RM {
 ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_REC& kin_rec, const MuonKinematics_GEN& kin_gen, const MuonFlags_RM& flags, const flags_config cfg_f, 
 const cuts_config cfg_c);
 
+/// @brief 
+/// @param node 
+/// @param flags_RM 
+/// @param cuts_RM 
+/// @return 
 ROOT::RDF::RNode CalculateRespMatrixWrapper(ROOT::RDF::RNode node, const flags_config& flags_RM, const cuts_config& cuts_RM);
 
+/// @brief 
+/// @param node 
+/// @param cfg 
+/// @return 
 RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct& cfg);
+/// @brief 
+/// @param node 
+/// @param cfg 
+/// @return 
+EffPurHisto BuildEffPurHisto(ROOT::RDF::RNode node, const config_struct& cfg);
 
+/// @brief 
+/// @param histo 
+/// @return 
 UnfoldDensities CreateUnfoldDensity(RespMatrixHisto& histo);
 
-UnfoldResult ApplyUnfold(UnfoldDensities& densities, EventHisto& event_histo, const config_struct& cfg, RespMatrixHisto& resp_histo);
+/// @brief 
+/// @param density 
+/// @param event_histo 
+/// @param cfg 
+/// @param resp_histo 
+/// @param tag 
+/// @return 
+UnfoldResult ApplyUnfold(std::unique_ptr<TUnfoldDensity> density, TH1D* event_histo, const config_struct& cfg, TH1D* resp_histo, const std::string& tag);
 
+/// @brief 
+/// @param canvas 
+/// @param results 
+/// @param histo_resp 
+/// @param eff_histos 
+/// @param tag 
+/// @return 
+int VisualizeUnfoldResults(std::vector<std::unique_ptr<TCanvas>>& canvas, UnfoldResult& results, RespMatrixHisto& resp_histo,  const std::string& tag);   
+
+int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas,     EffPurHisto& eff_histo, const std::string& tag);
 #endif
