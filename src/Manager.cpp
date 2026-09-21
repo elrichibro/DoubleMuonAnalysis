@@ -215,15 +215,15 @@ void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& 
         ROOT::RDF::TH1DModel model_1D_pt(name_pt.c_str(), title_pt.c_str(), cfg.pt_plot.nbins, cfg.pt_plot.axis_min, 
         cfg.pt_plot.axis_max);
 
-        RespMatrixHisto histo = BuildRespMatrixHisto(node, cfg);
+        RespMatrixHisto resp_histo = BuildRespMatrixHisto(node, cfg);
 
         // --------
         // Pipeline
         // --------
 
-        AddToPipeline("P_{t, Z0} Response Matrix", histo.histo_pt);
-        AddToPipeline("Y_{Z0}", histo.histo_y);
-        AddToPipeline("#Phi_{Z0}^{*}", histo.histo_phis);
+        AddToPipeline("P_{t, Z0} Response Matrix", resp_histo.h2_pt);
+        AddToPipeline("Y_{Z0}", resp_histo.h2_y);
+        AddToPipeline("#Phi_{Z0}^{*}", resp_histo.h2_phis);
  
         // -------------------
         // Saving Column names
