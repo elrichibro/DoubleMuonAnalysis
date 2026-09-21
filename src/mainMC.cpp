@@ -427,42 +427,41 @@ int main(int argc, char* argv[]) {
 
             // Second Event Loop on DATA
             UnfoldResult result;
-            if (cfg.unfold.unfold_quantity == "pt") {
-                result = ApplyUnfold(std::move(density.pt_unf), event_histo.h1_pt.GetPtr(), cfg, resp_histo.h1_pt_test.GetPtr(), "Pt_Z0");
+
+            if (cfg.unfold.check_plot == true) {
+                std::cout << "Starting Check." << std::endl;
+            
+            } else if (cfg.unfold.unfold_quantity == "pt") {
+                result = ApplyUnfold(std::move(density.pt_unf), event_histo.h1_pt.GetPtr(), resp_histo.h1_pt_test.GetPtr(), 
+                resp_histo.h1_pt_fake.GetPtr(), cfg, "Pt_Z0");
+            
             } else if (cfg.unfold.unfold_quantity == "y") {
-                result = ApplyUnfold(std::move(density.y_unf), event_histo.h1_y.GetPtr(), cfg, resp_histo.h1_y_test.GetPtr(), "Y_Z0");
+                result = ApplyUnfold(std::move(density.y_unf), event_histo.h1_y.GetPtr(), resp_histo.h1_y_test.GetPtr(),
+                resp_histo.h1_y_fake.GetPtr(), cfg, "Y_Z0");
+            
             } else if (cfg.unfold.unfold_quantity == "phis") {
-                //result = ApplyUnfold(std::move(density.phis_unf), event_histo.h1_phis.GetPtr(), cfg, resp_histo.h1_phis_test.GetPtr(), "Phis_Z0");
+                result = ApplyUnfold(std::move(density.phis_unf), event_histo.h1_phis.GetPtr(), resp_histo.h1_phis_test.GetPtr(),
+                resp_histo.h1_phis_fake.GetPtr(), cfg, "Phis_Z0");
+            
             } else {
-                std::cout << "ERROR: invalid unfold quantity input, control check" << std::endl;
-            } 
+                std::cout << "ERROR: invalid unfold quantity input, exiting..." << std::endl;
+                return 1;
+            }
+
 
             std::vector<std::unique_ptr<TCanvas>> canvas;
 
             if (visualize && app != nullptr) {
-                /*
-                TCanvas c1("c1", "", 800, 600);
-                event_histo.h1_mll->Draw("HIST E");
-
-                TCanvas c2("c2", "", 800, 600);
-                event_histo.h1_pt->Draw("HIST E");
-
-                TCanvas c3("c3", "", 800, 600);
-                event_histo.h1_y->Draw("HIST E");
-
-                TCanvas c4("c4", "", 800, 600);
-                event_histo.h1_phis->Draw("HIST E");
-                */
                 
-                int check_control = VisualizeControlPlots(canvas, eff_pur_histo, cfg.unfold.unfold_quantity);
-                /*
-                int check = VisualizeUnfoldResults(canvas, result, resp_histo,cfg.unfold.unfold_quantity);
-                if (check != 0) {
-                    std::cout << "ERROR: Visualize operation failed, exiting..." << std::endl;
-                    return 1;
-                }
-                */
+                int check_control = VisualizeControlPlots(canvas, resp_histo, eff_pur_histo, cfg.unfold.unfold_quantity);
 
+                if (cfg.unfold.check_plot == false) {
+                    int check = VisualizeUnfoldResults(canvas, result, resp_histo,cfg.unfold.unfold_quantity);
+                    if (check != 0) {
+                        std::cout << "ERROR: Visualize operation failed, exiting..." << std::endl;
+                        return 1;
+                    }
+                }
                 app->Run();
                 
                 delete app; 

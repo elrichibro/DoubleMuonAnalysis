@@ -46,12 +46,15 @@ struct RespMatrixHisto {
 struct EffPurHisto {
     std::unique_ptr<TH1D> h1_Eff_pt;
     std::unique_ptr<TH1D> h1_Pur_pt;
+    std::unique_ptr<TH1D> h1_Stab_pt;
     
     std::unique_ptr<TH1D> h1_Eff_y;
     std::unique_ptr<TH1D> h1_Pur_y;
+    std::unique_ptr<TH1D> h1_Stab_y;
 
     std::unique_ptr<TH1D> h1_Eff_phis;
     std::unique_ptr<TH1D> h1_Pur_phis;
+    std::unique_ptr<TH1D> h1_Stab_phis;
 };
 
 struct UnfoldDensities {
@@ -62,8 +65,11 @@ struct UnfoldDensities {
 
 struct UnfoldResult {
     std::unique_ptr<TUnfoldDensity> unf_density;
+    
     std::unique_ptr<TH1> h1_out_unf;
     std::unique_ptr<TH2> h2_out_cov;
+    std::unique_ptr<TH2> h2_out_corr;
+
     std::unique_ptr<TGraph> LCurveScan;
     std::unique_ptr<TSpline> logTauX;
     std::unique_ptr<TSpline> logTauY;
@@ -140,7 +146,7 @@ UnfoldDensities CreateUnfoldDensity(RespMatrixHisto& histo);
 /// @param resp_histo 
 /// @param tag 
 /// @return 
-UnfoldResult ApplyUnfold(std::unique_ptr<TUnfoldDensity> density, TH1D* event_histo, const config_struct& cfg, TH1D* resp_histo, const std::string& tag);
+UnfoldResult ApplyUnfold(std::unique_ptr<TUnfoldDensity> density, TH1D* event_histo, TH1D* resp_histo, TH1D* fake_histo, const config_struct& cfg, const std::string& tag);
 
 /// @brief 
 /// @param canvas 
@@ -151,5 +157,6 @@ UnfoldResult ApplyUnfold(std::unique_ptr<TUnfoldDensity> density, TH1D* event_hi
 /// @return 
 int VisualizeUnfoldResults(std::vector<std::unique_ptr<TCanvas>>& canvas, UnfoldResult& results, RespMatrixHisto& resp_histo,  const std::string& tag);   
 
-int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas,     EffPurHisto& eff_histo, const std::string& tag);
+int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMatrixHisto& resp_histo, EffPurHisto& eff_histo, const std::string& tag);
+
 #endif
