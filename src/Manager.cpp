@@ -209,27 +209,19 @@ void OutputSelManager::BookAnalysis(ROOT::RDF::RNode node, const config_struct& 
         column_names.insert(column_names.end(), names.begin(), names.end());
 
     } else if ((cfg.general.operation_mode.find("Selection") != std::string::npos) && (cfg.selection.selection_mode == "RespMatrix")) {
-        
-        std::string title_pt = ";" + cfg.pt_plot.title_axis + ";Efficiency;";
-        std::string name_pt = cfg.selection.dataset + "_p_{T}";
-        ROOT::RDF::TH1DModel model_1D_pt(name_pt.c_str(), title_pt.c_str(), cfg.pt_plot.nbins, cfg.pt_plot.axis_min, 
-        cfg.pt_plot.axis_max);
-
-        RespMatrixHisto resp_histo = BuildRespMatrixHisto(node, cfg);
-
-        // --------
-        // Pipeline
-        // --------
-
-        AddToPipeline("P_{t, Z0} Response Matrix", resp_histo.h2_pt);
-        AddToPipeline("Y_{Z0}", resp_histo.h2_y);
-        AddToPipeline("#Phi_{Z0}^{*}", resp_histo.h2_phis);
- 
         // -------------------
         // Saving Column names
         // -------------------
 
-        std::vector<std::string> names = {"Rec_InvMass", "Gen_InvMass", "Rec_Pt", "Gen_Pt", "Rec_Y", "Gen_Y", "Rec_Phis", "Gen_Phis"};
+        std::vector<std::string> names = {"Matched", "Missed", "Faked", "Rec_InvMass", "Gen_InvMass", "Rec_Pt", "Gen_Pt", "Rec_Y", "Gen_Y", "Rec_Phis", "Gen_Phis"};
+        column_names.insert(column_names.end(), names.begin(), names.end());
+    
+    } else if ((cfg.general.operation_mode.find("Selection") != std::string::npos) && (cfg.selection.selection_mode == "Event")) {
+        // -------------------
+        // Saving Column names
+        // -------------------
+
+        std::vector<std::string> names = {"InvariantMass", "Pt_Z", "Y_Z", "Phis_Z"};
         column_names.insert(column_names.end(), names.begin(), names.end());
     
     } else if ((cfg.general.operation_mode.find("Analysis") != std::string::npos) && (cfg.analysis.analysis_mode == "TagAndProbe_MC")) {

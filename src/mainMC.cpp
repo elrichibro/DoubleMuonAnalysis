@@ -148,13 +148,13 @@ int main(int argc, char* argv[]) {
                 std::cout << "Initializing Selection operation in MC." << std::endl;
             }
 
-            ROOT::RDataFrame data_frame(dataset_tree, dataset_file);
+            ROOT::RDataFrame selection_data_frame(dataset_tree, dataset_file);
             
             // ----------
             // RespMatrix
             // ----------
             
-            ROOT::RDF::RNode node_RM = data_frame;
+            ROOT::RDF::RNode node_RM = selection_data_frame;
             
             if (cfg.selection.selection_mode.find("RespMatrix") != std::string::npos) {
                 if (cfg.selection.dataset == "DATA") {
@@ -174,7 +174,7 @@ int main(int argc, char* argv[]) {
             // Tag and Probe
             // -------------
             
-            ROOT::RDF::RNode node_TP = data_frame;
+            ROOT::RDF::RNode node_TP = selection_data_frame;
             
             if (cfg.selection.selection_mode.find("TagAndProbe") != std::string::npos) {
                 
@@ -183,6 +183,27 @@ int main(int argc, char* argv[]) {
                 }
 
                 node_TP = CalculateTagAndProbeWrapper(node_TP, validation_map, cfg.selection, flags_TP, cuts_TP);
+            }
+
+            // -----
+            // Event
+            // -----
+
+            ROOT::RDF::RNode node_event = selection_data_frame;
+            
+            if (cfg.selection.selection_mode.find("Event") != std::string::npos) {
+                if (cfg.selection.dataset == "MC") {
+                    std::cout << "ERROR: invalid Selection dataset for Event selection, pls select DATA dataset in this Selection settup, exiting..."
+                     << std::endl;
+                    return 1; 
+                }
+
+                if (cfg.general.verbose) {
+                    std::cout << "Executing Event selection." << std::endl;
+                }
+                node_event = ApplyValidationFilter(node_event, validation_map, "run", "luminosityBlock");
+                
+                node_event = EventSelection(node_event, cfg);
             }
 
             // --------------
@@ -197,6 +218,9 @@ int main(int argc, char* argv[]) {
             } else if (cfg.selection.selection_mode == "RespMatrix") {
                 std::cout << "Starting RespMatrix booking." << std::endl;
                 manager.BookAnalysis(node_RM, cfg);
+            } else if (cfg.selection.selection_mode == "Event") {
+                std::cout << "Starting Event booking." << std::endl;
+                manager.BookAnalysis(node_event, cfg);
             }
 
             if (cfg.general.verbose) {
@@ -395,22 +419,21 @@ int main(int argc, char* argv[]) {
                 std::cout << "No visualization booked.\n" << std::endl;
             }
         
-        } else if (cfg.analysis.analysis_mode == "Event") {
+        } else if (cfg.analysis.analysis_mode == "Unfold") {
             
             // MonteCarlo DATASET
-            ROOT::RDataFrame mc_frame(cfg.io.tree_mc_name, cfg.io.in_mc_file);
+            ROOT::RDataFrame mc_frame("MC_RespMatrix_Tree", cfg.selection.o_sel_file_data);
             ROOT::RDF::RNode node_RM = mc_frame;
             
             // DATA DATASET
-            ROOT::RDataFrame data_frame(cfg.io.tree_data_name, cfg.io.in_data_file);
+            ROOT::RDataFrame data_frame("DATA_Event_Tree", cfg.selection.o_sel_file_data);
             ROOT::RDF::RNode node_event = data_frame;
 
             // ----------
             // MonteCarlo
             // ----------
-            
-            // Response Matrix Calculus
-            node_RM = CalculateRespMatrixWrapper(node_RM, flags_RM, cuts_RM);
+
+            // Insert FIT DATA procedure HERE !!!
 
             // First Event Loop on MonteCarlo
             RespMatrixHisto resp_histo = BuildRespMatrixHisto(node_RM, cfg);
@@ -422,7 +445,6 @@ int main(int argc, char* argv[]) {
             // DATA
             // ----
 
-            node_event = EventSelection(node_event, cfg);
             EventHisto event_histo = BuildEventHisto(node_event, cfg);
 
             // Second Event Loop on DATA
@@ -468,6 +490,36 @@ int main(int argc, char* argv[]) {
             } else {
                 std::cout << "No visualization booked.\n" << std::endl;
             }
+
+        } else if (cfg.analysis.analysis_mode == "Event") {
+            // DATA DATASET
+            ROOT::RDataFrame data_frame("DATA_Event_Tree", cfg.selection.o_sel_file_data);
+            ROOT::RDF::RNode node_event = data_frame;
+
+            EventHisto event_histo = BuildEventHisto(node_event, cfg);
+
+            std::vector<std::unique_ptr<TH1D>> event_container = PrepareEventFit(event_histo, "pt");
+
+            std::string file_name = "../output/Event_Fit_" + cfg.unfold.unfold_quantity + ".root"; 
+            TFile o_fit_file(file_name.c_str(), "UPDATE");
+            if (o_fit_file.IsZombie()) {
+                std::cout << "ERROR: invalid output file, exiting..." << file_name << std::endl;
+                return 1;
+            }
+            o_fit_file.cd();
+
+            std::string dir_name = "fits_" + cfg.unfold.unfold_quantity;
+            TDirectory* fit_dir = o_fit_file.GetDirectory(dir_name.c_str());
+
+            if (!fit_dir) {
+               fit_dir = o_fit_file.mkdir(dir_name.c_str());
+            }
+
+            std::vector<EventFitResult> event_results = EventFitWrapper(event_container, fit_dir, , const std::string& tag);
+
+            o_fit_file.cd();
+            o_fit_file.Write();
+            o_fit_file.Close();
         }
     }
 
