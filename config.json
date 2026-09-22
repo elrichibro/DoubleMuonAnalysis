@@ -18,13 +18,13 @@
   },
 
   "selection": {
-    "dataset": "MC",
-    "selection_mode": "RespMatrix",
-    "save_sel_data":false,
-    "save_sel_plots":true,
-    "visual_sel":true,
-    "o_sel_file_plots":"../output/risultati_plots.root",
-    "o_sel_file_data":"../output/risultati_data.root"
+    "dataset": "DATA",
+    "selection_mode": "Event",
+    "save_sel_data":true,
+    "save_sel_plots":false,
+    "visual_sel":false,
+    "o_sel_file_plots":"../output/selection_plots.root",
+    "o_sel_file_data":"../output/selection_data.root"
   },
 
   "template": {
@@ -38,7 +38,7 @@
   },
   
   "analysis": {
-    "analysis_mode":"Event",
+    "analysis_mode":"Unfold",
     "o_fit_file":"../output/risultati_fit.root",
     "bins_settup":"0_Set_Pt4_Eta4_Mll70",
     "pre_fit":true,
@@ -58,15 +58,14 @@
 
   "unfold":{
     "unfold_quantity" : "pt",
-    "check_plot":false,
-    
+    "check_plot":true,
+    "use_custom_bins":true,
+
     "l_scan":{
       "n_iter": 100,
       "tau_min":0.0,
       "tau_max":0.0
     },
-
-    "use_bins":false,
     
     "pt_bins":{
       "reco_bins":30,
