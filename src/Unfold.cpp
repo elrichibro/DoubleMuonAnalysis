@@ -220,17 +220,6 @@ ROOT::RDF::RNode CalculateRespMatrixWrapper(ROOT::RDF::RNode node, const flags_c
 
         .Define("Rec_Phis", [](const ResultsRespMatrix& res) { return res.phis_rec; }, {"RespMatrix_mask"})
         .Define("Gen_Phis", [](const ResultsRespMatrix& res) { return res.phis_gen; }, {"RespMatrix_mask"});
-
-    node_RM = node_RM
-        .Define("weight", [](){ return 1.0; }, {})
-        .Define("Rec_Pt_Unf", [](bool miss, float pt_rec){ return miss ? -1.0 : pt_rec; }, {"Missed","Rec_Pt"})
-        .Define("Gen_Pt_Unf", [](bool fake, float pt_gen){ return fake ? -1.0 : pt_gen; }, {"Faked","Gen_Pt"})
-
-        .Define("Rec_Y_Unf", [](bool miss, float y_rec){ return miss ? -100.0 : y_rec; }, {"Missed","Rec_Y"})
-        .Define("Gen_Y_Unf", [](bool fake, float y_gen){ return fake ? -100.0 : y_gen; }, {"Faked","Gen_Y"})
-
-        .Define("Rec_Phis_Unf",[](bool miss, float phis_rec){ return miss ? -1.0 : phis_rec; }, {"Missed","Rec_Phis"})
-        .Define("Gen_Phis_Unf",[](bool fake, float phis_gen){ return fake ? -1.0 : phis_gen; }, {"Faked","Gen_Phis"});
     
     return node_RM;
 }
@@ -241,55 +230,21 @@ RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct&
     ROOT::RDF::RNode node_unf = node;
     RespMatrixHisto resp_histo;
 
+    node_unf = node_unf
+        .Define("weight", [](){ return 1.0; }, {})
+        .Define("Rec_Pt_Unf", [](bool miss, float pt_rec){ return miss ? -1.0 : pt_rec; }, {"Missed","Rec_Pt"})
+        .Define("Gen_Pt_Unf", [](bool fake, float pt_gen){ return fake ? -1.0 : pt_gen; }, {"Faked","Gen_Pt"})
+
+        .Define("Rec_Y_Unf", [](bool miss, float y_rec){ return miss ? -100.0 : y_rec; }, {"Missed","Rec_Y"})
+        .Define("Gen_Y_Unf", [](bool fake, float y_gen){ return fake ? -100.0 : y_gen; }, {"Faked","Gen_Y"})
+
+        .Define("Rec_Phis_Unf",[](bool miss, float phis_rec){ return miss ? -1.0 : phis_rec; }, {"Missed","Rec_Phis"})
+        .Define("Gen_Phis_Unf",[](bool fake, float phis_gen){ return fake ? -1.0 : phis_gen; }, {"Faked","Gen_Phis"});
+
     std::vector<double> reco_bins_pt, gen_bins_pt, reco_bins_y, gen_bins_y, reco_bins_phis, gen_bins_phis;
 
-    if (cfg.unfold.use_bins == true) {
-
-        const auto& pt = cfg.unfold.pt_bins;
-        const auto& y = cfg.unfold.y_bins;
-        const auto& phis = cfg.unfold.phis_bins;
-
-        reco_bins_pt = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution, pt.split);
-        gen_bins_pt = CreateBins(pt.gen_bins, pt.min, pt.max, pt.distribution, pt.split);
-            
-        reco_bins_y = CreateBins(y.reco_bins, y.min, y.max, y.distribution, y.split);
-        gen_bins_y = CreateBins(y.gen_bins, y.min, y.max, y.distribution, y.split);
-            
-        reco_bins_phis = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution, phis.split);
-        gen_bins_phis = CreateBins(phis.gen_bins, phis.min, phis.max, phis.distribution, phis.split);
+    if (cfg.unfold.use_custom_bins == true) {
         
-        // ------------------
-        // Matched Histograms
-        // ------------------
-
-        auto node_matched = node_unf.Filter("Matched");
-        resp_histo.h1_pt_test = node_matched.Histo1D({"h_rec_pt_matched", "", pt.reco_bins, reco_bins_pt.data()}, "Rec_Pt");
-        resp_histo.h1_y_test = node_matched.Histo1D({"h_rec_y_matched", "", y.reco_bins, reco_bins_y.data()}, "Rec_Y");
-        resp_histo.h1_phis_test = node_matched.Histo1D({"h_rec_phis_matched", "", phis.reco_bins, reco_bins_phis.data()}, "Rec_Phis");
-
-        // --------------------
-        // Faked BKG Histograms
-        // --------------------
-
-        auto node_faked = node_unf.Filter("Faked");
-        resp_histo.h1_pt_fake = node_faked.Histo1D({"h_rec_pt_faked", "", pt.reco_bins, reco_bins_pt.data()}, "Rec_Pt");
-        resp_histo.h1_y_fake = node_faked.Histo1D({"h_rec_y_faked", "", y.reco_bins, reco_bins_y.data()}, "Rec_Y");
-        resp_histo.h1_phis_fake = node_faked.Histo1D({"h_rec_phis_faked", "", phis.reco_bins, reco_bins_phis.data()}, "Rec_Phis");
-
-        // ------------------
-        // Response Histogram
-        // ------------------
-
-        resp_histo.h2_pt = node_unf.Histo2D({"hResp_pt","", pt.reco_bins, reco_bins_pt.data(), pt.gen_bins , gen_bins_pt.data()}, "Rec_Pt_Unf",
-        "Gen_Pt_Unf", "weight");
-
-        resp_histo.h2_y = node_unf.Histo2D({"hResp_y","", y.reco_bins, reco_bins_y.data(), y.gen_bins, gen_bins_y.data()}, "Rec_Y_Unf", 
-        "Gen_Y_Unf", "weight");
-
-        resp_histo.h2_phis = node_unf.Histo2D({"hResp_phis","", phis.reco_bins, reco_bins_phis.data(), phis.gen_bins, gen_bins_phis.data()}, 
-        "Rec_Phis_Unf", "Gen_Phis_Unf", "weight");
-
-    } else {
         reco_bins_pt = cfg.unfold.pt_bins.reco_vec;
         gen_bins_pt = cfg.unfold.pt_bins.gen_vec;
         
@@ -338,22 +293,12 @@ RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct&
 
         resp_histo.h2_phis = node_unf.Histo2D({"hResp_phis","", n_reco_phis, reco_bins_phis.data(), n_gen_phis, gen_bins_phis.data()}, 
         "Rec_Phis_Unf", "Gen_Phis_Unf", "weight");
-    }
 
-    return resp_histo;
-}
+    } else {
 
-ControlHisto BuildControlHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
-    ROOT::RDF::RNode node_histo = node;
-    ControlHisto control_histo;
-
-    std::vector<double> reco_bins_pt, gen_bins_pt, reco_bins_y, gen_bins_y, reco_bins_phis, gen_bins_phis;
-
-    const auto& pt = cfg.unfold.pt_bins;
-    const auto& y = cfg.unfold.y_bins;
-    const auto& phis = cfg.unfold.phis_bins;
-
-    if (cfg.unfold.use_bins) {
+        const auto& pt = cfg.unfold.pt_bins;
+        const auto& y = cfg.unfold.y_bins;
+        const auto& phis = cfg.unfold.phis_bins;
 
         reco_bins_pt = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution, pt.split);
         gen_bins_pt = CreateBins(pt.gen_bins, pt.min, pt.max, pt.distribution, pt.split);
@@ -363,8 +308,55 @@ ControlHisto BuildControlHisto(ROOT::RDF::RNode node, const config_struct& cfg) 
             
         reco_bins_phis = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution, phis.split);
         gen_bins_phis = CreateBins(phis.gen_bins, phis.min, phis.max, phis.distribution, phis.split);
-    
-    } else {
+        
+        // ------------------
+        // Matched Histograms
+        // ------------------
+
+        auto node_matched = node_unf.Filter("Matched");
+        resp_histo.h1_pt_test = node_matched.Histo1D({"h_rec_pt_matched", "", pt.reco_bins, reco_bins_pt.data()}, "Rec_Pt");
+        resp_histo.h1_y_test = node_matched.Histo1D({"h_rec_y_matched", "", y.reco_bins, reco_bins_y.data()}, "Rec_Y");
+        resp_histo.h1_phis_test = node_matched.Histo1D({"h_rec_phis_matched", "", phis.reco_bins, reco_bins_phis.data()}, "Rec_Phis");
+
+        // --------------------
+        // Faked BKG Histograms
+        // --------------------
+
+        auto node_faked = node_unf.Filter("Faked");
+        resp_histo.h1_pt_fake = node_faked.Histo1D({"h_rec_pt_faked", "", pt.reco_bins, reco_bins_pt.data()}, "Rec_Pt");
+        resp_histo.h1_y_fake = node_faked.Histo1D({"h_rec_y_faked", "", y.reco_bins, reco_bins_y.data()}, "Rec_Y");
+        resp_histo.h1_phis_fake = node_faked.Histo1D({"h_rec_phis_faked", "", phis.reco_bins, reco_bins_phis.data()}, "Rec_Phis");
+
+        // ------------------
+        // Response Histogram
+        // ------------------
+
+        resp_histo.h2_pt = node_unf.Histo2D({"hResp_pt","", pt.reco_bins, reco_bins_pt.data(), pt.gen_bins , gen_bins_pt.data()}, "Rec_Pt_Unf",
+        "Gen_Pt_Unf", "weight");
+
+        resp_histo.h2_y = node_unf.Histo2D({"hResp_y","", y.reco_bins, reco_bins_y.data(), y.gen_bins, gen_bins_y.data()}, "Rec_Y_Unf", 
+        "Gen_Y_Unf", "weight");
+
+        resp_histo.h2_phis = node_unf.Histo2D({"hResp_phis","", phis.reco_bins, reco_bins_phis.data(), phis.gen_bins, gen_bins_phis.data()}, 
+        "Rec_Phis_Unf", "Gen_Phis_Unf", "weight");
+    }
+
+    return resp_histo;
+}
+
+ControlHisto BuildControlHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
+    ROOT::RDF::RNode node_histo = node;
+    ControlHisto control_histo;
+
+    node_histo = node_histo.Define("weight", [](){ return 1.0; }, {});
+
+    std::vector<double> reco_bins_pt, gen_bins_pt, reco_bins_y, gen_bins_y, reco_bins_phis, gen_bins_phis;
+
+    const auto& pt = cfg.unfold.pt_bins;
+    const auto& y = cfg.unfold.y_bins;
+    const auto& phis = cfg.unfold.phis_bins;
+
+    if (cfg.unfold.use_custom_bins == true) {
         reco_bins_pt = pt.reco_vec;
         gen_bins_pt = pt.gen_vec;
         
@@ -373,6 +365,16 @@ ControlHisto BuildControlHisto(ROOT::RDF::RNode node, const config_struct& cfg) 
         
         reco_bins_phis = phis.reco_vec;
         gen_bins_phis = phis.gen_vec;
+    
+    } else {
+        reco_bins_pt = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution, pt.split);
+        gen_bins_pt = CreateBins(pt.gen_bins, pt.min, pt.max, pt.distribution, pt.split);
+            
+        reco_bins_y = CreateBins(y.reco_bins, y.min, y.max, y.distribution, y.split);
+        gen_bins_y = CreateBins(y.gen_bins, y.min, y.max, y.distribution, y.split);
+            
+        reco_bins_phis = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution, phis.split);
+        gen_bins_phis = CreateBins(phis.gen_bins, phis.min, phis.max, phis.distribution, phis.split);
 
     }
 

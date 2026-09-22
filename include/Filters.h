@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <utility>
 
 #include <ROOT/RVec.hxx>
 #include <ROOT/RDataFrame.hxx>
@@ -82,8 +83,11 @@ struct EventHisto {
     ROOT::RDF::RResultPtr<TH1D> h1_pt;
     ROOT::RDF::RResultPtr<TH1D> h1_y;
     ROOT::RDF::RResultPtr<TH1D> h1_phis;
-};
 
+    ROOT::RDF::RResultPtr<TH2D> h2_mll_pt;
+    ROOT::RDF::RResultPtr<TH2D> h2_mll_y;
+    ROOT::RDF::RResultPtr<TH2D> h2_mll_phis;
+};
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
