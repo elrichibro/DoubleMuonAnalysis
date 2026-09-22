@@ -468,14 +468,7 @@ ROOT::RDF::RNode EventSelection(ROOT::RDF::RNode node, const config_struct& cfg)
     node_event = node_event
         .Filter(event_cut, "InvMass selection -> Good Event");
 
-    return node_event;
-}
-
-EventHisto BuildEventHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
-    ROOT::RDF::RNode node_event = node;
-    EventHisto histo;
-
-    node_event = node_event
+            node_event = node_event
         .Define("Pt_Z", [] (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
          const ROOT::RVec<float>& mass) {
             
@@ -498,39 +491,59 @@ EventHisto BuildEventHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
             return phis_Z;
         
         }, {"GM_Eta", "GM_Phi"});
+
+    return node_event;
+}
+
+EventHisto BuildEventHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
+    ROOT::RDF::RNode node_event = node;
+    EventHisto histo;
+      
+    std::vector<double> bins_pt, bins_y, bins_phis;
+    int n_pt, n_y, n_phis;
+
+    if (cfg.unfold.use_custom_bins == true) {
+        bins_pt = cfg.unfold.pt_bins.reco_vec;
+        bins_y = cfg.unfold.y_bins.reco_vec;
+        bins_phis = cfg.unfold.phis_bins.reco_vec;
+
+    } else {
+        const auto& pt = cfg.unfold.pt_bins;
+        const auto& y = cfg.unfold.y_bins;
+        const auto& phis = cfg.unfold.phis_bins;
+
+        bins_pt = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution, pt.split);
+        bins_y = CreateBins(y.reco_bins, y.min, y.max, y.distribution, y.split);            
+        bins_phis = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution, phis.split);
+    }
+
+    // Mll bins
+    int n_mll = 70;
+    
+    std::vector<double> mll_bins(n_mll + 1);
+    double step = (120.0 - 60.0) / n_mll;
+
+    for (int i = 0; i <= n_mll; i++) {
+        mll_bins[i] = 60.0 + (i * step);
+    }
+
+    n_pt = static_cast<int>(bins_pt.size()) - 1;
+    n_y = static_cast<int>(bins_y.size()) - 1;
+    n_phis = static_cast<int>(bins_phis.size()) - 1;
+
+    ROOT::RDF::TH2DModel model_mll_pt("h2_mll_pt", "Pt vs Mll", n_pt, bins_pt.data(), n_mll, mll_bins.data());
+    ROOT::RDF::TH2DModel model_mll_y("h2_mll_y", "Y vs Mll", n_y, bins_y.data(), n_mll, mll_bins.data());
+    ROOT::RDF::TH2DModel model_mll_phis("h2_mll_phis", "Phis vs Mll", n_phis, bins_phis.data(), n_mll, mll_bins.data());
+
+    histo.h1_mll = node_event.Histo1D({"hInvMass_fit","", 70, 60.0, 120.0}, "InvariantMass");
         
-        
+    histo.h1_pt = node_event.Histo1D({"hPt_event", "", n_pt, bins_pt.data()}, "Pt_Z");
+    histo.h1_y = node_event.Histo1D({"hRapidity_event", "", n_y, bins_y.data()}, "Y_Z");
+    histo.h1_phis = node_event.Histo1D({"hPhis_event", "", n_phis, bins_phis.data()}, "Phis_Z");
 
-        if (cfg.unfold.use_bins == true) {
-            const auto& pt = cfg.unfold.pt_bins;
-            const auto& y = cfg.unfold.y_bins;
-            const auto& phis = cfg.unfold.phis_bins;
-
-            std::vector<double> bins_pt = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution, pt.split);
-            std::vector<double> bins_y = CreateBins(y.reco_bins, y.min, y.max, y.distribution, y.split);            
-            std::vector<double> bins_phis = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution, phis.split);
-
-            histo.h1_mll = node_event.Histo1D({"hInvMass_fit","", 70, 60.0, 120.0}, "InvariantMass");
-            
-            histo.h1_pt = node_event.Histo1D({"hPt_event", "", pt.reco_bins, bins_pt.data()}, "Pt_Z");
-            histo.h1_y = node_event.Histo1D({"hRapidity_event", "", y.reco_bins, bins_y.data()}, "Y_Z");
-            histo.h1_phis = node_event.Histo1D({"hPhis_event", "", phis.reco_bins, bins_phis.data()}, "Phis_Z");
-
-        } else {
-            std::vector<double> bins_pt = cfg.unfold.pt_bins.reco_vec;
-            std::vector<double> bins_y = cfg.unfold.y_bins.reco_vec;
-            std::vector<double> bins_phis = cfg.unfold.phis_bins.reco_vec;
-            
-            int n_pt = static_cast<int>(bins_pt.size()) - 1;
-            int n_y = static_cast<int>(bins_y.size()) - 1;
-            int n_phis = static_cast<int>(bins_phis.size()) - 1;
-
-            histo.h1_mll = node_event.Histo1D({"hInvMass_fit","", 70, 60.0, 120.0}, "InvariantMass");
-            
-            histo.h1_pt = node_event.Histo1D({"hPt_event", "", n_pt, bins_pt.data()}, "Pt_Z");
-            histo.h1_y = node_event.Histo1D({"hRapidity_event", "", n_y, bins_y.data()}, "Y_Z");
-            histo.h1_phis = node_event.Histo1D({"hPhis_event", "", n_phis, bins_phis.data()}, "Phis_Z");
-        }
+    histo.h2_mll_pt = node_event.Histo2D(model_mll_pt, "Pt_Z", "InvariantMass");
+    histo.h2_mll_y = node_event.Histo2D(model_mll_y, "Y_Z", "InvariantMass");
+    histo.h2_mll_phis = node_event.Histo2D(model_mll_phis, "Phis_Z", "InvariantMass");
 
     return histo;
 }

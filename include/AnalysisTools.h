@@ -70,6 +70,28 @@ struct FitResult {
     int fit_status;// Fit status
 };
 
+// Event fit results
+struct EventFitResult {
+    int bin_idx;// Index of the P_t, Y or Phi* quantity.
+    
+    double n_sig;// Signal yield.
+    double n_sig_err;// Signal yield fit error.
+    
+    double mean_z;// Mean of signal distribution.
+    double mean_z_err;// Mean error of signal distribution.
+    
+    double sigma_gauss;// Sigma of the covoluted gaussian.
+    double sigma_gauss_err;// Associated error to the sigma of the covoluted gaussian.
+    
+    double n_bkg;// Backgorund yield.
+    double n_bkg_err;// Background yield error.
+    
+    double lambda;// Exponential lambda result.
+    double lambda_err;// Lambda fit error.
+    
+    int fit_status;// Fit status -> 0 = succes
+};
+
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 // --------------
@@ -91,9 +113,9 @@ int UnbinnedTemplateMaker(ROOT::RDF::RNode node, const config_struct& cfg);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-// ---------------
-// Template Loader
-// ---------------
+// ---------------------------
+// Template Loader - PreFitter
+// ---------------------------
 
 /// @brief Loads the template binned data into the system Template struct.
 /// @param cfg Configure general struct.
@@ -108,6 +130,12 @@ int LoadBinnedTemplate(const config_struct& cfg, std::vector<Template_RooF>& con
 /// @param container Template system container. 
 /// @return 0 if succeds, else error code.
 int LoadUnbinnedTemplate(TTree* tree, const config_struct& cfg, const int dataset, std::vector<Template_RooF>& container);
+
+/// @brief 
+/// @param event_histo 
+/// @param tag 
+/// @return 
+std::vector<std::unique_ptr<TH1D>> PrepareEventFit(EventHisto& event_histo, const std::string& tag);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
@@ -147,5 +175,20 @@ const config_struct& cfg);
 /// @param o_file Output file for SaveBinFitCanvas function.
 /// @return 0 if succeds, else error code.
 int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_struct& cfg, std::vector<FitResult>& results, TFile* o_file);
+
+/// @brief Fits binned data with a signal model hardcoded. Saves the fit and residual plot into the output Event file.
+/// @param bin_idx Bin index of P_t, Y, Phis star.
+/// @param h_mll Histogram -> Binned data for input.
+/// @param o_dir Output directory.
+/// @param tag Identifies the ortogonal quantity.
+/// @return Returns a struct containing the fit results.
+EventFitResult EventSingleFit(int bin_idx, TH1D* h_mll, TDirectory* o_dir, const std::string& tag);
+
+/// @brief Wrapper for EventSingleFit that loops on all P_t, Y or Phi* bins.
+/// @param container Container for binned input data.
+/// @param o_dir Output directory.
+/// @param tag Identifies the ortogonal quantity.
+/// @return Returns all the Fit results.
+std::vector<EventFitResult> EventFitWrapper(std::vector<std::unique_ptr<TH1D>>& container, TDirectory* o_dir, const std::string& tag);
 
 #endif

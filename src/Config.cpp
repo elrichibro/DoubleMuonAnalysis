@@ -108,7 +108,7 @@ int Configure(config_struct& value, const std::string& json_path) {
                 value.unfold.scan.tau_max = j_l.value("tau_max", value.unfold.scan.tau_max);
             }
 
-            value.unfold.use_bins = j.value("use_bins", value.unfold.use_bins);
+            value.unfold.use_custom_bins = j.value("use_custom_bins", value.unfold.use_custom_bins);
 
             if (j.contains("pt_bins")) {
                 const auto& j_p = j["pt_bins"];
@@ -395,7 +395,7 @@ void Verbose_config(const config_struct& value) {
     std::cout << "        Tau max value: " << value.unfold.scan.tau_max << std::endl;
 
     std::cout << "" << std::endl;
-    std::cout << "    Use bins option: " << value.unfold.use_bins << std::endl;
+    std::cout << "    Use custom JSON bins option: " << value.unfold.use_custom_bins << std::endl;
     std::cout << "" << std::endl;
 
     std::cout << "    Pt bins: " << std::endl;
