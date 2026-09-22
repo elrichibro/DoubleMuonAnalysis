@@ -101,8 +101,9 @@ struct l_scan {
 struct unfold_config {
     std::string unfold_quantity = "";
     bool check_plot = false;
+    bool use_custom_bins;    
+    
     l_scan scan;
-    bool use_bins;
     bins pt_bins;
     bins y_bins;
     bins phis_bins;    
