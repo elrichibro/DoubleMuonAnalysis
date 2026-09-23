@@ -61,45 +61,11 @@ int Configure(config_struct& value, const std::string& json_path) {
             value.selection.o_sel_file_data = j.value("o_sel_file_data", value.selection.o_sel_file_data); 
         }
 
-        if (json_obj.contains("template")) {
-            const auto& j = json_obj["template"];
-            
-            value.templ.dataset = j.value("dataset", value.templ.dataset);
-            value.templ.template_type = j.value("template_type", value.templ.template_type);
-            value.templ.bins_settup = j.value("bins_settup", value.templ.bins_settup);
-            value.templ.o_template_file_data = j.value("o_template_file_data", value.templ.o_template_file_data);
-
-            if (j.contains("pt_bins")) {
-                value.templ.pt_bins = j["pt_bins"].get<std::vector<float>>();
-            }
-            if (j.contains("eta_bins")) {
-                value.templ.eta_bins = j["eta_bins"].get<std::vector<float>>();
-            }
-            value.templ.mll_bins = j.value("mll_bins", value.templ.mll_bins);
-        }
-
         if (json_obj.contains("analysis")) {
             const auto& j = json_obj["analysis"];
 
             value.analysis.analysis_mode = j.value("analysis_mode", value.analysis.analysis_mode);            
             value.analysis.o_fit_file = j.value("o_fit_file", value.analysis.o_fit_file);
-            value.analysis.bins_settup = j.value("bins_settup", value.analysis.bins_settup);
-            value.analysis.pre_fit = j.value("pre_fit", value.analysis.pre_fit);
-
-            value.analysis.sample_pass_data = j.value("sample_pass_data", value.analysis.sample_pass_data);
-            value.analysis.sample_pass_mc = j.value("sample_pass_mc", value.analysis.sample_pass_mc);
-            value.analysis.sample_fail_data = j.value("sample_fail_data", value.analysis.sample_fail_data);
-            value.analysis.sample_fail_mc = j.value("sample_fail_mc", value.analysis.sample_fail_mc);
-            
-            if (j.contains("params")) {
-                const auto& j_p = j["params"];
-                value.analysis.params.efficiency = j_p["efficiency"].get<std::vector<double>>();
-                value.analysis.params.n_tot = j_p["n_tot"].get<std::vector<double>>();
-                value.analysis.params.mu = j_p["mu"].get<std::vector<double>>();
-                value.analysis.params.sigma = j_p["sigma"].get<std::vector<double>>();
-                value.analysis.params.lambda_pass = j_p["lambda_pass"].get<std::vector<double>>();
-                value.analysis.params.lambda_fail = j_p["lambda_fail"].get<std::vector<double>>();
-            }
         }
 
         if (json_obj.contains("unfold")) {
@@ -184,25 +150,6 @@ int Configure(config_struct& value, const std::string& json_path) {
             value.cut_ES.iso_cut = j.value("iso_cut", value.cut_ES.iso_cut);
             value.cut_ES.mass_min = j.value("mass_min", value.cut_ES.mass_min);
             value.cut_ES.mass_max = j.value("mass_max", value.cut_ES.mass_max);
-        }
-
-        if (json_obj.contains("flag_TP")) {
-            const auto& j = json_obj["flag_TP"];
-
-            value.flag_TP.en_kinematics = j.value("en_kinematics", value.flag_TP.en_kinematics);
-            value.flag_TP.en_isolation = j.value("en_isolation", value.flag_TP.en_isolation);
-            value.flag_TP.en_mass_window = j.value("en_mass_window", value.flag_TP.en_mass_window);
-            value.flag_TP.en_tight_muon = j.value("en_tight_muon", value.flag_TP.en_tight_muon);
-        }
-
-        if (json_obj.contains("cut_TP")) {
-            const auto& j = json_obj["cut_TP"];
-
-            value.cut_TP.pt_cut = j.value("pt_cut", value.cut_TP.pt_cut);
-            value.cut_TP.eta_cut = j.value("eta_cut", value.cut_TP.eta_cut);
-            value.cut_TP.iso_cut = j.value("iso_cut", value.cut_TP.iso_cut);
-            value.cut_TP.mass_min = j.value("mass_min", value.cut_TP.mass_min);
-            value.cut_TP.mass_max = j.value("mass_max", value.cut_TP.mass_max);
         }
 
         if (json_obj.contains("flag_RM")) {
@@ -326,27 +273,6 @@ void Verbose_config(const config_struct& value) {
     std::cout << "--------------------------------------------------------------------" << std::endl;
     std::cout << "" << std::endl;
 
-    std::cout << "Template options: " << std::endl;
-    std::cout << "    Dataset: " << value.templ.dataset << std::endl;
-    std::cout << "    Template output type: " << value.templ.template_type << std::endl;    
-    std::cout << "    Bins settup: " << value.templ.bins_settup << std::endl;
-    std::cout << "    Output template file path: " << value.templ.o_template_file_data << std::endl;
-
-    std::cout << "    Pt bins intervals: ";
-    for (auto it : value.templ.pt_bins) {
-        std::cout << it << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "    Eta bins intervals: ";
-    for (auto it : value.templ.eta_bins) {
-        std::cout << it << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "    Invariant mass bins number: " << value.templ.mll_bins << std::endl;
-    
-    std::cout << "" << std::endl;
-    std::cout << "--------------------------------------------------------------------" << std::endl;
-    std::cout << "" << std::endl;
     
     std::cout << "Analysis settup:" << std::endl;
 
@@ -354,55 +280,7 @@ void Verbose_config(const config_struct& value) {
 
     std::cout << "    Analysis Mode: " << value.analysis.analysis_mode << std::endl;
     std::cout << "    Fit results file path: " << value.analysis.o_fit_file << std::endl;
-    std::cout << "    Bins settup: " << value.analysis.bins_settup << std::endl;
-    std::cout << "    Pre-Fit flag option: " << value.analysis.pre_fit << std::endl;
-
-    std::cout << "" << std::endl;
-
-    std::cout << "    Sample Data Pass: " << value.analysis.sample_pass_data << std::endl;
-    std::cout << "    Sample MC Pass: " << value.analysis.sample_pass_mc << std::endl;
-    std::cout << "    Sample Data Fail: " << value.analysis.sample_fail_data << std::endl;
-    std::cout << "    Sample MC Fail: " << value.analysis.sample_fail_mc << std::endl;
-
-    std::cout << "" << std::endl;
-
-    std::cout << "    Fit parameters: " << std::endl;
-    std::cout << "        Efficiency: ";
-    for (auto it : value.analysis.params.efficiency) {
-        std::cout << " / " << it;
-    }
-    std::cout << " /" << std::endl;
-    
-    std::cout << "        Signal Events: ";
-    for (auto it : value.analysis.params.n_tot) {
-        std::cout << " / " << it;
-    }
-    std::cout << " /" << std::endl;    
-    
-    std::cout << "        Gaussian mean: ";
-    for (auto it : value.analysis.params.mu) {
-        std::cout << " / " << it;
-    }
-    std::cout << " /" << std::endl;    
-    
-    std::cout << "        Gaussian sigma: ";
-    for (auto it : value.analysis.params.sigma) {
-        std::cout << " / " << it;
-    }
-    std::cout << " /" << std::endl;    
-    
-    std::cout << "        Lambda pass: ";
-    for (auto it : value.analysis.params.lambda_pass) {
-        std::cout << " / " << it;
-    }
-    std::cout << " /" << std::endl;    
-    
-    std::cout << "        Lambda fail: ";
-    for (auto it : value.analysis.params.lambda_fail) {
-        std::cout << " / " << it;
-    }
-    std::cout << " /" << std::endl;
-
+   
     std::cout << "" << std::endl;
     std::cout << "--------------------------------------------------------------------" << std::endl;
     std::cout << "" << std::endl;
@@ -515,23 +393,6 @@ void Verbose_config(const config_struct& value) {
     std::cout << "    Isolation cut: " << value.cut_ES.iso_cut << std::endl;
     std::cout << "    Max mass: " << value.cut_ES.mass_max << std::endl;
     std::cout << "    Min mass: " << value.cut_ES.mass_min << std::endl;
-
-    std::cout << "" << std::endl;
-
-    std::cout << "TagAndProbe flags:" << std::endl;
-    std::cout << "    Kinematics: " << value.flag_TP.en_kinematics << std::endl;
-    std::cout << "    Isolation: " << value.flag_TP.en_isolation << std::endl;
-    std::cout << "    Mass window: " << value.flag_TP.en_mass_window << std::endl;
-    std::cout << "    Tight muon: " << value.flag_TP.en_tight_muon << std::endl;
-
-    std::cout << "" << std::endl;
-
-    std::cout << "TagAndProbe cuts:" << std::endl;
-    std::cout << "    p_T cut: " << value.cut_TP.pt_cut << std::endl;
-    std::cout << "    Eta cut: " << value.cut_TP.eta_cut << std::endl;
-    std::cout << "    Isolation cut: " << value.cut_TP.iso_cut << std::endl;
-    std::cout << "    Max mass: " << value.cut_TP.mass_max << std::endl;
-    std::cout << "    Min mass: " << value.cut_TP.mass_min << std::endl;
 
     std::cout << "" << std::endl;
 

@@ -298,14 +298,14 @@ RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct&
         const auto& phis = cfg.unfold.phis_bins;
 
         // Creation of the bin vectors.
-        reco_bins_pt = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution, pt.split);
-        gen_bins_pt = CreateBins(pt.gen_bins, pt.min, pt.max, pt.distribution, pt.split);
+        reco_bins_pt = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution);
+        gen_bins_pt = CreateBins(pt.gen_bins, pt.min, pt.max, pt.distribution);
             
-        reco_bins_y = CreateBins(y.reco_bins, y.min, y.max, y.distribution, y.split);
-        gen_bins_y = CreateBins(y.gen_bins, y.min, y.max, y.distribution, y.split);
+        reco_bins_y = CreateBins(y.reco_bins, y.min, y.max, y.distribution);
+        gen_bins_y = CreateBins(y.gen_bins, y.min, y.max, y.distribution);
             
-        reco_bins_phis = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution, phis.split);
-        gen_bins_phis = CreateBins(phis.gen_bins, phis.min, phis.max, phis.distribution, phis.split);
+        reco_bins_phis = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution);
+        gen_bins_phis = CreateBins(phis.gen_bins, phis.min, phis.max, phis.distribution);
         
         // ------------------
         // Matched Histograms
@@ -367,14 +367,14 @@ ControlHisto BuildControlHisto(ROOT::RDF::RNode node, const config_struct& cfg) 
         gen_bins_phis = phis.gen_vec;
     
     } else {
-        reco_bins_pt = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution, pt.split);
-        gen_bins_pt = CreateBins(pt.gen_bins, pt.min, pt.max, pt.distribution, pt.split);
+        reco_bins_pt = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution);
+        gen_bins_pt = CreateBins(pt.gen_bins, pt.min, pt.max, pt.distribution);
             
-        reco_bins_y = CreateBins(y.reco_bins, y.min, y.max, y.distribution, y.split);
-        gen_bins_y = CreateBins(y.gen_bins, y.min, y.max, y.distribution, y.split);
+        reco_bins_y = CreateBins(y.reco_bins, y.min, y.max, y.distribution);
+        gen_bins_y = CreateBins(y.gen_bins, y.min, y.max, y.distribution);
             
-        reco_bins_phis = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution, phis.split);
-        gen_bins_phis = CreateBins(phis.gen_bins, phis.min, phis.max, phis.distribution, phis.split);
+        reco_bins_phis = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution);
+        gen_bins_phis = CreateBins(phis.gen_bins, phis.min, phis.max, phis.distribution);
     }
 
     int n_reco_pt = static_cast<int>(reco_bins_pt.size()) - 1;
@@ -561,15 +561,15 @@ std::unique_ptr<TH1D> BuildFitResultHistogram(const std::vector<EventFitResult>&
     } else {
         if (tag == "pt") {
             const auto& pt = cfg.unfold.pt_bins;
-            vector_bins = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution, pt.split);
+            vector_bins = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution);
 
         } else if (tag == "y") {
             const auto& y = cfg.unfold.y_bins;
-            vector_bins = CreateBins(y.reco_bins, y.min, y.max, y.distribution, y.split);            
+            vector_bins = CreateBins(y.reco_bins, y.min, y.max, y.distribution);            
 
         } else if (tag == "phis") {
             const auto& phis = cfg.unfold.phis_bins;
-            vector_bins = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution, phis.split);
+            vector_bins = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution);
         }
     }
     

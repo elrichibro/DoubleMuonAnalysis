@@ -176,7 +176,7 @@ class OutputSelManager {
         /// @brief Takes the node and based on the dataset, the operation mode and the analysis mode it add to the Pipeline the interest objects(hardcoded). 
         /// @param node Analysis/Selection node.
         /// @param cfg Main configuration struct.
-        void BookAnalysis(ROOT::RDF::RNode node, const config_struct& cfg);
+        void BookAction(ROOT::RDF::RNode node, const config_struct& cfg);
 
         /// @brief Clears the pipeline vector.
         void Clear() { pipeline.clear(); }
