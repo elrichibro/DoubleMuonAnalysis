@@ -4,6 +4,7 @@
 #include "Config.h"
 #include "Filters.h"
 
+
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TH3D.h"
@@ -18,6 +19,8 @@
 #include <RooSimultaneous.h>
 
 #include <RooDataSet.h>
+
+#include <RooExponential.h>
 
 #include <string>
 #include <vector>
@@ -77,12 +80,6 @@ struct EventFitResult {
     double n_sig;// Signal yield.
     double n_sig_err;// Signal yield fit error.
     
-    double mean_z;// Mean of signal distribution.
-    double mean_z_err;// Mean error of signal distribution.
-    
-    double sigma_gauss;// Sigma of the covoluted gaussian.
-    double sigma_gauss_err;// Associated error to the sigma of the covoluted gaussian.
-    
     double n_bkg;// Backgorund yield.
     double n_bkg_err;// Background yield error.
     
@@ -137,6 +134,8 @@ int LoadUnbinnedTemplate(TTree* tree, const config_struct& cfg, const int datase
 /// @return 
 std::vector<std::unique_ptr<TH1D>> PrepareEventFit(EventHisto& event_histo, const std::string& tag);
 
+std::vector<std::unique_ptr<RooDataSet>> PrepareEventFitModel(TTree* tree, const config_struct& cfg, const std::string& tag);
+
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 // ---------------------
@@ -162,6 +161,9 @@ int SaveMapFittedValues(TFile* o_file, const std::vector<FitResult>& results, co
 void SaveBinFitCanvas(RooRealVar& mll, RooCategory& sample, RooAbsData& data, RooSimultaneous& simPdf, const FitResult& res, TFile* o_file, 
 const config_struct& cfg);
 
+void SaveEventFitCanvas(RooRealVar& mll, RooAbsPdf& model, RooAbsData& data, RooAbsPdf& bkg_pdf, const EventFitResult& res, TH1D* h_mll, 
+    TDirectory* o_dir, const int bin_idx, const std::string& tag);
+
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 // ------
@@ -182,13 +184,15 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
 /// @param o_dir Output directory.
 /// @param tag Identifies the ortogonal quantity.
 /// @return Returns a struct containing the fit results.
-EventFitResult EventSingleFit(int bin_idx, TH1D* h_mll, TDirectory* o_dir, const std::string& tag);
+EventFitResult EventSingleFit(int bin_idx, TH1D* h_mll, RooDataSet* d_mll_model, TDirectory* o_dir, const std::string& tag, const bool save_plots);
 
 /// @brief Wrapper for EventSingleFit that loops on all P_t, Y or Phi* bins.
 /// @param container Container for binned input data.
 /// @param o_dir Output directory.
 /// @param tag Identifies the ortogonal quantity.
 /// @return Returns all the Fit results.
-std::vector<EventFitResult> EventFitWrapper(std::vector<std::unique_ptr<TH1D>>& container, TDirectory* o_dir, const std::string& tag);
+std::vector<EventFitResult> EventFitWrapper(std::vector<std::unique_ptr<TH1D>>& container, std::vector<std::unique_ptr<RooDataSet>>& container_model,
+const std::string& tag, const bool save_plots, TDirectory* o_dir = nullptr);
+
 
 #endif

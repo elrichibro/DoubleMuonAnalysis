@@ -41,6 +41,14 @@ int Configure(config_struct& value, const std::string& json_path) {
             value.acceptance.dataset = j.value("dataset", value.acceptance.dataset);
         }
 
+        if (json_obj.contains("resolution")) {
+            const auto& j = json_obj["resolution"];
+            value.resolution.quantity = j.value("quantity", value.resolution.quantity);
+            value.resolution.gen_bins = j.value("gen_bins", value.resolution.gen_bins);
+            value.resolution.min = j.value("min", value.resolution.min);
+            value.resolution.max = j.value("max", value.resolution.max);
+        }
+
         if (json_obj.contains("selection")) {
             const auto& j = json_obj["selection"];
 
@@ -148,6 +156,15 @@ int Configure(config_struct& value, const std::string& json_path) {
                 value.unfold.phis_bins.reco_vec = j_phis["reco_vec"].get<std::vector<double>>();
                 value.unfold.phis_bins.gen_vec = j_phis["gen_vec"].get<std::vector<double>>();
             }
+        }
+
+        if (json_obj.contains("event")) {
+            const auto& j = json_obj["event"];
+
+            value.event.event_quantity = j.value("event_quantity", value.event.event_quantity);
+            value.event.o_event_file = j.value("o_event_file", value.event.o_event_file);
+            value.event.save_fit_plots = j.value("save_fit_plots", value.event.save_fit_plots);
+
         }
 
         if (json_obj.contains("flag_ES")) {
@@ -281,6 +298,16 @@ void Verbose_config(const config_struct& value) {
 
     std::cout << "Acceptance settup:" << std::endl;
     std::cout << "    Dataset: " << value.acceptance.dataset << std::endl;
+    
+    std::cout << "" << std::endl;
+    std::cout << "--------------------------------------------------------------------" << std::endl;
+    std::cout << "" << std::endl;
+
+    std::cout << "Resolution settup:" << std::endl;
+    std::cout << "    Quantity: " << value.resolution.quantity << std::endl;
+    std::cout << "    Generated bins: " << value.resolution.gen_bins<< std::endl;
+    std::cout << "    Min bin value: " << value.resolution.min << std::endl;
+    std::cout << "    Max bin value: " << value.resolution.max << std::endl;
 
     std::cout << "" << std::endl;
     std::cout << "--------------------------------------------------------------------" << std::endl;
@@ -460,6 +487,15 @@ void Verbose_config(const config_struct& value) {
     }
     std::cout << "" << std::endl;
     std::cout << "" << std::endl;
+    
+    std::cout << "" << std::endl;
+    std::cout << "--------------------------------------------------------------------" << std::endl;
+    std::cout << "" << std::endl;
+
+    std::cout << "Event Fit settup: " << std::endl;
+    std::cout << "    Event quantity fit: " << value.event.event_quantity << std::endl;
+    std::cout << "    Event Output file path: " << value.event.o_event_file << std::endl;
+    std::cout << "    Save fit plots: " << value.event.save_fit_plots << std::endl;
 
     std::cout << "" << std::endl;
     std::cout << "--------------------------------------------------------------------" << std::endl;

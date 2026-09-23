@@ -100,7 +100,6 @@ const cuts_config cfg_c) {
         }
     }
 
-
     for (int i = 0; i < n_muons_gen; i++) {
         if (abs(flags.gen_pdg_idx[i]) != 13 || (flags.gen_status[i] != 1)) {
             continue;
@@ -230,8 +229,9 @@ RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct&
     ROOT::RDF::RNode node_unf = node;
     RespMatrixHisto resp_histo;
 
+    // Defining Unfold quantities with over/underflow bins
     node_unf = node_unf
-        .Define("weight", [](){ return 1.0; }, {})
+        .Define("weight", [](){ return 1.0; }, {})// Standard weight -> for TagAndProbe implementation
         .Define("Rec_Pt_Unf", [](bool miss, float pt_rec){ return miss ? -1.0 : pt_rec; }, {"Missed","Rec_Pt"})
         .Define("Gen_Pt_Unf", [](bool fake, float pt_gen){ return fake ? -1.0 : pt_gen; }, {"Faked","Gen_Pt"})
 
@@ -241,8 +241,10 @@ RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct&
         .Define("Rec_Phis_Unf",[](bool miss, float phis_rec){ return miss ? -1.0 : phis_rec; }, {"Missed","Rec_Phis"})
         .Define("Gen_Phis_Unf",[](bool fake, float phis_gen){ return fake ? -1.0 : phis_gen; }, {"Faked","Gen_Phis"});
 
+    // Bin vectors initialization
     std::vector<double> reco_bins_pt, gen_bins_pt, reco_bins_y, gen_bins_y, reco_bins_phis, gen_bins_phis;
 
+    // Custom bins JSON file option
     if (cfg.unfold.use_custom_bins == true) {
         
         reco_bins_pt = cfg.unfold.pt_bins.reco_vec;
@@ -294,12 +296,13 @@ RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct&
         resp_histo.h2_phis = node_unf.Histo2D({"hResp_phis","", n_reco_phis, reco_bins_phis.data(), n_gen_phis, gen_bins_phis.data()}, 
         "Rec_Phis_Unf", "Gen_Phis_Unf", "weight");
 
+    // Standard JSON file bin option
     } else {
-
         const auto& pt = cfg.unfold.pt_bins;
         const auto& y = cfg.unfold.y_bins;
         const auto& phis = cfg.unfold.phis_bins;
 
+        // Creation of the bin vectors.
         reco_bins_pt = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution, pt.split);
         gen_bins_pt = CreateBins(pt.gen_bins, pt.min, pt.max, pt.distribution, pt.split);
             
@@ -344,6 +347,8 @@ RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct&
     return resp_histo;
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 ControlHisto BuildControlHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
     ROOT::RDF::RNode node_histo = node;
     ControlHisto control_histo;
@@ -387,6 +392,7 @@ ControlHisto BuildControlHisto(ROOT::RDF::RNode node, const config_struct& cfg) 
     int n_reco_phis = static_cast<int>(reco_bins_phis.size()) - 1;
     int n_gen_phis = static_cast<int>(gen_bins_phis.size()) - 1;
 
+    // Find bin index in a bin vector -> used for purity/stability
     auto FindBinIndex = [](float value, const std::vector<double>& bins) -> int {
         for (int i = 0; i < bins.size() - 1; ++i) {
             if ((value > bins[i]) && (value <= bins[i + 1])) {
@@ -398,164 +404,7 @@ ControlHisto BuildControlHisto(ROOT::RDF::RNode node, const config_struct& cfg) 
         return -1;
     };
 
-    node_histo = node_histo
-        .Define("Purity_Pt_Pass", [FindBinIndex, reco_bins_pt](bool matched, float gen, float reco) {
-            if (!matched) {
-                return false;
-            }
-
-            int bin_gen = FindBinIndex(gen, reco_bins_pt);
-            int bin_reco = FindBinIndex(reco, reco_bins_pt);
-            
-            return (bin_reco != -1) && (bin_reco == bin_gen);
-        }, {"Matched", "Gen_Pt", "Rec_Pt"});
-
-    node_histo = node_histo
-        .Define("Purity_Y_Pass", [FindBinIndex, reco_bins_y](bool matched, float gen, float reco) {
-            if (!matched) {
-                return false;
-            }
-
-            int bin_gen = FindBinIndex(gen, reco_bins_y);
-            int bin_reco = FindBinIndex(reco, reco_bins_y);
-            
-            return (bin_reco != -1) && (bin_reco == bin_gen);
-        }, {"Matched", "Gen_Y", "Rec_Y"});
-
-    node_histo = node_histo
-        .Define("Purity_Phis_Pass", [FindBinIndex, reco_bins_phis](bool matched, float gen, float reco) {
-            if (!matched) {
-                return false;
-            }
-
-            int bin_gen = FindBinIndex(gen, reco_bins_phis);
-            int bin_reco = FindBinIndex(reco, reco_bins_phis);
-            
-            return (bin_reco != -1) && (bin_reco == bin_gen);
-        }, {"Matched", "Gen_Phis", "Rec_Phis"});
-
-    node_histo = node_histo
-        .Define("Stability_Pt_Pass", [FindBinIndex, gen_bins_pt](bool matched, float gen, float reco) {
-            if (!matched) {
-                return false;
-            }
-
-            int bin_gen = FindBinIndex(gen, gen_bins_pt);
-            int bin_reco = FindBinIndex(reco, gen_bins_pt);
-            
-            return (bin_gen != -1) && (bin_reco == bin_gen);
-        }, {"Matched", "Gen_Phis", "Rec_Phis"});
-
-    node_histo = node_histo
-        .Define("Stability_Y_Pass", [FindBinIndex, gen_bins_y](bool matched, float gen, float reco) {
-            if (!matched) {
-                return false;
-            }
-
-            int bin_gen = FindBinIndex(gen, gen_bins_y);
-            int bin_reco = FindBinIndex(reco, gen_bins_y);
-            
-            return (bin_gen != -1) && (bin_reco == bin_gen);
-        }, {"Matched", "Gen_Phis", "Rec_Phis"});
-
-    node_histo = node_histo
-        .Define("Stability_Phis_Pass", [FindBinIndex, gen_bins_phis](bool matched, float gen, float reco) {
-            if (!matched) {
-                return false;
-            }
-
-            int bin_gen = FindBinIndex(gen, gen_bins_phis);
-            int bin_reco = FindBinIndex(reco, gen_bins_phis);
-            
-            return (bin_gen != -1) && (bin_reco == bin_gen);
-        }, {"Matched", "Gen_Phis", "Rec_Phis"});
-
-    // -----
-    // Pt_Z0
-    // -----
-
-    // Efficiency
-    auto h_eff_den_pt = node_histo
-        .Filter("Matched || Missed")
-        .Histo1D({"h_eff_den_pt", "", n_gen_pt, gen_bins_pt.data()}, "Gen_Pt", "weight");
-    
-    auto h_eff_num_pt = node_histo
-        .Filter("Matched")
-        .Histo1D({"h_eff_num_pt", "", n_gen_pt, gen_bins_pt.data()}, "Gen_Pt", "weight");
-
-    // Purity
-    auto h_pur_den_pt = node_histo
-        .Filter("Matched || Faked")
-        .Histo1D({"h_pur_den_pt", "", n_reco_pt, reco_bins_pt.data()}, "Rec_Pt", "weight");
-    auto h_pur_num_pt = node_histo
-        .Filter("Matched && Purity_Pt_Pass")
-        .Histo1D({"h_pur_num_pt", "", n_reco_pt, reco_bins_pt.data()}, "Rec_Pt", "weight");
-
-    // Stability
-    auto h_stab_den_pt = node_histo
-        .Filter("Matched")
-        .Histo1D({"h_stab_den_pt", "", n_gen_pt, gen_bins_pt.data()}, "Gen_Pt", "weight");
-    auto h_stab_num_pt = node_histo
-        .Filter("Matched && Stability_Pt_Pass")
-        .Histo1D({"h_stab_num_pt", "", n_gen_pt, gen_bins_pt.data()}, "Gen_Pt", "weight");
-
-
-    // ----
-    // Y_Z0
-    // ----
-
-    // Efficiency
-    auto h_eff_den_y = node_histo
-        .Filter("Matched || Missed")
-        .Histo1D({"h_eff_den_y", "", n_gen_y, gen_bins_y.data()}, "Gen_Y", "weight");
-    auto h_eff_num_y = node_histo
-        .Filter("Matched")
-        .Histo1D({"h_eff_num_y", "", n_gen_y, gen_bins_y.data()}, "Gen_Y", "weight");
-    
-    // Purity
-    auto h_pur_den_y = node_histo
-        .Filter("Matched || Faked")
-        .Histo1D({"h_pur_den_y", "", n_reco_y, reco_bins_y.data()}, "Rec_Y", "weight");
-    auto h_pur_num_y = node_histo
-        .Filter("Matched && Purity_Y_Pass")
-        .Histo1D({"h_pur_num_y", "", n_reco_y, reco_bins_y.data()}, "Rec_Y", "weight");
-
-    // Stability
-    auto h_stab_den_y = node_histo
-        .Filter("Matched")
-        .Histo1D({"h_stab_den_y", "", n_gen_y, gen_bins_y.data()}, "Gen_Y", "weight");
-    auto h_stab_num_y = node_histo
-        .Filter("Matched && Stability_Y_Pass")
-        .Histo1D({"h_stab_num_y", "", n_gen_y, gen_bins_y.data()}, "Gen_Y", "weight");
-
-    // -------
-    // Phis_Z0
-    // -------
-
-    // Efficiency
-    auto h_eff_den_phis = node_histo
-        .Filter("Matched || Missed")
-        .Histo1D({"h_eff_den_phis", "", n_gen_phis, gen_bins_phis.data()}, "Gen_Phis", "weight");
-    auto h_eff_num_phis = node_histo
-        .Filter("Matched")
-        .Histo1D({"h_eff_num_phis", "", n_gen_phis, gen_bins_phis.data()}, "Gen_Phis", "weight");
-    
-    // Purity
-    auto h_pur_den_phis = node_histo
-        .Filter("Matched || Faked")
-        .Histo1D({"h_pur_den_phis", "", n_reco_phis, reco_bins_phis.data()}, "Rec_Phis", "weight");
-    auto h_pur_num_phis = node_histo
-        .Filter("Matched && Purity_Phis_Pass")
-        .Histo1D({"h_pur_num_phis", "", n_reco_phis, reco_bins_phis.data()}, "Rec_Phis", "weight");
-    
-    // Stability
-    auto h_stab_den_phis = node_histo
-        .Filter("Matched")
-        .Histo1D({"h_stab_den_phis", "", n_gen_phis, gen_bins_phis.data()}, "Gen_Phis", "weight");
-    auto h_stab_num_phis = node_histo
-        .Filter("Matched && Stability_Phis_Pass")
-        .Histo1D({"h_stab_num_phis", "", n_gen_phis, gen_bins_phis.data()}, "Gen_Phis", "weight");
-
+    // Lambda for Histogram creation
     auto CreateHistogrm = [](ROOT::RDF::RResultPtr<TH1D>& num, ROOT::RDF::RResultPtr<TH1D>& den, const std::string& name, const std::string& title) {
         auto h_result = std::unique_ptr<TH1D>(static_cast<TH1D*>(num->Clone(name.c_str())));
         
@@ -568,36 +417,185 @@ ControlHisto BuildControlHisto(ROOT::RDF::RNode node, const config_struct& cfg) 
         return h_result;
     };
 
-    control_histo.h1_Eff_pt = CreateHistogrm(h_eff_num_pt, h_eff_den_pt, "h1_Eff_pt", "Efficiency; Gen_Pt_Z0 [GeV]; Efficiency");
-    control_histo.h1_Pur_pt = CreateHistogrm(h_pur_num_pt,h_pur_den_pt, "h1_Pur_pt", "Purity; Rec_Pt_Z0 [GeV]; Purity");
-    control_histo.h1_Stab_pt = CreateHistogrm(h_stab_num_pt, h_stab_den_pt, "h1_Stab_pt", "Stability; Gen_Pt_Z0 [GeV]; Stability");
+    node_histo = node_histo
+        .Define("Purity_Pt_Pass", [FindBinIndex, reco_bins_pt](bool matched, float gen, float reco) {
+            if (!matched) {
+                return false;
+            }
 
-    control_histo.h1_Eff_y = CreateHistogrm(h_eff_num_y, h_eff_den_y, "h1_Eff_y", "Efficiency; Gen_Y_Z0; Efficiency");
-    control_histo.h1_Pur_y = CreateHistogrm(h_pur_num_y, h_pur_den_y, "h1_Pur_y", "Purity; Rec_Y_Z0; Purity");
-    control_histo.h1_Stab_y = CreateHistogrm(h_stab_num_y, h_stab_den_y, "h1_Stab_y", "Stability; Gen_Y_Z0; Stability");
+            int bin_gen = FindBinIndex(gen, reco_bins_pt);
+            int bin_reco = FindBinIndex(reco, reco_bins_pt);
+            
+            return (bin_reco != -1) && (bin_reco == bin_gen);
+        }, {"Matched", "Gen_Pt", "Rec_Pt"})
+
+        .Define("Purity_Y_Pass", [FindBinIndex, reco_bins_y](bool matched, float gen, float reco) {
+            if (!matched) {
+                return false;
+            }
+
+            int bin_gen = FindBinIndex(gen, reco_bins_y);
+            int bin_reco = FindBinIndex(reco, reco_bins_y);
+            
+            return (bin_reco != -1) && (bin_reco == bin_gen);
+        }, {"Matched", "Gen_Y", "Rec_Y"})
+
+        .Define("Purity_Phis_Pass", [FindBinIndex, reco_bins_phis](bool matched, float gen, float reco) {
+            if (!matched) {
+                return false;
+            }
+
+            int bin_gen = FindBinIndex(gen, reco_bins_phis);
+            int bin_reco = FindBinIndex(reco, reco_bins_phis);
+            
+            return (bin_reco != -1) && (bin_reco == bin_gen);
+        }, {"Matched", "Gen_Phis", "Rec_Phis"})
+
+        .Define("Stability_Pt_Pass", [FindBinIndex, gen_bins_pt](bool matched, float gen, float reco) {
+            if (!matched) {
+                return false;
+            }
+
+            int bin_gen = FindBinIndex(gen, gen_bins_pt);
+            int bin_reco = FindBinIndex(reco, gen_bins_pt);
+            
+            return (bin_gen != -1) && (bin_reco == bin_gen);
+        }, {"Matched", "Gen_Pt", "Rec_Pt"})
+
+        .Define("Stability_Y_Pass", [FindBinIndex, gen_bins_y](bool matched, float gen, float reco) {
+            if (!matched) {
+                return false;
+            }
+
+            int bin_gen = FindBinIndex(gen, gen_bins_y);
+            int bin_reco = FindBinIndex(reco, gen_bins_y);
+            
+            return (bin_gen != -1) && (bin_reco == bin_gen);
+        }, {"Matched", "Gen_Y", "Rec_Y"})
+
+        .Define("Stability_Phis_Pass", [FindBinIndex, gen_bins_phis](bool matched, float gen, float reco) {
+            if (!matched) {
+                return false;
+            }
+
+            int bin_gen = FindBinIndex(gen, gen_bins_phis);
+            int bin_reco = FindBinIndex(reco, gen_bins_phis);
+            
+            return (bin_gen != -1) && (bin_reco == bin_gen);
+        }, {"Matched", "Gen_Phis", "Rec_Phis"});
+
+
+    // -------------------------------
+    // Efficiency / Purity / Stability
+    // -------------------------------
     
-    control_histo.h1_Eff_phis = CreateHistogrm(h_eff_num_phis, h_eff_den_phis, "h1_Eff_phis", "Efficiency; Gen_Phis_Z0; Efficiency");
+    // node_eff_num / node_stab_den
+    ROOT::RDF::RNode node_matched = node_histo.Filter("Matched");
+    auto h_matched_pt = node_matched.Histo1D({"h_matched_pt", "", n_gen_pt, gen_bins_pt.data()}, "Gen_Pt", "weight");
+    auto h_matched_y = node_matched.Histo1D({"h_matched_y", "", n_gen_y, gen_bins_y.data()}, "Gen_Y", "weight");
+    auto h_matched_phis = node_matched.Histo1D({"h_matched_phis", "", n_gen_phis, gen_bins_phis.data()}, "Gen_Phis", "weight");
+    
+    ROOT::RDF::RNode node_eff_den = node_histo.Filter("Matched || Missed");
+    auto h_eff_den_pt = node_eff_den.Histo1D({"h_eff_den_pt", "", n_gen_pt, gen_bins_pt.data()}, "Gen_Pt", "weight");
+    auto h_eff_den_y = node_eff_den.Histo1D({"h_eff_den_y", "", n_gen_y, gen_bins_y.data()}, "Gen_Y", "weight");
+    auto h_eff_den_phis = node_eff_den.Histo1D({"h_eff_den_phis", "", n_gen_phis, gen_bins_phis.data()}, "Gen_Phis", "weight");
+
+    ROOT::RDF::RNode node_pur_den = node_histo.Filter("Matched || Faked");
+    auto h_pur_den_pt = node_pur_den.Histo1D({"h_pur_den_pt", "", n_reco_pt, reco_bins_pt.data()}, "Rec_Pt", "weight");
+    auto h_pur_den_y = node_pur_den.Histo1D({"h_pur_den_y", "", n_reco_y, reco_bins_y.data()}, "Rec_Y", "weight");
+    auto h_pur_den_phis = node_pur_den.Histo1D({"h_pur_den_phis", "", n_reco_phis, reco_bins_phis.data()}, "Rec_Phis", "weight");
+
+    auto h_pur_num_pt = node_histo.Filter("Matched && Purity_Pt_Pass").Histo1D({"h_pur_num_pt", "", n_reco_pt, reco_bins_pt.data()}, "Rec_Pt", "weight");
+    auto h_pur_num_y = node_histo.Filter("Matched && Purity_Y_Pass").Histo1D({"h_pur_num_y", "", n_reco_y, reco_bins_y.data()}, "Rec_Y", "weight");
+    auto h_pur_num_phis = node_histo.Filter("Matched && Purity_Phis_Pass").Histo1D({"h_pur_num_phis", "", n_reco_phis, reco_bins_phis.data()}, "Rec_Phis", "weight");
+    
+    auto h_stab_num_pt = node_histo.Filter("Matched && Stability_Pt_Pass").Histo1D({"h_stab_num_pt", "", n_gen_pt, gen_bins_pt.data()}, "Gen_Pt", "weight");
+    auto h_stab_num_y = node_histo.Filter("Matched && Stability_Y_Pass").Histo1D({"h_stab_num_y", "", n_gen_y, gen_bins_y.data()}, "Gen_Y", "weight");
+    auto h_stab_num_phis = node_histo.Filter("Matched && Stability_Phis_Pass").Histo1D({"h_stab_num_phis", "", n_gen_phis, gen_bins_phis.data()}, "Gen_Phis", "weight");
+
+    // Histogram creation
+    control_histo.h1_Eff_pt = CreateHistogrm(h_matched_pt, h_eff_den_pt, "h1_Eff_pt", "Efficiency; Gen_Pt_Z0 [GeV]; Efficiency");
+    control_histo.h1_Pur_pt = CreateHistogrm(h_pur_num_pt,h_pur_den_pt, "h1_Pur_pt", "Purity; Rec_Pt_Z0 [GeV]; Purity");
+    control_histo.h1_Stab_pt = CreateHistogrm(h_stab_num_pt, h_matched_pt, "h1_Stab_pt", "Stability; Gen_Pt_Z0 [GeV]; Stability");
+
+    control_histo.h1_Eff_y = CreateHistogrm(h_matched_y, h_eff_den_y, "h1_Eff_y", "Efficiency; Gen_Y_Z0; Efficiency");
+    control_histo.h1_Pur_y = CreateHistogrm(h_pur_num_y, h_pur_den_y, "h1_Pur_y", "Purity; Rec_Y_Z0; Purity");
+    control_histo.h1_Stab_y = CreateHistogrm(h_stab_num_y, h_matched_y, "h1_Stab_y", "Stability; Gen_Y_Z0; Stability");
+    
+    control_histo.h1_Eff_phis = CreateHistogrm(h_matched_phis, h_eff_den_phis, "h1_Eff_phis", "Efficiency; Gen_Phis_Z0; Efficiency");
     control_histo.h1_Pur_phis = CreateHistogrm(h_pur_num_phis, h_pur_den_phis, "h1_Pur_phis", "Purity; Rec_Phis_Z0; Purity");
-    control_histo.h1_Stab_phis = CreateHistogrm(h_stab_num_phis, h_stab_den_phis, "h1_Stab_phis", "Stability; Gen_Phis_Z0; Stability");
+    control_histo.h1_Stab_phis = CreateHistogrm(h_stab_num_phis, h_matched_phis, "h1_Stab_phis", "Stability; Gen_Phis_Z0; Stability");
 
     return control_histo;
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
 
-UnfoldDensities CreateUnfoldDensity(RespMatrixHisto& resp_histo) {
+UnfoldDensities CreateUnfoldDensity(RespMatrixHisto& resp_histo, const std::string& tag) {
     UnfoldDensities densities;
 
-    densities.pt_unf = std::make_unique<TUnfoldDensity>(resp_histo.h2_pt.GetPtr(), TUnfold::kHistMapOutputVert, TUnfold::kRegModeCurvature, TUnfold::kEConstraintNone,
+    if (tag == "pt") {
+        densities.pt_unf = std::make_unique<TUnfoldDensity>(resp_histo.h2_pt.GetPtr(), TUnfold::kHistMapOutputVert, TUnfold::kRegModeCurvature, TUnfold::kEConstraintNone,
         TUnfoldDensity::kDensityModeBinWidth);
-
-    densities.y_unf = std::make_unique<TUnfoldDensity>(resp_histo.h2_y.GetPtr(), TUnfold::kHistMapOutputVert, TUnfold::kRegModeCurvature, TUnfold::kEConstraintNone,
+    } else if (tag == "y") {
+        densities.y_unf = std::make_unique<TUnfoldDensity>(resp_histo.h2_y.GetPtr(), TUnfold::kHistMapOutputVert, TUnfold::kRegModeCurvature, TUnfold::kEConstraintNone,
         TUnfoldDensity::kDensityModeBinWidth);
-
-    densities.phis_unf = std::make_unique<TUnfoldDensity>(resp_histo.h2_phis.GetPtr(), TUnfold::kHistMapOutputVert, TUnfold::kRegModeCurvature, TUnfold::kEConstraintNone,
+    } else if (tag == "phis") {
+        densities.phis_unf = std::make_unique<TUnfoldDensity>(resp_histo.h2_phis.GetPtr(), TUnfold::kHistMapOutputVert, TUnfold::kRegModeCurvature, TUnfold::kEConstraintNone,
         TUnfoldDensity::kDensityModeBinWidth);
+    } else {
+        std::cout << "ERROR: invalid tag input, exiting..." << std::endl;
+        return densities;
+    }
 
     return densities;
 }
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+std::unique_ptr<TH1D> BuildFitResultHistogram(const std::vector<EventFitResult>& results, const config_struct& cfg, const std::string& tag) {
+     std::vector<double> vector_bins;
+    
+    if (cfg.unfold.use_custom_bins == true) {
+        if (tag == "pt") {
+            vector_bins = cfg.unfold.pt_bins.reco_vec;
+        } else if (tag == "y") {
+            vector_bins = cfg.unfold.y_bins.reco_vec;
+        } else if (tag == "phis") {
+            vector_bins = cfg.unfold.phis_bins.reco_vec;
+        }
+    } else {
+        if (tag == "pt") {
+            const auto& pt = cfg.unfold.pt_bins;
+            vector_bins = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution, pt.split);
+
+        } else if (tag == "y") {
+            const auto& y = cfg.unfold.y_bins;
+            vector_bins = CreateBins(y.reco_bins, y.min, y.max, y.distribution, y.split);            
+
+        } else if (tag == "phis") {
+            const auto& phis = cfg.unfold.phis_bins;
+            vector_bins = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution, phis.split);
+        }
+    }
+    
+    int n_bins = vector_bins.size() - 1;
+
+    std::string name = "h_signal_" + tag;
+    auto histo = std::make_unique<TH1D>(name.c_str(), name.c_str(), n_bins, vector_bins.data());
+
+    histo->SetDirectory(nullptr);
+
+    for (int i = 0; i < n_bins; ++i) {
+        int bin_root = i + 1; 
+
+        histo->SetBinContent(bin_root, results[i].n_sig);
+        histo->SetBinError(bin_root, results[i].n_sig_err);
+    }
+    return histo;
+}
+
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 UnfoldResult ApplyUnfold(std::unique_ptr<TUnfoldDensity> density, TH1D* event_histo, TH1D* resp_histo, TH1D* fake_histo, const config_struct& cfg, const std::string& tag) {
     UnfoldResult results;
@@ -641,6 +639,7 @@ UnfoldResult ApplyUnfold(std::unique_ptr<TUnfoldDensity> density, TH1D* event_hi
     return results;
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 int VisualizeUnfoldResults(std::vector<std::unique_ptr<TCanvas>>& canvas, UnfoldResult& results, RespMatrixHisto& resp_histo, const std::string& tag) {
     std::cout << "Initializing visualization " << tag << " sample." << std::endl;
@@ -752,6 +751,7 @@ int VisualizeUnfoldResults(std::vector<std::unique_ptr<TCanvas>>& canvas, Unfold
     return 0;
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMatrixHisto& resp_histo, ControlHisto& control_histo, const std::string& tag) {
     // --------------------------
@@ -776,14 +776,14 @@ int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMat
     }
 
     //c1->SetLogz();
-    histo_resp->Draw("COLZ");
+    histo_resp->Draw("TEXTS COLZ");
 
     std::string title_reco = tag + " reco [GeV]";
     std::string title_gen = tag + " gen [GeV]";
     histo_resp->GetXaxis()->SetTitle(title_reco.c_str());
     histo_resp->GetYaxis()->SetTitle(title_gen.c_str());
     
-    std::string name_c5 = "Efficiency/Purity_" + tag; 
+    std::string name_c5 = "Efficiency/Purity/Stability_" + tag; 
     auto c5 = std::make_unique<TCanvas>(name_c5.c_str(), name_c5.c_str(), 800, 600);
     TH1D* h_eff;
     TH1D* h_pur;
@@ -818,7 +818,7 @@ int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMat
         h_pur->SetLineWidth(2);
         h_pur->SetStats(0);
 
-        h_stab->SetLineColor(9);
+        h_stab->SetLineColor(6);
         h_stab->SetLineWidth(2);
         h_stab->SetStats(0);
 
@@ -841,5 +841,68 @@ int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMat
     canvas.push_back(std::move(c1));
 
     return 0;
+}
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+std::unique_ptr<TH1D> EventFit_SignalHisto_Wrapper(const config_struct& cfg) {
+    std::string tag = cfg.event.event_quantity;
+    
+    // DATA DATASET
+    ROOT::RDataFrame data_frame("DATA_Event_Tree", cfg.selection.o_sel_file_data);
+    ROOT::RDF::RNode node_event = data_frame;
+
+    // MC DATASET -> Model
+    ROOT::RDataFrame mc_frame("MC_Event_Tree", cfg.selection.o_sel_file_data);
+    ROOT::RDF::RNode node_event_model = mc_frame;
+
+    EventHisto event_histo = BuildEventHisto(node_event, cfg);
+    EventHisto event_model_histo = BuildEventHisto(node_event_model, cfg);
+
+    std::vector<std::unique_ptr<TH1D>> event_container = PrepareEventFit(event_histo, tag);
+
+    // Unpacking model
+    std::unique_ptr<TFile> model_file(TFile::Open(cfg.selection.o_sel_file_data.c_str(), "READ"));
+    TTree* model_tree = model_file->Get<TTree>("MC_Event_Tree");
+
+    if (!model_file || !model_file) {
+        std::cout << "ERROR: invalid read operation" << std::endl;
+        return nullptr;
+    }
+
+    std::vector<std::unique_ptr<RooDataSet>> event_model_container = PrepareEventFitModel(model_tree, cfg, tag);
+    
+    TFile o_fit_file;
+    TDirectory* fit_dir;
+
+    if (cfg.event.save_fit_plots) {
+        // Output file
+        TFile o_fit_file(cfg.event.o_event_file.c_str(), "UPDATE");
+        
+        if (o_fit_file.IsZombie()) {
+            std::cout << "ERROR: invalid output file, exiting..." << cfg.event.o_event_file << std::endl;
+            return nullptr;
+        }
+
+        o_fit_file.cd();
+
+        std::string dir_name = "Event_InvMass_DATA_fits_" + tag;
+        TDirectory* fit_dir = o_fit_file.GetDirectory(dir_name.c_str());
+
+        if (!fit_dir) {
+            fit_dir = o_fit_file.mkdir(dir_name.c_str());
+        }
+    }
+
+    std::vector<EventFitResult> event_results = EventFitWrapper(event_container, event_model_container, tag, cfg.event.save_fit_plots, fit_dir);
+
+    if (cfg.event.save_fit_plots) {
+        o_fit_file.cd();
+        o_fit_file.Write();
+        o_fit_file.Close();
+    }
+
+    std::unique_ptr<TH1D> h_sig = BuildFitResultHistogram(event_results, cfg, tag);
+
+    return h_sig;
 }

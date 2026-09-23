@@ -422,6 +422,87 @@ std::vector<float> CalculateAcceptance(ROOT::RDF::RNode node, const std::string&
     return results;
 }
 
+ResolutionResults CalculateResolution(ROOT::RDF::RNode node, const config_struct& cfg) {
+    ROOT::RDF::RNode node_resolution = node;
+    
+    std::string tag = cfg.resolution.quantity;
+    std::string gen_col = "";
+    std::string reco_col = "";
+
+    if (tag == "pt") {
+        reco_col = "Rec_Pt";
+        gen_col = "Gen_Pt";
+    } else if (tag == "y") {
+        reco_col = "Rec_Y";
+        gen_col = "Gen_Y";
+    } else if (tag == "phis") {
+        reco_col = "Rec_Phis";
+        gen_col = "Gen_Phis";
+    }
+
+    std::vector<double> vector_bins = CreateBins(cfg.resolution.gen_bins, cfg.resolution.min, cfg.resolution.max, "linear");
+    int n_bins = vector_bins.size() - 1;
+
+    ResolutionResults result;
+    result.mean.resize(n_bins);
+    result.sigma.resize(n_bins);
+    result.events.resize(n_bins);
+
+    node_resolution = node_resolution.Filter("Matched == true");
+
+    auto gen_ptr = node_resolution.Take<float>(gen_col);
+    auto reco_ptr = node_resolution.Take<float>(reco_col);
+
+    const auto& gen_vec = *gen_ptr;
+    const auto& reco_vec = *reco_ptr;
+
+    std::vector<std::vector<double>> bin_buffers(n_bins);
+
+    size_t n_entries = gen_vec.size();
+    
+    for (size_t i = 0; i < n_entries; i++) {
+
+        auto upper_idx = std::upper_bound(vector_bins.begin(), vector_bins.end(), gen_vec[i]);
+        int bin_idx = std::distance(vector_bins.begin(), upper_idx) - 1;
+
+        if ((bin_idx >= 0) && (bin_idx < n_bins)) {
+            bin_buffers[bin_idx].push_back(reco_vec[i]);
+        }
+    }
+
+    for (int j = 0; j < n_bins; j++) {
+        const auto& bin = bin_buffers[j];
+        
+        int entries = bin.size();
+        result.events[j] = entries;
+
+        if (entries == 0) {
+            continue;
+        }
+        
+        double sum = 0.0;
+        
+        for (double value : bin) {
+            sum += value;
+        }
+
+        double mean = sum / entries;
+        result.mean[j] = mean;
+
+        if (entries > 1) {
+            double sq_sum = 0;
+            
+            for (double value : bin) {
+                double diff = value - mean;
+                sq_sum += diff * diff;
+            }
+            result.sigma[j] = std::sqrt(sq_sum / (entries - 1));
+        }
+    }
+
+    return result;
+}
+
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 ROOT::RDF::RNode EventSelection(ROOT::RDF::RNode node, const config_struct& cfg) {

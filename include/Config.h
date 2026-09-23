@@ -30,7 +30,14 @@ struct io_config {
 };
 
 struct acceptance_config {
-    std::string dataset = "MC";// Dataset.
+    std::string dataset = "";// Dataset.
+};
+
+struct resolution_config {
+    std::string quantity = "";
+    int gen_bins = 0;
+    double min = 0;
+    double max = 0;
 };
 
 /// @brief Selection mode settup
@@ -109,6 +116,12 @@ struct unfold_config {
     bins phis_bins;    
 };
 
+struct event_config {
+    std::string event_quantity = "";  
+    std::string o_event_file = "";
+    bool save_fit_plots = false;
+};
+
 /// @brief Flags for enabling/disablig specifics selections cuts.
 struct flags_config {
     bool en_kinematics = false;// Enables/Disables the kinematic cut, composed by transverse momentum and pseudorapidity cuts.  
@@ -146,12 +159,15 @@ struct config_struct {
     io_config io;
 
     acceptance_config acceptance;
+    resolution_config resolution;
+    
     selection_config selection;
     template_config templ;
     analysis_config analysis;
 
     unfold_config unfold;
-
+    event_config event;
+    
     flags_config flag_ES;
     cuts_config cut_ES;
 

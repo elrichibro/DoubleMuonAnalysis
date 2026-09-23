@@ -180,6 +180,6 @@ T CalculateRapidityZ0_Raw_Pair(const T pt1, const T pt2, const T eta1, const T e
     return y_Z0; 
 }
 
-std::vector<double> CreateBins(int nbins, double min, double max, const std::string& distribution, double split);
+std::vector<double> CreateBins(int nbins, double min, double max, const std::string& distribution, double split = 0.0);
 
 #endif
