@@ -12,6 +12,10 @@
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
+// -----------------
+// Validation filter
+// -----------------
+
 /// @brief Apply the validation check to all the events in the dataset.
 /// @param node Input RDF node.
 /// @param val_map Struct containing the validated run and the relative luminosity blocks.
@@ -37,8 +41,28 @@ ROOT::RDF::RNode ApplyKinematicalBinDivision(ROOT::RDF::RNode node, const config
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
+// ----------
+// Acceptance
+// ----------
+
+/// @brief Calculates the acceptance from MonteCarlo sample.
+/// @param node Input RDF node.
+/// @param tag Tag for Column name.
+/// @param FSR FSR Muon states.
+/// @return Returns the value of detector acceptance in Z0->mu+mu- event. First element is central value, second value is the stat. sigma.
+std::vector<float> CalculateAcceptance(ROOT::RDF::RNode node, const std::string& tag, int FSR);
+
+struct ResolutionResults {
+    std::vector<double> mean;
+    std::vector<double> sigma;
+    std::vector<int> events;
+};
+
+ResolutionResults CalculateResolution(ROOT::RDF::RNode node, const config_struct& cfg);
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 // -------
-// STRUCTS
+// Structs
 // -------
 
 /// @brief Transverse momentum, psudorapidity and invariant mass vectors results -> from CalculeteTagAndProbe().
@@ -78,6 +102,7 @@ struct MuonFlags {
     const ROOT::RVec<int>& gen_pdg_idx;// PDG id of the particle.
 };
 
+/// @brief 
 struct EventHisto {
     ROOT::RDF::RResultPtr<TH1D> h1_mll;
     ROOT::RDF::RResultPtr<TH1D> h1_pt;
@@ -95,8 +120,15 @@ struct EventHisto {
 // Functions
 // ---------
 
+/// @brief Applies the function CalculateTagAndProbe in two options DATA/MC dataset and defines important quantities.
+/// @param node RDF input node.
+/// @param validation_map Validation map/struct for DATA dataset.
+/// @param selection Selection info struct.
+/// @param flags_TP Flags for TagAndProbe kinematical selection.
+/// @param cuts_TP TagAndProbe kinematical cuts.
+/// @return RDF node.
 ROOT::RDF::RNode CalculateTagAndProbeWrapper(ROOT::RDF::RNode node, const validation_type& validation_map, const selection_config& selection, 
-    const flags_config& flags_TP, const cuts_config& cuts_TP);
+const flags_config& flags_TP, const cuts_config& cuts_TP);
 
 /// @brief TagAndProbe function selection for MonteCarlo sample (by adding a DeltaR selection)
 /// @param kin Muon kinematic event values.
@@ -107,10 +139,8 @@ ROOT::RDF::RNode CalculateTagAndProbeWrapper(ROOT::RDF::RNode node, const valida
 /// @param gen_eta Pseudorapidity of Generated muon used for DeltaR calculus.
 /// @param gen_phi Phi angle of Generated muon used for DeltaR calculus.
 /// @return Struct containing probe muons kinematical variables.
-ResultsTagAndProbe CalculateTagAndProbe_MC(const MuonKinematics_TP& kin, const MuonFlags_TP& flags, const flags_config cfg_f, 
-const cuts_config cfg_c, const MuonFlags& DeltaR_flags, const ROOT::RVec<float> gen_eta, const ROOT::RVec<float> gen_phi);
-
-// ------------------------------------------------------------------------------------------------------------------------------------
+ResultsTagAndProbe CalculateTagAndProbe_MC(const MuonKinematics_TP& kin, const MuonFlags_TP& flags, const flags_config cfg_f, const cuts_config cfg_c,
+const MuonFlags& DeltaR_flags, const ROOT::RVec<float> gen_eta, const ROOT::RVec<float> gen_phi);
 
 /// @brief TagAndProbe function selection for data sample.
 /// @param kin Muon kinematic event values.
@@ -123,22 +153,16 @@ const cuts_config cfg_c);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-/// @brief Calculates the acceptance from MonteCarlo sample.
-/// @param node Input RDF node.
-/// @param tag Tag for Column name.
-/// @param FSR FSR Muon states.
-/// @return Returns the value of detector acceptance in Z0->mu+mu- event. First element is central value, second value is the stat. sigma.
-std::vector<float> CalculateAcceptance(ROOT::RDF::RNode node, const std::string& tag, int FSR);
-
-// ------------------------------------------------------------------------------------------------------------------------------------
-
 /// @brief 
 /// @param node 
 /// @param cfg 
 /// @return 
 ROOT::RDF::RNode EventSelection(ROOT::RDF::RNode node, const config_struct& cfg);
 
+/// @brief 
+/// @param node 
+/// @param cfg 
+/// @return 
 EventHisto BuildEventHisto(ROOT::RDF::RNode node, const config_struct& cfg);
-
 
 #endif
