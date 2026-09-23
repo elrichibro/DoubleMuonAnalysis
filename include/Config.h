@@ -51,40 +51,10 @@ struct selection_config {
     std::string o_sel_file_data = "";// Output file path for data.
 };
 
-/// @brief Template mode settup
-struct template_config {
-    std::string dataset = "MC";// Dataset.
-    std::string template_type = "";// DATA or HISTO unbinned or binned throughtput.    
-    std::string bins_settup = "";// Name of bins status
-    std::string o_template_file_data = "";// Output file path for template mode.
-    std::vector<float> pt_bins;// Vector of pt bins.
-    std::vector<float> eta_bins;// Vector of eta bins.
-    float mll_bins = 0;// Number of Invariant Mass bins.
-};
-
-/// @brief Analysis parameters for fine tuning. 
-struct analysis_params {
-    std::vector<double> efficiency;// Efficiency = N_sig_pass/(N_sig_pass + N_sig_fail)
-    std::vector<double> n_tot;// Total number of Signal probes.
-    
-    std::vector<double> mu;// Mean of convolution gaussian.
-    std::vector<double> sigma;// Sigma of convolution gaussian.
-    
-    std::vector<double> lambda_pass;// Lambda of passed background.
-    std::vector<double> lambda_fail;// Lambda of failed background.
-};
-
 /// @brief Analysis mode settup
 struct analysis_config {
     std::string analysis_mode = "";
-    bool pre_fit = false;// Flag for prefit option.
     std::string o_fit_file = "";// Fit output file path.
-    std::string bins_settup = "";
-    std::string sample_pass_data = "";// Data format.
-    std::string sample_pass_mc = "";// Data format.
-    std::string sample_fail_data = "";// Data format.
-    std::string sample_fail_mc = "";// Data format.
-    analysis_params params;// Struct of analysis parameters.
 };
 
 struct bins {
@@ -162,7 +132,6 @@ struct config_struct {
     resolution_config resolution;
     
     selection_config selection;
-    template_config templ;
     analysis_config analysis;
 
     unfold_config unfold;
@@ -170,9 +139,6 @@ struct config_struct {
     
     flags_config flag_ES;
     cuts_config cut_ES;
-
-    flags_config flag_TP;
-    cuts_config cut_TP;
 
     flags_config flag_RM;
     cuts_config cut_RM;

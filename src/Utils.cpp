@@ -1,6 +1,6 @@
 #include "Utils.h"
 
-std::vector<double> CreateBins(int nbins, double min, double max, const std::string& distribution, double split) {
+std::vector<double> CreateBins(int nbins, double min, double max, const std::string& distribution) {
     std::vector<double> bins;
     bins.reserve(nbins + 1);
     

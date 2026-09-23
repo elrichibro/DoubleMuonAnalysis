@@ -16,6 +16,7 @@
   "acceptance":{
     "dataset":"MC"
   },
+  
   "resolution":{
     "quantity":"y",
     "gen_bins":100,
@@ -32,34 +33,10 @@
     "o_sel_file_plots":"../output/selection_plots.root",
     "o_sel_file_data":"../output/selection_data.root"
   },
-
-  "template": {
-    "dataset": "MC",
-    "bins_settup":"0_Set_Pt4_Eta4_Mll70",
-    "template_type":"BINNED_UNBINNED",
-    "o_template_file_data":"../output/risultati_template.root",
-    "pt_bins": [25.0, 30.0, 35.0, 40.0, 50.0],
-    "eta_bins": [-2.4, -0.9, 0.0, 0.9, 2.4],
-    "mll_bins": 70.0
-  },
   
   "analysis": {
     "analysis_mode":"Unfold",
-    "o_fit_file":"../output/risultati_fit.root",
-    "bins_settup":"0_Set_Pt4_Eta4_Mll70",
-    "pre_fit":true,
-    "sample_pass_data":"binned",
-    "sample_pass_mc":"binned",
-    "sample_fail_data":"binned",
-    "sample_fail_mc":"unbinned",
-    "params": {
-      "efficiency":[0.9, 0.4, 1.0],
-      "n_tot":[0,0,0],
-      "mu":[-0.08, -3.0, 3.0],
-      "sigma":[0.1, 0.001, 2.0],
-      "lambda_pass":[-0.04, -3.0, 0.0],
-      "lambda_fail":[-0.04, -3.0, 0.0]
-    }
+    "o_fit_file":"../output/risultati_fit.root"
   },
 
   "unfold":{
@@ -123,19 +100,6 @@
   "cut_ES": {
     "pt_cut":25.0,
     "eta_cut":2.4,
-    "iso_cut":0.15,
-    "mass_min":60.0,
-    "mass_max":120.0
-  },
-
-  "flag_TP": {
-    "en_kinematics":true,
-    "en_mass_window":true
-  },
-
-  "cut_TP": {
-    "pt_cut":25.0,
-    "eta_cut":2.5,
     "iso_cut":0.15,
     "mass_min":60.0,
     "mass_max":120.0
