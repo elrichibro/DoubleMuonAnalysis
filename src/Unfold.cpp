@@ -35,14 +35,6 @@ Match :
     - 2 posibilities -> match between Generator index and mother index for reconstructed particle (that is the muon in the GenPart collection)
 */
 
-
-/// @brief 
-/// @param kin_rec 
-/// @param kin_gen 
-/// @param flags 
-/// @param cfg_f 
-/// @param cfg_c 
-/// @return 
 ResultsRespMatrix CalculateRespMatrix(const MuonKinematics_REC& kin_rec, const MuonKinematics_GEN& kin_gen, const MuonFlags_RM& flags, const flags_config cfg_f, 
 const cuts_config cfg_c) {
     
@@ -184,6 +176,8 @@ const cuts_config cfg_c) {
     return results;
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 ROOT::RDF::RNode CalculateRespMatrixWrapper(ROOT::RDF::RNode node, const flags_config& flags_RM, const cuts_config& cuts_RM) {
     ROOT::RDF::RNode node_RM = node;
 
@@ -223,6 +217,7 @@ ROOT::RDF::RNode CalculateRespMatrixWrapper(ROOT::RDF::RNode node, const flags_c
     return node_RM;
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
     
@@ -380,7 +375,6 @@ ControlHisto BuildControlHisto(ROOT::RDF::RNode node, const config_struct& cfg) 
             
         reco_bins_phis = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution, phis.split);
         gen_bins_phis = CreateBins(phis.gen_bins, phis.min, phis.max, phis.distribution, phis.split);
-
     }
 
     int n_reco_pt = static_cast<int>(reco_bins_pt.size()) - 1;
