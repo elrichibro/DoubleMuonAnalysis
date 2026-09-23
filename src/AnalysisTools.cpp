@@ -425,7 +425,6 @@ int LoadBinnedTemplate(const config_struct& cfg, std::vector<Template_RooF>& con
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-
 int LoadUnbinnedTemplate(TTree* tree, const config_struct& cfg, const int dataset, std::vector<Template_RooF>& container) {
     if (!tree) {
         std::cout << "ERROR: tree invalid pointer, exiting..." << std::endl;
@@ -809,6 +808,10 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
         return 0;
     }
 
+    // -----
+    // Start
+    // -----
+
     results.reserve(analysis_struct.size());
     
     RooRealVar mll("mll", "m_{#mu+#mu-}", 60.0, 120.0, "GeV");
@@ -821,12 +824,16 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
     int successful_fits = 0;
     int failed_fits = 0;
 
+    // ------------------------------
+    // Loop on P_t_Z0 and Eta_Z0 bins
+    // ------------------------------
+
     for (const auto& it : analysis_struct) {
         std::cout << "Fitting -> Eta bin: " << it.eta_bin_idx << " , Pt bin: " << it.pt_bin_idx << std::endl;
 
-        // --------------
-        // MC PASS option
-        // --------------
+        // ------------------------------------
+        // MC PASS option -> BINNED or UNBINNED
+        // ------------------------------------
 
         std::unique_ptr<RooAbsPdf> mc_pass_pdf{nullptr};
         std::unique_ptr<RooDataHist> hist_mc_pass{nullptr};
@@ -838,6 +845,7 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
                 std::cout << "ERROR: invalid mc_pass_pdf pointer, exiting..." << std::endl; 
                 return 1;
             }
+
         } else if (cfg.analysis.sample_pass_mc == "binned") {
             hist_mc_pass = std::make_unique<RooDataHist>("hist_mc_pass", "Pass data histogram", mll, it.h_MC_pass.get());
             auto hist_pdf = std::make_unique<RooHistPdf>("hist_mc_pass_pdf", "Pass data pdf", mll, *hist_mc_pass);
@@ -851,9 +859,9 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
             }
         }
 
-        // --------------
-        // MC FAIL option
-        // --------------
+        // ------------------------------------
+        // MC FAIL option -> BINNED or UNBINNED
+        // ------------------------------------
 
         std::unique_ptr<RooAbsPdf> mc_fail_pdf = nullptr;
         std::unique_ptr<RooDataHist> hist_mc_fail = nullptr;
@@ -878,15 +886,18 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
             }
         }
 
-        // DATA container
+        // -------------------------------------------
+        // DATA -> PASSED/FAILED -> SAME SAMPLE OPTION
+        // -------------------------------------------
+
         std::unique_ptr<RooAbsData> sig_data;
 
         if ((cfg.analysis.sample_pass_data == "unbinned") && (cfg.analysis.sample_fail_data == "unbinned")) {    
-            sig_data = std::make_unique<RooDataSet>("sig_data", "Signal data unbinned", RooArgSet(mll), 
-            
-            RooFit::Index(sample),
-            RooFit::Import("Pass", *it.d_DATA_pass), 
-            RooFit::Import("Fail", *it.d_DATA_fail));
+            sig_data = std::make_unique<RooDataSet>("sig_data", "Signal data unbinned", 
+                RooArgSet(mll),
+                RooFit::Index(sample),
+                RooFit::Import("Pass", *it.d_DATA_pass), 
+                RooFit::Import("Fail", *it.d_DATA_fail));
             
             if (!sig_data) {
                 std::cout << "ERROR: invalid sig_data pointer, exiting..." << std::endl; 
@@ -911,12 +922,19 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
             return 1;
         }
 
-        // For initial parameter value -> n_tot 
+        // -----------------------------------------
+        // Getting INITIAL value for YIELD parameter
+        // -----------------------------------------
+         
         bool is_data_unbinned = (cfg.analysis.sample_pass_data == "unbinned");
 
         double data_pass_entries = (is_data_unbinned) ? it.d_DATA_pass->sumEntries() : it.h_DATA_pass->Integral();
         double data_fail_entries = (is_data_unbinned) ? it.d_DATA_fail->sumEntries() : it.h_DATA_fail->Integral();
         double total_entries = data_pass_entries + data_fail_entries;
+
+        // -----------------------------
+        // DEFINING FIT MODEL/PARAMETERS
+        // -----------------------------
 
         // Efficiency
         RooRealVar efficiency("efficiency", "Efficiency", cfg.analysis.params.efficiency.at(0), cfg.analysis.params.efficiency.at(1),
@@ -962,9 +980,14 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
         simPdf.addPdf(model_pass, "Pass");
         simPdf.addPdf(model_fail, "Fail");
 
+        // --------------
+        // PRE-FIT OPTION 
+        // --------------
+
         if (cfg.analysis.pre_fit) {
             std::cout << "Starting pre-fitting." << std::endl;
 
+            // Fixing efficiency value
             efficiency.setVal(1.0);
             efficiency.setConstant(kTRUE);
             RooDataHist hist_data_pass("hist_data_pass", "Pass data histogram", mll, it.h_DATA_pass.get());
@@ -987,6 +1010,7 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
 
             std::unique_ptr<RooFitResult> prefitRes(m_pass.save());
 
+            // Passing fitted values as parameter inputs -> mean/sigma convolutional gaussian
             double mu_fit = mu.getVal();
             double mu_err = mu.getError();
 
@@ -999,9 +1023,14 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
             mu.setVal(mu_fit);
             sigma.setVal(sigma_fit);
         
+            // Unfixing efficiency
             efficiency.setConstant(kFALSE);
             efficiency.setVal(cfg.analysis.params.efficiency.at(0));
         }
+
+        // -----------------------
+        // FINAL FIT -> NLL OPTION
+        // -----------------------
 
         std::unique_ptr<RooAbsReal> nll(simPdf.createNLL(
             *sig_data,
@@ -1030,7 +1059,12 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
             failed_fits++;
         }
 
+        // Verbose
         raw_fitRes->Print("v");
+
+        // ---------------------
+        // FILLING RESULT STRUCT
+        // ---------------------
 
         results.emplace_back( FitResult {
             it.eta_bin_idx,
@@ -1057,6 +1091,10 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
             raw_fitRes ? raw_fitRes->status() : -1
         });
 
+        // ---------------------------------
+        // SAVING FIT PLOTS -> QUALITY CHECK
+        // ---------------------------------
+
         SaveBinFitCanvas(mll, sample, *sig_data, simPdf, results.back(), o_file, cfg);
     }
     
@@ -1067,8 +1105,12 @@ int EfficiencyFitter(std::vector<Template_RooF>& analysis_struct, const config_s
     
     return 0;
 }
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 void SaveEventFitCanvas(RooRealVar& mll, RooAbsPdf& model, RooAbsData& data, RooAbsPdf& bkg_pdf, const EventFitResult& res, TH1D* h_mll,
 TDirectory* o_dir, const int bin_idx, const std::string& tag) {
+    
     if (!o_dir) {
         return;
     }
@@ -1141,6 +1183,7 @@ TDirectory* o_dir, const int bin_idx, const std::string& tag) {
     delete frame_pull;
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 std::vector<std::unique_ptr<TH1D>> PrepareEventFit(EventHisto& event_histo, const std::string& tag) {
 
@@ -1179,6 +1222,8 @@ std::vector<std::unique_ptr<TH1D>> PrepareEventFit(EventHisto& event_histo, cons
 
     return container;
 }
+
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 std::vector<std::unique_ptr<RooDataSet>> PrepareEventFitModel(TTree* tree, const config_struct& cfg, const std::string& tag) {
     std::vector<std::unique_ptr<RooDataSet>> container;
@@ -1269,6 +1314,7 @@ std::vector<std::unique_ptr<RooDataSet>> PrepareEventFitModel(TTree* tree, const
     return container;
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 EventFitResult EventSingleFit(int bin_idx, TH1D* h_mll, RooDataSet* d_mll_model, TDirectory* o_dir, const std::string& tag, const bool save_plots) {
     EventFitResult result;
@@ -1331,6 +1377,8 @@ EventFitResult EventSingleFit(int bin_idx, TH1D* h_mll, RooDataSet* d_mll_model,
     
     return result;
 }
+
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 std::vector<EventFitResult> EventFitWrapper(std::vector<std::unique_ptr<TH1D>>& container, std::vector<std::unique_ptr<RooDataSet>>& container_model, const std::string& tag, const bool save_plots, TDirectory* o_dir) {
     // Fit global container

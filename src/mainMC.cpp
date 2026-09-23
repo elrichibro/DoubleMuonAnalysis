@@ -82,7 +82,9 @@ int main(int argc, char* argv[]) {
 
     std::string dataset_tree = "";
     std::string dataset_file = "";
-    
+
+    ROOT::EnableImplicitMT();// MultiThread option: ON
+
     // ------------------------------------------------------------------------------------------------------------------------------------
     // VISUALIZATION OPTION
     // ------------------------------------------------------------------------------------------------------------------------------------
@@ -126,6 +128,63 @@ int main(int argc, char* argv[]) {
         }
             
         std::cout << "Geometrical acceptance: " << results.at(0) << "+-" << results.at(1) << std::endl;
+    }
+
+    // ----------
+    // Resolution
+    // ----------
+
+    if (cfg.general.operation_mode.find("Resolution") != std::string::npos) {
+
+        ROOT::RDataFrame data_frame("MC_RespMatrix_Tree", cfg.selection.o_sel_file_data);
+        ROOT::RDF::RNode node_resolution = data_frame;
+
+        //ROOT::EnableImplicitMT();// MultiThread option: ON
+
+        ResolutionResults resolution =  CalculateResolution(node_resolution, cfg);
+        
+        if (app != nullptr) {                
+            std::cout << "Starting visualization..." << std::endl;
+            std::string tag = cfg.resolution.quantity;
+            
+            std::vector<double> x_value;
+            std::vector<double> y_value;
+
+            for (int i = 0; i < resolution.mean.size(); i++) {
+                if (resolution.events[i] > 1) {
+                    x_value.push_back(resolution.mean[i]);
+                    y_value.push_back(resolution.sigma[i]);
+                }
+            }
+
+            auto canvas = TCanvas(("c_res_" + tag).c_str(), ("Resolution_ " + tag).c_str(), 800, 600);
+
+            TGraph* graph = new TGraph(x_value.size(), x_value.data(), y_value.data());
+
+            std::string axis;
+            if (tag == "pt") {
+                axis = ";Mean P_t [GeV];#sigma P_t [GeV]";
+            } else {
+                axis = ";Mean;Sigma";
+            }
+
+            std::string title = "Resolution " + tag + axis;
+            graph->SetTitle(title.c_str());
+            graph->SetMarkerStyle(20);
+            graph->SetMarkerSize(0.7);
+            graph->SetMarkerColor(kBlue+1);
+            graph->SetLineColor(kBlue+1);
+            canvas.SetGrid();
+
+            graph->Draw("AP");
+            
+            app->Run();
+            
+            delete app; 
+        } else {
+            std::cout << "No visualization booked." << std::endl;
+        }
+
     }
 
     // ---------
@@ -192,17 +251,14 @@ int main(int argc, char* argv[]) {
             ROOT::RDF::RNode node_event = selection_data_frame;
             
             if (cfg.selection.selection_mode.find("Event") != std::string::npos) {
-                if (cfg.selection.dataset == "MC") {
-                    std::cout << "ERROR: invalid Selection dataset for Event selection, pls select DATA dataset in this Selection settup, exiting..."
-                     << std::endl;
-                    return 1; 
-                }
-
                 if (cfg.general.verbose) {
                     std::cout << "Executing Event selection." << std::endl;
                 }
-                node_event = ApplyValidationFilter(node_event, validation_map, "run", "luminosityBlock");
-                
+
+                if (cfg.selection.dataset == "DATA") {
+                    node_event = ApplyValidationFilter(node_event, validation_map, "run", "luminosityBlock");
+                }
+
                 node_event = EventSelection(node_event, cfg);
             }
 
@@ -418,51 +474,58 @@ int main(int argc, char* argv[]) {
             } else {
                 std::cout << "No visualization booked.\n" << std::endl;
             }
-        
+
         } else if (cfg.analysis.analysis_mode == "Unfold") {
-            
+            std::string tag = cfg.unfold.unfold_quantity;
+            std::vector<std::unique_ptr<TCanvas>> canvas;
+
             // MonteCarlo DATASET
             ROOT::RDataFrame mc_frame("MC_RespMatrix_Tree", cfg.selection.o_sel_file_data);
             ROOT::RDF::RNode node_RM = mc_frame;
             
+            RespMatrixHisto resp_histo = BuildRespMatrixHisto(node_RM, cfg);
+
+            if (cfg.unfold.check_plot) {
+                
+                ControlHisto control_histo = BuildControlHisto(node_RM, cfg);
+                
+                if (visualize && app != nullptr) {
+                
+                    int check_control = VisualizeControlPlots(canvas, resp_histo, control_histo, tag);
+                    app->Run();
+                    delete app;
+                    
+                    return 0; 
+                } else {
+                    std::cout << "check_plot True but no visualization was booked, exiting..." << std::endl;
+                    return 1;
+                }
+            }
+
             // DATA DATASET
             ROOT::RDataFrame data_frame("DATA_Event_Tree", cfg.selection.o_sel_file_data);
             ROOT::RDF::RNode node_event = data_frame;
 
-            // ----------
-            // MonteCarlo
-            // ----------
-
-            // Insert FIT DATA procedure HERE !!!
-
             // First Event Loop on MonteCarlo
-            RespMatrixHisto resp_histo = BuildRespMatrixHisto(node_RM, cfg);
-            ControlHisto control_histo = BuildControlHisto(node_RM, cfg);// HERE
-
-            UnfoldDensities density = CreateUnfoldDensity(resp_histo);// OR HERE
-
-            // ----
-            // DATA
-            // ----
-
-            EventHisto event_histo = BuildEventHisto(node_event, cfg);
-
-            // Second Event Loop on DATA
+            UnfoldDensities density = CreateUnfoldDensity(resp_histo, tag);// OR HERE
             UnfoldResult result;
-
-            if (cfg.unfold.check_plot == true) {
-                std::cout << "Starting Check." << std::endl;
             
-            } else if (cfg.unfold.unfold_quantity == "pt") {
-                result = ApplyUnfold(std::move(density.pt_unf), event_histo.h1_pt.GetPtr(), resp_histo.h1_pt_test.GetPtr(), 
+            // Signal Fitter - Second Event Loop on data
+            std::unique_ptr<TH1D> event_histo = EventFit_SignalHisto_Wrapper(cfg);
+            
+            // Old method
+            //EventHisto event_histo = BuildEventHisto(node_event, cfg);
+
+            if (tag == "pt") {
+                result = ApplyUnfold(std::move(density.pt_unf), event_histo.get(), resp_histo.h1_pt_test.GetPtr(), 
                 resp_histo.h1_pt_fake.GetPtr(), cfg, "Pt_Z0");
             
-            } else if (cfg.unfold.unfold_quantity == "y") {
-                result = ApplyUnfold(std::move(density.y_unf), event_histo.h1_y.GetPtr(), resp_histo.h1_y_test.GetPtr(),
+            } else if (tag == "y") {
+                result = ApplyUnfold(std::move(density.y_unf), event_histo.get(), resp_histo.h1_y_test.GetPtr(), 
                 resp_histo.h1_y_fake.GetPtr(), cfg, "Y_Z0");
             
-            } else if (cfg.unfold.unfold_quantity == "phis") {
-                result = ApplyUnfold(std::move(density.phis_unf), event_histo.h1_phis.GetPtr(), resp_histo.h1_phis_test.GetPtr(),
+            } else if (tag == "phis") {
+                result = ApplyUnfold(std::move(density.phis_unf), event_histo.get(), resp_histo.h1_phis_test.GetPtr(),
                 resp_histo.h1_phis_fake.GetPtr(), cfg, "Phis_Z0");
             
             } else {
@@ -470,56 +533,58 @@ int main(int argc, char* argv[]) {
                 return 1;
             }
 
-
-            std::vector<std::unique_ptr<TCanvas>> canvas;
-
             if (visualize && app != nullptr) {
+                int check = VisualizeUnfoldResults(canvas, result, resp_histo, tag);
                 
-                int check_control = VisualizeControlPlots(canvas, resp_histo, control_histo, cfg.unfold.unfold_quantity);
-
-                if (cfg.unfold.check_plot == false) {
-                    int check = VisualizeUnfoldResults(canvas, result, resp_histo,cfg.unfold.unfold_quantity);
-                    if (check != 0) {
-                        std::cout << "ERROR: Visualize operation failed, exiting..." << std::endl;
-                        return 1;
-                    }
+                if (check != 0) {
+                    std::cout << "ERROR: Visualize operation failed, exiting..." << std::endl;
+                    return 1;
                 }
+                
                 app->Run();
                 
-                delete app; 
+                delete app;
+                
+                return 0;
             } else {
-                std::cout << "No visualization booked.\n" << std::endl;
+                std::cout << " Unfold procedure applied but no visualization was booked." << std::endl;
+                return 1;
             }
 
         } else if (cfg.analysis.analysis_mode == "Event") {
-            // DATA DATASET
-            ROOT::RDataFrame data_frame("DATA_Event_Tree", cfg.selection.o_sel_file_data);
-            ROOT::RDF::RNode node_event = data_frame;
+            std::vector<std::unique_ptr<TCanvas>> canvas;
+            std::unique_ptr<TH1D> event_histo = EventFit_SignalHisto_Wrapper(cfg);
+            
+            if (visualize && app != nullptr) {                
+                
+                TH1D* histo = event_histo.get();
+                if (histo == nullptr) {
+                    std::cout << "ERROR: invalid Response Matrix histogram, exiting..." << std::endl;
+                    return 1;
+                }
 
-            EventHisto event_histo = BuildEventHisto(node_event, cfg);
+                std::string name_c1 = "Signal yield_ " + cfg.event.event_quantity;
+                auto c1 = std::make_unique<TCanvas>(name_c1.c_str(), name_c1.c_str(), 800, 600);
+                
+                histo->Draw("HIST E");
 
-            std::vector<std::unique_ptr<TH1D>> event_container = PrepareEventFit(event_histo, "pt");
+                std::string title_x = cfg.event.event_quantity;
+                std::string title_y = cfg.event.event_quantity + " Entries";
+                histo->GetXaxis()->SetTitle(title_x.c_str());
+                histo->GetYaxis()->SetTitle(title_y.c_str());
+                
+                c1->Update();
+                canvas.push_back(std::move(c1));
 
-            std::string file_name = "../output/Event_Fit_" + cfg.unfold.unfold_quantity + ".root"; 
-            TFile o_fit_file(file_name.c_str(), "UPDATE");
-            if (o_fit_file.IsZombie()) {
-                std::cout << "ERROR: invalid output file, exiting..." << file_name << std::endl;
+                app->Run();
+                
+                delete app;
+                
+                return 0;
+            } else {
+                std::cout << " Unfold procedure applied but no visualization was booked." << std::endl;
                 return 1;
             }
-            o_fit_file.cd();
-
-            std::string dir_name = "fits_" + cfg.unfold.unfold_quantity;
-            TDirectory* fit_dir = o_fit_file.GetDirectory(dir_name.c_str());
-
-            if (!fit_dir) {
-               fit_dir = o_fit_file.mkdir(dir_name.c_str());
-            }
-
-            std::vector<EventFitResult> event_results = EventFitWrapper(event_container, fit_dir, , const std::string& tag);
-
-            o_fit_file.cd();
-            o_fit_file.Write();
-            o_fit_file.Close();
         }
     }
 
