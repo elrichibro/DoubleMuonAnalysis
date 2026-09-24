@@ -15,11 +15,11 @@ include_directories(include)
 set(COMMON_SRCS
     src/Config.cpp
     src/Utils.cpp
-    src/Filters.cpp
-    src/Checks.cpp
     src/Manager.cpp
-    src/AnalysisTools.cpp
     src/Unfold.cpp
+    src/Event.cpp
+    src/Selection.cpp
+    src/ControlCheck.cpp
 )
 
 set(COMMON_LIBS
