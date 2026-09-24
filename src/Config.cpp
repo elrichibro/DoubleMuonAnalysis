@@ -9,6 +9,7 @@
 int Configure(config_struct& value, const std::string& json_path) {
     std::ifstream file(json_path);
     
+    // Check
     if (!file.is_open()) {
         std::cout << "ERROR: Cannot open: " << json_path << ", exiting.\n" << std::endl;
         return 1;
@@ -91,10 +92,12 @@ int Configure(config_struct& value, const std::string& json_path) {
                 
                 value.unfold.pt_bins.reco_bins = j_p.value("reco_bins", value.unfold.pt_bins.reco_bins);
                 value.unfold.pt_bins.gen_bins = j_p.value("gen_bins", value.unfold.pt_bins.gen_bins);
+                
                 value.unfold.pt_bins.min = j_p.value("min", value.unfold.pt_bins.min);
                 value.unfold.pt_bins.max = j_p.value("max", value.unfold.pt_bins.max);
+                
                 value.unfold.pt_bins.distribution = j_p.value("distribution", value.unfold.pt_bins.distribution);
-                value.unfold.pt_bins.split = j_p.value("split", value.unfold.pt_bins.split);
+                
                 value.unfold.pt_bins.reco_vec = j_p["reco_vec"].get<std::vector<double>>();
                 value.unfold.pt_bins.gen_vec = j_p["gen_vec"].get<std::vector<double>>();
             }
@@ -104,10 +107,12 @@ int Configure(config_struct& value, const std::string& json_path) {
                 
                 value.unfold.y_bins.reco_bins = j_y.value("reco_bins", value.unfold.y_bins.reco_bins);
                 value.unfold.y_bins.gen_bins = j_y.value("gen_bins", value.unfold.y_bins.gen_bins);
+                
                 value.unfold.y_bins.min = j_y.value("min", value.unfold.y_bins.min);
                 value.unfold.y_bins.max = j_y.value("max", value.unfold.y_bins.max);
+                
                 value.unfold.y_bins.distribution = j_y.value("distribution", value.unfold.y_bins.distribution);
-                value.unfold.y_bins.split = j_y.value("split", value.unfold.y_bins.split);
+                
                 value.unfold.y_bins.reco_vec = j_y["reco_vec"].get<std::vector<double>>();
                 value.unfold.y_bins.gen_vec = j_y["gen_vec"].get<std::vector<double>>();
             }
@@ -117,10 +122,12 @@ int Configure(config_struct& value, const std::string& json_path) {
                 
                 value.unfold.phis_bins.reco_bins = j_phis.value("reco_bins", value.unfold.phis_bins.reco_bins);
                 value.unfold.phis_bins.gen_bins = j_phis.value("gen_bins", value.unfold.phis_bins.gen_bins);
+                
                 value.unfold.phis_bins.min = j_phis.value("min", value.unfold.phis_bins.min);
                 value.unfold.phis_bins.max = j_phis.value("max", value.unfold.phis_bins.max);
+                
                 value.unfold.phis_bins.distribution = j_phis.value("distribution", value.unfold.phis_bins.distribution);
-                value.unfold.phis_bins.split = j_phis.value("split", value.unfold.phis_bins.split);
+                
                 value.unfold.phis_bins.reco_vec = j_phis["reco_vec"].get<std::vector<double>>();
                 value.unfold.phis_bins.gen_vec = j_phis["gen_vec"].get<std::vector<double>>();
             }
@@ -132,7 +139,6 @@ int Configure(config_struct& value, const std::string& json_path) {
             value.event.event_quantity = j.value("event_quantity", value.event.event_quantity);
             value.event.o_event_file = j.value("o_event_file", value.event.o_event_file);
             value.event.save_fit_plots = j.value("save_fit_plots", value.event.save_fit_plots);
-
         }
 
         if (json_obj.contains("flag_ES")) {
@@ -224,7 +230,11 @@ void Verbose_config(const config_struct& value) {
     std::cout << "Init Verbose -> Loaded Configuration:" << std::endl;
     
     std::cout << "" << std::endl;
-
+    
+    // -------
+    // General
+    // -------
+    
     std::cout << "General settings:" << std::endl;
     std::cout << "    Operation mode: " << value.general.operation_mode << std::endl;
     std::cout << "    Verbose mode: " << value.general.verbose << std::endl;
@@ -233,6 +243,10 @@ void Verbose_config(const config_struct& value) {
     std::cout << "" << std::endl;    
     std::cout << "--------------------------------------------------------------------" << std::endl;
     std::cout << "" << std::endl;
+    
+    // ------------
+    // Input/Output
+    // ------------
 
     std::cout << "I/O settings:" << std::endl;
     std::cout << "    Input data file: " << value.io.in_data_file << std::endl;
@@ -245,14 +259,26 @@ void Verbose_config(const config_struct& value) {
     std::cout << "--------------------------------------------------------------------" << std::endl;
     std::cout << "" << std::endl;
 
+    // ----------
+    // Acceptance
+    // ----------
+    
     std::cout << "Acceptance settup:" << std::endl;
+    std::cout << "" << std::endl;
+
     std::cout << "    Dataset: " << value.acceptance.dataset << std::endl;
     
     std::cout << "" << std::endl;
     std::cout << "--------------------------------------------------------------------" << std::endl;
     std::cout << "" << std::endl;
 
+    // ----------
+    // Resolution
+    // ----------
+
     std::cout << "Resolution settup:" << std::endl;
+    std::cout << "" << std::endl;
+    
     std::cout << "    Quantity: " << value.resolution.quantity << std::endl;
     std::cout << "    Generated bins: " << value.resolution.gen_bins<< std::endl;
     std::cout << "    Min bin value: " << value.resolution.min << std::endl;
@@ -262,7 +288,13 @@ void Verbose_config(const config_struct& value) {
     std::cout << "--------------------------------------------------------------------" << std::endl;
     std::cout << "" << std::endl;
 
+    // ---------
+    // Selection
+    // ---------
+
     std::cout << "Selection settup:" << std::endl;
+    std::cout << "" << std::endl;
+
     std::cout << "    Dataset: " << value.selection.dataset << std::endl;
     std::cout << "    Mode: " << value.selection.selection_mode << std::endl;
     std::cout << "    Save plots: " << value.selection.save_sel_plots << std::endl;
@@ -275,9 +307,11 @@ void Verbose_config(const config_struct& value) {
     std::cout << "--------------------------------------------------------------------" << std::endl;
     std::cout << "" << std::endl;
 
-    
-    std::cout << "Analysis settup:" << std::endl;
+    // --------
+    // Analysis
+    // --------
 
+    std::cout << "Analysis settup:" << std::endl;
     std::cout << "" << std::endl;
 
     std::cout << "    Analysis Mode: " << value.analysis.analysis_mode << std::endl;
@@ -287,97 +321,111 @@ void Verbose_config(const config_struct& value) {
     std::cout << "--------------------------------------------------------------------" << std::endl;
     std::cout << "" << std::endl;
 
-    std::cout << "Unfold settup: " << std::endl;
+    // ------
+    // Unfold
+    // ------
+
+    std::cout << "    Unfold settup: " << std::endl;
 
     std::cout << "" << std::endl;
 
-    std::cout << "    Unfold Quantity: " << value.unfold.unfold_quantity << std::endl;
-    std::cout << "    Check Plots flag: " << value.unfold.check_plot << std::endl;
-    std::cout << "    Closure test flag: " << value.unfold.closure_test << std::endl;
-    std::cout << "    BKG subtraction flag: " << value.unfold.bkg_subtraction << std::endl;
+    std::cout << "        Unfold Quantity: " << value.unfold.unfold_quantity << std::endl;
+    std::cout << "        Check Plots flag: " << value.unfold.check_plot << std::endl;
+    std::cout << "        Closure test flag: " << value.unfold.closure_test << std::endl;
+    std::cout << "        BKG subtraction flag: " << value.unfold.bkg_subtraction << std::endl;
 
     std::cout << "" << std::endl;
 
-    std::cout << "    L-Scan: " << std::endl;
-    std::cout << "        Iterations number: " << value.unfold.scan.n_iter << std::endl;
-    std::cout << "        Tau min value: " << value.unfold.scan.tau_min << std::endl;
-    std::cout << "        Tau max value: " << value.unfold.scan.tau_max << std::endl;
+    std::cout << "        L-Scan: " << std::endl;
+    std::cout << "            Iterations number: " << value.unfold.scan.n_iter << std::endl;
+    std::cout << "            Tau min value: " << value.unfold.scan.tau_min << std::endl;
+    std::cout << "            Tau max value: " << value.unfold.scan.tau_max << std::endl;
 
     std::cout << "" << std::endl;
-    std::cout << "    Use custom JSON bins option: " << value.unfold.use_custom_bins << std::endl;
+    std::cout << "        Use custom JSON bins option: " << value.unfold.use_custom_bins << std::endl;
     std::cout << "" << std::endl;
 
-    std::cout << "    Pt bins: " << std::endl;
-    std::cout << "        Reconstructed bins: " << value.unfold.pt_bins.reco_bins << std::endl;
-    std::cout << "        Generated bins: " << value.unfold.pt_bins.gen_bins << std::endl;
-    std::cout << "        Min bin: " << value.unfold.pt_bins.min << std::endl;
-    std::cout << "        Max bin: " << value.unfold.pt_bins.max << std::endl;
-    std::cout << "        Distribution of bins: " << value.unfold.pt_bins.distribution << std::endl;
-    std::cout << "        Split option: " << value.unfold.pt_bins.split << std::endl;
+    std::cout << "        Pt bins: " << std::endl;
+    std::cout << "" << std::endl;
+
+    std::cout << "            Reconstructed bins: " << value.unfold.pt_bins.reco_bins << std::endl;
+    std::cout << "            Generated bins: " << value.unfold.pt_bins.gen_bins << std::endl;
+    std::cout << "            Min bin: " << value.unfold.pt_bins.min << std::endl;
+    std::cout << "            Max bin: " << value.unfold.pt_bins.max << std::endl;
+    std::cout << "            Distribution of bins: " << value.unfold.pt_bins.distribution << std::endl;
     
-    std::cout << "        Custom Reco bins: ";
+    std::cout << "            Custom Reco bins: ";
     for (auto it : value.unfold.pt_bins.reco_vec) {
         std::cout << it << " ";
     }
     std::cout << "" << std::endl;
 
-    std::cout << "        Custom Gen bins: ";
+    std::cout << "            Custom Gen bins: ";
     for (auto it : value.unfold.pt_bins.gen_vec) {
         std::cout << it << " ";
     }
     std::cout << "" << std::endl;
 
     std::cout << "" << std::endl;
+    std::cout << "        Rapidity bins: " << std::endl;
+    std::cout << "" << std::endl;
 
-    std::cout << "    Rapidity bins: " << std::endl;
-    std::cout << "        Reconstructed bins: " << value.unfold.y_bins.reco_bins << std::endl;
-    std::cout << "        Generated bins: " << value.unfold.y_bins.gen_bins << std::endl;
-    std::cout << "        Min bin: " << value.unfold.y_bins.min << std::endl;
-    std::cout << "        Max bin: " << value.unfold.y_bins.max << std::endl;
-    std::cout << "        Distribution of bins: " << value.unfold.y_bins.distribution << std::endl;
-    std::cout << "        Split option: " << value.unfold.y_bins.split << std::endl;
-    std::cout << "        Custom Reco bins: ";
+    std::cout << "            Reconstructed bins: " << value.unfold.y_bins.reco_bins << std::endl;
+    std::cout << "            Generated bins: " << value.unfold.y_bins.gen_bins << std::endl;
+    std::cout << "            Min bin: " << value.unfold.y_bins.min << std::endl;
+    std::cout << "            Max bin: " << value.unfold.y_bins.max << std::endl;
+    std::cout << "            Distribution of bins: " << value.unfold.y_bins.distribution << std::endl;
+    
+    std::cout << "            Custom Reco bins: ";
     for (auto it : value.unfold.y_bins.reco_vec) {
         std::cout << it << " ";
     }
     std::cout << "" << std::endl;
 
-    std::cout << "        Custom Gen bins: ";
+    std::cout << "             Custom Gen bins: ";
     for (auto it : value.unfold.y_bins.gen_vec) {
         std::cout << it << " ";
     }
     std::cout << "" << std::endl;
 
     std::cout << "" << std::endl;
+    std::cout << "        Phi Star bins: " << std::endl;
+    std::cout << "" << std::endl;
 
-    std::cout << "    Phi Star bins: " << std::endl;
-    std::cout << "        Reconstructed bins: " << value.unfold.phis_bins.reco_bins << std::endl;
-    std::cout << "        Generated bins: " << value.unfold.phis_bins.gen_bins << std::endl;
-    std::cout << "        Min bin: " << value.unfold.phis_bins.min << std::endl;
-    std::cout << "        Max bin: " << value.unfold.phis_bins.max << std::endl;
-    std::cout << "        Distribution of bins: " << value.unfold.phis_bins.distribution << std::endl;
-    std::cout << "        Split option: " << value.unfold.phis_bins.split << std::endl;
-    std::cout << "        Custom Reco bins: ";
+    std::cout << "            Reconstructed bins: " << value.unfold.phis_bins.reco_bins << std::endl;
+    std::cout << "            Generated bins: " << value.unfold.phis_bins.gen_bins << std::endl;
+    std::cout << "            Min bin: " << value.unfold.phis_bins.min << std::endl;
+    std::cout << "            Max bin: " << value.unfold.phis_bins.max << std::endl;
+    std::cout << "            Distribution of bins: " << value.unfold.phis_bins.distribution << std::endl;
+    
+    std::cout << "            Custom Reco bins: ";
     for (auto it : value.unfold.phis_bins.reco_vec) {
         std::cout << it << " ";
     }
     std::cout << "" << std::endl;
 
-    std::cout << "        Custom Gen bins: ";
+    std::cout << "            Custom Gen bins: ";
     for (auto it : value.unfold.phis_bins.gen_vec) {
         std::cout << it << " ";
     }
     std::cout << "" << std::endl;
-    std::cout << "" << std::endl;
     
+    // ------------
+    // Event
+    // ------------
+
     std::cout << "" << std::endl;
     std::cout << "--------------------------------------------------------------------" << std::endl;
     std::cout << "" << std::endl;
 
-    std::cout << "Event Fit settup: " << std::endl;
-    std::cout << "    Event quantity fit: " << value.event.event_quantity << std::endl;
-    std::cout << "    Event Output file path: " << value.event.o_event_file << std::endl;
-    std::cout << "    Save fit plots: " << value.event.save_fit_plots << std::endl;
+    std::cout << "    Event Fit settup: " << std::endl;
+    std::cout << "        Event quantity fit: " << value.event.event_quantity << std::endl;
+    std::cout << "        Event Output file path: " << value.event.o_event_file << std::endl;
+    std::cout << "        Save fit plots: " << value.event.save_fit_plots << std::endl;
+
+    // ------------
+    // Filters info
+    // ------------
 
     std::cout << "" << std::endl;
     std::cout << "--------------------------------------------------------------------" << std::endl;
@@ -419,8 +467,11 @@ void Verbose_config(const config_struct& value) {
     std::cout << "--------------------------------------------------------------------" << std::endl;
     std::cout << "" << std::endl;
 
-    std::cout << "Plot settings:" << std::endl;
+    // -----
+    // Plots
+    // -----
 
+    std::cout << "Plot settings:" << std::endl;
     std::cout << "" << std::endl;
 
     std::cout << "    Pt plot: " << std::endl;
