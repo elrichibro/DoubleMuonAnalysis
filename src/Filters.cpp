@@ -7,7 +7,9 @@
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_type& val_map, const std::string& run_name, const std::string& block_name) {
-    ROOT::RDF::RNode node_validation = node
+    ROOT::RDF::RNode node_validation = node;
+
+    node_validation = node_validation
         .Filter([&val_map](const UInt_t run, const UInt_t lum_block) {
             // Auto-update variables -> applied to multithread operation mode.
             thread_local static UInt_t last_run = 0;
@@ -43,6 +45,7 @@ ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_t
 
         }, {run_name , block_name}, "JSON Validation");
     
+    // Filtered node
     return node_validation;
 }
 
@@ -52,14 +55,16 @@ std::vector<float> CalculateAcceptance(ROOT::RDF::RNode node, const std::string&
     std::vector<float> results;
 
     // Selection of true event: Z0 -> mu+ mu-
-    ROOT::RDF::RNode node_acc = node
+    ROOT::RDF::RNode node_acc = node;
+
+    node_acc = node_acc
         .Define("Z0_Event", [FSR](const ROOT::RVec<Int_t>& pdg, const ROOT::RVec<Int_t>& flags, const ROOT::RVec<Int_t>& mother) {
             return is_MC_Event(pdg, flags, mother, FSR);
         }, {"GenPart_pdgId", "GenPart_statusFlags", "GenPart_genPartIdxMother"})
         .Filter("Z0_Event", "Is_Z0_Event");
 
-    // All Z0-> mu+ mu- events
-    auto tot_gen_events = node_acc.Count();
+    // All Z0-> mu+ mu- generated events
+    auto tot_generated_events = node_acc.Count();
 
     // Building muon masks for kinematical selection
     node_acc = node_acc
@@ -81,14 +86,16 @@ std::vector<float> CalculateAcceptance(ROOT::RDF::RNode node, const std::string&
         .Filter("(abs(Mu_eta[0]) < 2.4) && (abs(AMu_eta[0]) < 2.4)", "Eta_cut")
 
         // Invariant mass calculus
-        .Define("Z0_InvMass", [](const ROOT::RVec<float>& mu_pt, const ROOT::RVec<float>& amu_pt, const ROOT::RVec<float>& mu_eta, 
-        const ROOT::RVec<float>& amu_eta, const ROOT::RVec<float>& mu_phi, const ROOT::RVec<float>& amu_phi, const ROOT::RVec<float>& mu_mass, 
-        const ROOT::RVec<float>& amu_mass) {
+        .Define("Z0_InvMass", [](const ROOT::RVec<float>& mu_pt, const ROOT::RVec<float>& anti_mu_pt, const ROOT::RVec<float>& mu_eta, 
+        const ROOT::RVec<float>& anti_mu_eta, const ROOT::RVec<float>& mu_phi, const ROOT::RVec<float>& anti_mu_phi, 
+        const ROOT::RVec<float>& mu_mass, const ROOT::RVec<float>& anti_mu_mass) -> float {
                 
-            return CalculateInvariantMass_Pair<float>(mu_pt[0], amu_pt[0], mu_eta[0], amu_eta[0], mu_phi[0], amu_phi[0], 
-                mu_mass[0], amu_mass[0]);
+            return CalculateInvariantMass_Pair<float>(mu_pt[0], anti_mu_pt[0], mu_eta[0], anti_mu_eta[0], mu_phi[0], anti_mu_phi[0], 
+                mu_mass[0], anti_mu_mass[0]);
+
         }, {"Mu_pt", "AMu_pt", "Mu_eta", "AMu_eta", "Mu_phi", "AMu_phi", "Mu_mass", "AMu_mass"})
 
+        // Invariant mass filter -> fiducial region
         .Filter("(Z0_InvMass > 60.0) && (Z0_InvMass < 120.0)", "Mass_cut");
 
         // Accepted events
@@ -97,7 +104,7 @@ std::vector<float> CalculateAcceptance(ROOT::RDF::RNode node, const std::string&
         auto report_node = node_acc.Report();
         report_node->Print();
 
-        float num_tot = static_cast<float>(tot_gen_events.GetValue());
+        float num_tot = static_cast<float>(tot_generated_events.GetValue());
         float num_acc = static_cast<float>(acc_events.GetValue());
 
         float acc = (num_tot > 0) ? (num_acc / num_tot) : 0.0;
@@ -109,10 +116,15 @@ std::vector<float> CalculateAcceptance(ROOT::RDF::RNode node, const std::string&
     return results;
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 ResolutionResults CalculateResolution(ROOT::RDF::RNode node, const config_struct& cfg) {
     ROOT::RDF::RNode node_resolution = node;
     
+    // Resolution quantity
     std::string tag = cfg.resolution.quantity;
+    
+    // Columns in RDF node
     std::string gen_col = "";
     std::string reco_col = "";
 
@@ -127,9 +139,11 @@ ResolutionResults CalculateResolution(ROOT::RDF::RNode node, const config_struct
         gen_col = "Gen_Phis";
     }
 
+    // Vector of bins
     std::vector<double> vector_bins = CreateBins(cfg.resolution.gen_bins, cfg.resolution.min, cfg.resolution.max, "linear");
     int n_bins = vector_bins.size() - 1;
 
+    // Initializing struct
     ResolutionResults result;
     result.mean.resize(n_bins);
     result.sigma.resize(n_bins);
@@ -145,8 +159,8 @@ ResolutionResults CalculateResolution(ROOT::RDF::RNode node, const config_struct
 
     std::vector<std::vector<double>> bin_buffers(n_bins);
 
+    // For each event -> unpacking reconstructed quantity and saving it into bin vector.
     size_t n_entries = gen_vec.size();
-    
     for (size_t i = 0; i < n_entries; i++) {
 
         auto upper_idx = std::upper_bound(vector_bins.begin(), vector_bins.end(), gen_vec[i]);
@@ -157,6 +171,7 @@ ResolutionResults CalculateResolution(ROOT::RDF::RNode node, const config_struct
         }
     }
 
+    // For each bin content
     for (int j = 0; j < n_bins; j++) {
         const auto& bin = bin_buffers[j];
         
@@ -167,26 +182,25 @@ ResolutionResults CalculateResolution(ROOT::RDF::RNode node, const config_struct
             continue;
         }
         
+        // Mean calculus
         double sum = 0.0;
-        
-        for (double value : bin) {
-            sum += value;
+        for (int i = 0; i < entries; i++) {
+            sum += bin[i];
         }
 
         double mean = sum / entries;
         result.mean[j] = mean;
 
+        // Standard deviation calculus
         if (entries > 1) {
             double sq_sum = 0;
-            
-            for (double value : bin) {
-                double diff = value - mean;
+            for (int i = 0; i < entries; i++) {
+                double diff = bin[i] - mean;   
                 sq_sum += diff * diff;
             }
             result.sigma[j] = std::sqrt(sq_sum / (entries - 1));
         }
     }
-
     return result;
 }
 
@@ -195,8 +209,8 @@ ResolutionResults CalculateResolution(ROOT::RDF::RNode node, const config_struct
 ROOT::RDF::RNode EventSelection(ROOT::RDF::RNode node, const config_struct& cfg) {
     ROOT::RDF::RNode node_event = node;
 
+    // Defining Event cuts from JSON info
     std::string good_muon = "true";
-
     if (cfg.flag_ES.en_kinematics) {
         good_muon += " && (Muon_pt > " + std::to_string(cfg.cut_ES.pt_cut) + " && abs(Muon_eta) < " + std::to_string(cfg.cut_ES.eta_cut)
          + ")";
@@ -206,27 +220,6 @@ ROOT::RDF::RNode EventSelection(ROOT::RDF::RNode node, const config_struct& cfg)
         good_muon += " && (Muon_tightId == true)";
     }
 
-    node_event = node_event
-        .Define("GoodMuon", good_muon)
-
-        .Define("GM_Pt", "Muon_pt[GoodMuon]")
-        .Define("GM_Eta", "Muon_eta[GoodMuon]")
-        .Define("GM_Phi", "Muon_phi[GoodMuon]")
-        .Define("GM_Mass", "Muon_mass[GoodMuon]")
-        .Define("GM_Charge", "Muon_charge[GoodMuon]");
-
-    node_event = node_event
-        .Define("EventPair", "Sum(GoodMuon) == 2")
-        .Define("GoodEvent", "EventPair && (GM_Charge[0] != GM_Charge[1])");
-
-    node_event = node_event
-        .Define("InvariantMass", [] (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
-         const ROOT::RVec<float>& mass) -> float {
-            
-            return static_cast<float>(ROOT::VecOps::InvariantMass(pt, eta, phi, mass));
-        
-        }, {"GM_Pt", "GM_Eta", "GM_Phi", "GM_Mass"});
-
     std::string event_cut = "GoodEvent";
     if (cfg.flag_ES.en_mass_window) {
         event_cut += " && (InvariantMass > " + std::to_string(cfg.cut_ES.mass_min) + " && InvariantMass < " 
@@ -234,9 +227,26 @@ ROOT::RDF::RNode EventSelection(ROOT::RDF::RNode node, const config_struct& cfg)
     }
 
     node_event = node_event
-        .Filter(event_cut, "InvMass selection -> Good Event");
+        .Define("GoodMuon", good_muon)
 
-            node_event = node_event
+        .Define("GM_Pt", "Muon_pt[GoodMuon]")
+        .Define("GM_Eta", "Muon_eta[GoodMuon]")
+        .Define("GM_Phi", "Muon_phi[GoodMuon]")
+        .Define("GM_Mass", "Muon_mass[GoodMuon]")
+        .Define("GM_Charge", "Muon_charge[GoodMuon]")
+
+        .Define("EventPair", "Sum(GoodMuon) == 2")
+        .Define("GoodEvent", "EventPair && (GM_Charge[0] != GM_Charge[1])")
+
+        .Define("InvariantMass", [] (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
+         const ROOT::RVec<float>& mass) -> float {
+            
+            return static_cast<float>(ROOT::VecOps::InvariantMass(pt, eta, phi, mass));
+        
+        }, {"GM_Pt", "GM_Eta", "GM_Phi", "GM_Mass"})
+
+        .Filter(event_cut, "InvMass selection -> Good Event")
+
         .Define("Pt_Z", [] (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
          const ROOT::RVec<float>& mass) {
             
@@ -263,6 +273,8 @@ ROOT::RDF::RNode EventSelection(ROOT::RDF::RNode node, const config_struct& cfg)
     return node_event;
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
 EventHisto BuildEventHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
     ROOT::RDF::RNode node_event = node;
     EventHisto histo;
@@ -270,6 +282,7 @@ EventHisto BuildEventHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
     std::vector<double> bins_pt, bins_y, bins_phis;
     int n_pt, n_y, n_phis;
 
+    // Choosing binning options
     if (cfg.unfold.use_custom_bins == true) {
         bins_pt = cfg.unfold.pt_bins.reco_vec;
         bins_y = cfg.unfold.y_bins.reco_vec;
@@ -285,13 +298,13 @@ EventHisto BuildEventHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
         bins_phis = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution);
     }
 
-    // Mll bins
+    // Mll bins - HARDCODED
     int n_mll = 70;
     
     std::vector<double> mll_bins(n_mll + 1);
     double step = (120.0 - 60.0) / n_mll;
 
-    for (int i = 0; i <= n_mll; i++) {
+    for (int i = 0; i < n_mll + 1; i++) {
         mll_bins[i] = 60.0 + (i * step);
     }
 
