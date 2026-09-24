@@ -62,3 +62,20 @@ target_link_libraries(run_tests PRIVATE gtest_main ${COMMON_LIBS})
 
 include(GoogleTest)
 gtest_discover_tests(run_tests)
+
+
+find_package(Doxygen)
+
+if(DOXYGEN_FOUND)
+    set(DOXYGEN_GENERATE_HTML YES)
+    set(DOXYGEN_GENERATE_LATEX NO)
+    
+    doxygen_add_docs(
+        docs
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        COMMENT "Generazione della documentazione Doxygen..."
+    )
+else()
+    message(WARNING "Doxygen non è stato trovato nel sistema. Il target 'docs' non sarà disponibile.")
+endif()
