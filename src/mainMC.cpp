@@ -10,12 +10,12 @@
 #include "TEfficiency.h"
 
 #include "Config.h"
-#include "Filters.h"
 #include "Utils.h"
-#include "Checks.h"
 #include "Manager.h"
-#include "AnalysisTools.h"
 #include "Unfold.h"
+#include "Selection.h"
+#include "Event.h"
+#include "ControlCheck.h"
 
 int main(int argc, char* argv[]) {
 
@@ -322,7 +322,7 @@ int main(int argc, char* argv[]) {
             UnfoldDensities density = CreateUnfoldDensity(resp_histo, tag);// OR HERE
             UnfoldResult result;
             
-            EventHisto event_histo_struct = BuildEventHisto(node_event, cfg);
+            EventSelectionHisto event_histo_struct = BuildEventSelection_Histo(node_event, cfg);
 
             // Signal Fitter - Second Event Loop on data
 
@@ -334,7 +334,7 @@ int main(int argc, char* argv[]) {
             
             } else if (cfg.unfold.bkg_subtraction == true){
                 std::cout << "Initializing Unfold procedure with BKG substraction fit." << std::endl;
-                event_histo = EventFit_SignalHisto_Wrapper(cfg, event_histo_struct);
+                event_histo = EventFit_SignalHisto_Wrapper(event_histo_struct, cfg);
             
             } else {
                 std::cout << "Initializing Standard Unfold procedure." << std::endl;
@@ -392,9 +392,9 @@ int main(int argc, char* argv[]) {
             // DATA DATASET
             ROOT::RDataFrame data_frame("DATA_Event_Tree", cfg.selection.o_sel_file_data);
             ROOT::RDF::RNode node_event = data_frame;
-            EventHisto event_histo_struct = BuildEventHisto(node_event, cfg);
+            EventSelectionHisto event_histo_struct = BuildEventSelection_Histo(node_event, cfg);
 
-            std::unique_ptr<TH1D> event_histo = EventFit_SignalHisto_Wrapper(cfg, event_histo_struct);
+            std::unique_ptr<TH1D> event_histo = EventFit_SignalHisto_Wrapper(event_histo_struct, cfg);
             std::string tag = cfg.event.event_quantity;
             TH1D* histo_ev;
 

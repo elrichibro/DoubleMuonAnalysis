@@ -1,6 +1,6 @@
 {
   "general": { 
-    "operation_mode":"Analysis",
+    "operation_mode":"Resolution",
     "verbose": 1,
     "visualize":true
   },

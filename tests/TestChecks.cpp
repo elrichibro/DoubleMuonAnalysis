@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <ROOT/RVec.hxx>
 
-#include "Checks.h"
+#include "ControlCheck.h"
 
 TEST(MonteCarloChecksTest, is_MC_Z0_valid_input) {
     ROOT::RVec<Int_t> pdgId{11, 23, -11, 23, -23, 21, 20};
