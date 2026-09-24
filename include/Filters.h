@@ -30,12 +30,18 @@ ROOT::RDF::RNode ApplyValidationFilter(ROOT::RDF::RNode node, const validation_t
 // Acceptance
 // ----------
 
-/// @brief Calculates the acceptance from MonteCarlo sample.
+/// @brief Calculates the acceptance from MonteCarlo sample. Cuts values are fixed by definition -> can be overwritten manually.
 /// @param node Input RDF node.
 /// @param tag Tag for Column name.
 /// @param FSR FSR Muon states.
 /// @return Returns the value of detector acceptance in Z0->mu+mu- event. First element is central value, second value is the stat. sigma.
 std::vector<float> CalculateAcceptance(ROOT::RDF::RNode node, const std::string& tag, int FSR);
+
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+// ----------
+// Resolution
+// ----------
 
 struct ResolutionResults {
     std::vector<double> mean;
@@ -43,43 +49,46 @@ struct ResolutionResults {
     std::vector<int> events;
 };
 
+/// @brief Calculates the resolution of the detector from MC sample
+/// @param node RDF input node 
+/// @param cfg General configure input
+/// @return A struct containing aritmetic mean and standard deviation for each bin.
 ResolutionResults CalculateResolution(ROOT::RDF::RNode node, const config_struct& cfg);
+
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-// -------
-// Structs
-// -------
+// ------------
+// Event struct
+// ------------
 
-/// @brief 
+/// @brief RDF Histograms obtained from DATA sample.
 struct EventHisto {
-    ROOT::RDF::RResultPtr<TH1D> h1_mll;
-    ROOT::RDF::RResultPtr<TH1D> h1_pt;
-    ROOT::RDF::RResultPtr<TH1D> h1_y;
-    ROOT::RDF::RResultPtr<TH1D> h1_phis;
+    ROOT::RDF::RResultPtr<TH1D> h1_mll;// 1D histogram: Z0 invariant mass
+    ROOT::RDF::RResultPtr<TH1D> h1_pt;// 1D histogram: Z0 Transverse momentum
+    ROOT::RDF::RResultPtr<TH1D> h1_y;// 1D histogram: Z0 rapidity
+    ROOT::RDF::RResultPtr<TH1D> h1_phis;// 1D histogram: Z0 phi*
 
-    ROOT::RDF::RResultPtr<TH2D> h2_mll_pt;
-    ROOT::RDF::RResultPtr<TH2D> h2_mll_y;
-    ROOT::RDF::RResultPtr<TH2D> h2_mll_phis;
+    ROOT::RDF::RResultPtr<TH2D> h2_mll_pt;// 2D histogram: Z0 transverse momentum vs invariant mass
+    ROOT::RDF::RResultPtr<TH2D> h2_mll_y;// 2D histogram: Z0 rapidity vs invariant mass
+    ROOT::RDF::RResultPtr<TH2D> h2_mll_phis;// 2D histogram: Z0 phi* vs invariant mass
 };
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-// ---------
-// Functions
-// ---------
+// ---------------
+// Event functions
+// ---------------
 
-// ------------------------------------------------------------------------------------------------------------------------------------
-
-/// @brief 
-/// @param node 
-/// @param cfg 
-/// @return 
+/// @brief Filters the event selecting Z0/mu+mu- events falling withing the fiducial region.
+/// @param node RDF input node: DATA/MC -> Event selection procedure
+/// @param cfg General configure struct
+/// @return RNode with filtered events and new variables defined.
 ROOT::RDF::RNode EventSelection(ROOT::RDF::RNode node, const config_struct& cfg);
 
-/// @brief 
-/// @param node 
-/// @param cfg 
-/// @return 
+/// @brief Creates histograms from RDF input node and save them into EventHisto struct. The selection cuts/flags can be setted by JSON values.
+/// @param node RDF input node.
+/// @param cfg General config struct.
+/// @return The histogram struct filled with event histograms.
 EventHisto BuildEventHisto(ROOT::RDF::RNode node, const config_struct& cfg);
 
 #endif
