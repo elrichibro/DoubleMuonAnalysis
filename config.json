@@ -1,6 +1,6 @@
 {
   "general": { 
-    "operation_mode":"Resolution",
+    "operation_mode":"Analysis",
     "verbose": 1,
     "visualize":true
   },
@@ -18,15 +18,15 @@
   },
   
   "resolution":{
-    "quantity":"y",
-    "gen_bins":100,
-    "min":-2.4,
-    "max":2.4
+    "quantity":"phis",
+    "gen_bins":1000,
+    "min":0.0001,
+    "max":0.1
   },
 
   "selection": {
     "dataset": "MC",
-    "selection_mode": "Event",
+    "selection_mode": "RespMatrix",
     "save_sel_data":true,
     "save_sel_plots":false,
     "visual_sel":false,
@@ -40,9 +40,11 @@
   },
 
   "unfold":{
-    "unfold_quantity" : "pt",
+    "unfold_quantity" : "phis",
     "check_plot":false,
     "use_custom_bins":true,
+    "closure_test":false,
+    "bkg_subtraction":true,
 
     "l_scan":{
       "n_iter": 100,
@@ -64,29 +66,29 @@
     "y_bins":{
       "reco_bins":30,
       "gen_bins":15,
-      "min":0,
-      "max":2.0,
+      "min":0.001,
+      "max":2.4,
       "distribution":"linear",
-      "reco_vec":[-2.4, 2.3, -2.2, 2.1, -2.0, 1.9, -1.8, -1.6, -1.4, -1.2, -1.0, 0.9, -0.8, 0.7, -0.6, 0.5, -0.4, 0.3,
-       -0.2, 0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4],
-      "gen_vec":[-2.4, -2.0, -1.6, -1.2, -0.8, -0.4, 0.0, 0.4, 0.8, 1.2, 1.6, 2.0, 2.4]
+      "reco_vec":[0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1.0, 1.2, 1.4, 1.7, 1.9, 2.1, 2.4],
+      "gen_vec":[0.0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 2.0, 2.4]
     },
     
     "phis_bins":{
       "reco_bins":40,
       "gen_bins":20,
-      "min":0.001,
+      "min":0.0001,
       "max":2.0,
       "distribution":"log",
       "split":0.003,
-      "reco_vec":[0.001, 0.005, 0.010, 0.018, 0.028, 0.040, 0.055, 0.072, 0.090, 0.110, 0.135, 0.165, 
+      "reco_vec":[0.0001, 0.0008, 0.003, 0.005, 0.007, 0.009, 0.012, 0.015, 0.019, 0.024, 0.029, 0.035, 0.040, 0.053, 0.072, 0.090, 0.110, 0.135, 0.165, 
       0.200, 0.245, 0.300, 0.370, 0.450, 0.550, 0.680, 0.840, 1.050, 1.300],
-      "gen_vec":[0.001, 0.012, 0.030, 0.060, 0.100, 0.150, 0.230, 0.350, 0.520, 0.780, 1.000, 1.300]
+      
+      "gen_vec":[0.0001, 0.004, 0.008, 0.012, 0.016, 0.020, 0.026, 0.033, 0.042, 0.070, 0.10, 0.150, 0.230, 0.350, 0.520, 0.780, 1.000, 1.300]
     }
   },
 
   "event": {
-    "event_quantity":"pt",
+    "event_quantity":"phis",
     "o_event_file":"../output/event_fit.root",
     "save_fit_plots":false
   },
