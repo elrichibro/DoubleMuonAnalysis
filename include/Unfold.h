@@ -207,6 +207,6 @@ std::unique_ptr<TH1D> BuildFitResultHistogram(const std::vector<EventFitResult>&
 /// @brief 
 /// @param cfg 
 /// @return 
-std::unique_ptr<TH1D> EventFit_SignalHisto_Wrapper(const config_struct& cfg);
+std::unique_ptr<TH1D> EventFit_SignalHisto_Wrapper(const config_struct& cfg, EventHisto& event_histo);
 
 #endif

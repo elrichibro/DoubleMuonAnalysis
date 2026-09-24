@@ -322,8 +322,31 @@ int main(int argc, char* argv[]) {
             UnfoldDensities density = CreateUnfoldDensity(resp_histo, tag);// OR HERE
             UnfoldResult result;
             
+            EventHisto event_histo_struct = BuildEventHisto(node_event, cfg);
+
             // Signal Fitter - Second Event Loop on data
-            std::unique_ptr<TH1D> event_histo = EventFit_SignalHisto_Wrapper(cfg);
+
+            std::unique_ptr<TH1D> event_histo;
+
+            if (cfg.unfold.closure_test == true) {
+                std::cout << "Initializing Unfold Closure test procedure." << std::endl;
+                event_histo = nullptr;    
+            
+            } else if (cfg.unfold.bkg_subtraction == true){
+                std::cout << "Initializing Unfold procedure with BKG substraction fit." << std::endl;
+                event_histo = EventFit_SignalHisto_Wrapper(cfg, event_histo_struct);
+            
+            } else {
+                std::cout << "Initializing Standard Unfold procedure." << std::endl;
+
+                if (tag == "pt") {
+                    event_histo.reset(event_histo_struct.h1_pt.GetPtr());
+                } else if (tag == "y") {
+                    event_histo.reset(event_histo_struct.h1_y.GetPtr());
+                } else if (tag == "phis") {
+                    event_histo.reset(event_histo_struct.h1_phis.GetPtr());
+                }
+            }
             
             // Old method
             //EventHisto event_histo = BuildEventHisto(node_event, cfg);
@@ -365,10 +388,25 @@ int main(int argc, char* argv[]) {
 
         } else if (cfg.analysis.analysis_mode == "Event") {
             std::vector<std::unique_ptr<TCanvas>> canvas;
-            std::unique_ptr<TH1D> event_histo = EventFit_SignalHisto_Wrapper(cfg);
-            
+
+            // DATA DATASET
+            ROOT::RDataFrame data_frame("DATA_Event_Tree", cfg.selection.o_sel_file_data);
+            ROOT::RDF::RNode node_event = data_frame;
+            EventHisto event_histo_struct = BuildEventHisto(node_event, cfg);
+
+            std::unique_ptr<TH1D> event_histo = EventFit_SignalHisto_Wrapper(cfg, event_histo_struct);
+            std::string tag = cfg.event.event_quantity;
+            TH1D* histo_ev;
+
             if (visualize && app != nullptr) {                
-                
+                if (tag == "pt") {
+                    histo_ev = event_histo_struct.h1_pt.GetPtr();
+                } else if (tag == "y") {
+                    histo_ev = event_histo_struct.h1_y.GetPtr();
+                } else if (tag == "phis") {
+                    histo_ev = event_histo_struct.h1_phis.GetPtr();
+                }
+
                 TH1D* histo = event_histo.get();
                 if (histo == nullptr) {
                     std::cout << "ERROR: invalid Response Matrix histogram, exiting..." << std::endl;
@@ -377,13 +415,24 @@ int main(int argc, char* argv[]) {
 
                 std::string name_c1 = "Signal yield_ " + cfg.event.event_quantity;
                 auto c1 = std::make_unique<TCanvas>(name_c1.c_str(), name_c1.c_str(), 800, 600);
-                
-                histo->Draw("HIST E");
 
                 std::string title_x = cfg.event.event_quantity;
                 std::string title_y = cfg.event.event_quantity + " Entries";
                 histo->GetXaxis()->SetTitle(title_x.c_str());
                 histo->GetYaxis()->SetTitle(title_y.c_str());
+
+                histo_ev->SetLineColor(kBlue);
+                histo_ev->SetLineWidth(2);
+        
+                histo->SetLineColor(kRed);
+                histo->SetLineWidth(2);
+
+                double max_val = std::max(histo_ev->GetMaximum(), histo->GetMaximum());
+                histo_ev->SetMaximum(max_val * 1.25);
+                histo_ev->SetMinimum(0.0);
+
+                histo_ev->Draw("E");
+                histo->Draw("E SAME");
                 
                 c1->Update();
                 canvas.push_back(std::move(c1));

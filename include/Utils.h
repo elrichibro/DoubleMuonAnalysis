@@ -147,7 +147,7 @@ T CalculateRapidityZ0(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const R
     auto z0 = mu1 + mu2;
 
     T y_Z0 = static_cast<T>(z0.Rapidity());
-    return y_Z0; 
+    return std::abs(y_Z0); 
 }
 
 template <typename T>
@@ -161,7 +161,7 @@ T CalculateRapidityZ0_Raw(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, con
 
     T y_Z0 = static_cast<T>(0.5 * std::log((E_tot + pz_tot) / (E_tot - pz_tot)));
     
-    return y_Z0; 
+    return std::abs(y_Z0); 
 }
 
 template <typename T>
@@ -177,7 +177,7 @@ T CalculateRapidityZ0_Raw_Pair(const T pt1, const T pt2, const T eta1, const T e
 
     T y_Z0 = static_cast<T>(0.5 * std::log((E_tot + pz_tot) / (E_tot - pz_tot)));
     
-    return y_Z0; 
+    return std::abs(y_Z0); 
 }
 
 std::vector<double> CreateBins(int nbins, double min, double max, const std::string& distribution);

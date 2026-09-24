@@ -596,8 +596,12 @@ UnfoldResult ApplyUnfold(std::unique_ptr<TUnfoldDensity> density, TH1D* event_hi
 
     results.unf_density = std::move(density); 
 
+    if (cfg.unfold.closure_test == true) {
+        results.unf_density->SetInput(resp_histo);
+    } else {
+        results.unf_density->SetInput(event_histo);
+    }
     // Starting the Second Event Loop on DATA !
-    results.unf_density->SetInput(event_histo);
     
     // Subtracting fake background
     //results.unf_density->SubtractBackground(fake_histo, "Fake signal", 1.0, 0.05);
@@ -839,18 +843,13 @@ int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMat
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-std::unique_ptr<TH1D> EventFit_SignalHisto_Wrapper(const config_struct& cfg) {
+std::unique_ptr<TH1D> EventFit_SignalHisto_Wrapper(const config_struct& cfg, EventHisto& event_histo) {
     std::string tag = cfg.event.event_quantity;
     
-    // DATA DATASET
-    ROOT::RDataFrame data_frame("DATA_Event_Tree", cfg.selection.o_sel_file_data);
-    ROOT::RDF::RNode node_event = data_frame;
-
     // MC DATASET -> Model
     ROOT::RDataFrame mc_frame("MC_Event_Tree", cfg.selection.o_sel_file_data);
     ROOT::RDF::RNode node_event_model = mc_frame;
 
-    EventHisto event_histo = BuildEventHisto(node_event, cfg);
     EventHisto event_model_histo = BuildEventHisto(node_event_model, cfg);
 
     std::vector<std::unique_ptr<TH1D>> event_container = PrepareEventFit(event_histo, tag);
@@ -866,34 +865,34 @@ std::unique_ptr<TH1D> EventFit_SignalHisto_Wrapper(const config_struct& cfg) {
 
     std::vector<std::unique_ptr<RooDataSet>> event_model_container = PrepareEventFitModel(model_tree, cfg, tag);
     
-    TFile o_fit_file;
+    std::unique_ptr<TFile> o_fit_file = nullptr;
     TDirectory* fit_dir;
 
     if (cfg.event.save_fit_plots) {
         // Output file
-        TFile o_fit_file(cfg.event.o_event_file.c_str(), "UPDATE");
+        o_fit_file = std::make_unique<TFile>(cfg.event.o_event_file.c_str(), "UPDATE");        
         
-        if (o_fit_file.IsZombie()) {
+        if (o_fit_file->IsZombie()) {
             std::cout << "ERROR: invalid output file, exiting..." << cfg.event.o_event_file << std::endl;
             return nullptr;
         }
 
-        o_fit_file.cd();
+        o_fit_file->cd();
 
         std::string dir_name = "Event_InvMass_DATA_fits_" + tag;
-        TDirectory* fit_dir = o_fit_file.GetDirectory(dir_name.c_str());
+        fit_dir = o_fit_file->GetDirectory(dir_name.c_str());
 
         if (!fit_dir) {
-            fit_dir = o_fit_file.mkdir(dir_name.c_str());
+            fit_dir = o_fit_file->mkdir(dir_name.c_str());
         }
     }
 
     std::vector<EventFitResult> event_results = EventFitWrapper(event_container, event_model_container, tag, cfg.event.save_fit_plots, fit_dir);
 
     if (cfg.event.save_fit_plots) {
-        o_fit_file.cd();
-        o_fit_file.Write();
-        o_fit_file.Close();
+        o_fit_file->cd();
+        o_fit_file->Write();
+        o_fit_file->Close();
     }
 
     std::unique_ptr<TH1D> h_sig = BuildFitResultHistogram(event_results, cfg, tag);
