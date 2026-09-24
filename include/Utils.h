@@ -15,21 +15,16 @@
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-/*
-This file contains:
-    - CalculateInvariantMass()
-    - CalculateInvariantMass_Pair()
-    - CalculatePhiStar()
-*/
-
-// ------------------------------------------------------------------------------------------------------------------------------------
+// --------------
+// Invariant Mass
+// --------------
 
 /// @brief Calculates the invariant mass of the first two particles in the event.
 /// @tparam T Template: float, double.
-/// @param pt ROOT Vector containing the transverse momentum of the particles.
-/// @param eta Pseudorapidity.
-/// @param phi Angular variable in cilindrical cordinates.
-/// @param mass Mass values of the event particles.
+/// @param pt RVec containing the transverse momentum of the particles.
+/// @param eta RVec Pseudorapidity.
+/// @param phi RVec Angular variable in cilindrical cordinates.
+/// @param mass RVec Mass values of the event particles.
 /// @return Returns the invariant mass.
 template <typename T>
 T CalculateInvariantMass(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi, const ROOT::RVec<T>& mass) {
@@ -37,8 +32,6 @@ T CalculateInvariantMass(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, cons
     return ROOT::VecOps::InvariantMass(ROOT::RVec<T>{pt[0], pt[1]}, ROOT::RVec<T>{eta[0], eta[1]}, ROOT::RVec<T>{phi[0], phi[1]},
         ROOT::RVec<T>{mass[0], mass[1]});
 }
-
-// ------------------------------------------------------------------------------------------------------------------------------------
 
 /// @brief Calculates the invariant mass of a pair of particles givin the individual quantities.
 /// @tparam T float, double
@@ -77,10 +70,14 @@ T CalculateInvariantMass_Pair(const T pt1, const T pt2, const T eta1, const T et
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
+// ----
+// Phi*
+// ----
+
 /// @brief Calculates the special angular variable between the first two particles in the event.
 /// @tparam T : float, double.
-/// @param eta Pseudorapidity of the particles.
-/// @param phi Angular variable in cilindrical cordinates.
+/// @param eta RVec Pseudorapidity of the particles.
+/// @param phi RVec Angular variable in cilindrical cordinates.
 /// @return Returns special angular variable.
 template <typename T>
 T CalculatePhiStar(const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi) {
@@ -93,6 +90,13 @@ T CalculatePhiStar(const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi) {
     return std::tan((TMath::Pi() - delta_phi) / 2.0) * sin;
 }
 
+/// @brief Calculates the special angular variable between the first two particles in the event.
+/// @tparam T Float, double.
+/// @param eta1 Pseudorapidity of first particle.
+/// @param eta2 Pseudorapidity of second particle.
+/// @param phi1 Angular variable of fisrt particle.
+/// @param phi2 Angular variable of second particle.
+/// @return Scalar of type "T" rappresenting the special angular variable of the Z0.
 template <typename T>
 T CalculatePhiStar_Pair(const T eta1, const T eta2, const T phi1, const T phi2) {
     T delta_phi = std::abs(ROOT::VecOps::DeltaPhi(phi1, phi2));
@@ -106,6 +110,17 @@ T CalculatePhiStar_Pair(const T eta1, const T eta2, const T phi1, const T phi2) 
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
+// -------------------
+// Transverse momentum
+// -------------------
+
+/// @brief Calculates the transverse momentum of a pair of particles using 4-vector object.
+/// @tparam T Float, double.
+/// @param pt RVec transverse momentum
+/// @param eta RVec pseudorapidity
+/// @param phi RVec angular variable
+/// @param mass RVec mass of the particles
+/// @return A scalar column containing the transverse momentum of the first 2 particles in the collection. 
 template <typename T>
 T CalculatePtZ0(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi, const ROOT::RVec<T>& mass) {
     ROOT::Math::PtEtaPhiMVector mu1(pt[0], eta[0], phi[0], mass[0]);
@@ -117,6 +132,11 @@ T CalculatePtZ0(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const ROOT::R
     return pt_Z0;
 }
 
+/// @brief Calculates the transverse momentum of a pair of particles.
+/// @tparam T Float, double.
+/// @param pt RVec transverse momentum.
+/// @param phi RVec angular variable.
+/// @return A scalar column containing the transverse momentum of the first 2 particles in the collection. 
 template <typename T>
 T CalculatePtZ0_Raw(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& phi) {
     T px_Z0 = (pt[0] * std::cos(phi[0])) + (pt[1] * std::cos(phi[1]));
@@ -127,6 +147,13 @@ T CalculatePtZ0_Raw(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& phi) {
     return pt_Z0;
 }
 
+/// @brief Calculates the transverse momentum of a pair of particles.
+/// @tparam T Float, double.
+/// @param pt1 Transverse momentum of the first particle.
+/// @param pt2 Transverse momentum of the second particle.
+/// @param phi1 Angular variable of the first particle.
+/// @param phi2 Angular variable of the second particle.
+/// @return A scalar column containing the transverse momentum of the pair of particles given. 
 template <typename T>
 T CalculatePtZ0_Raw_Pair(const T pt1, const T pt2, const T phi1, const T phi2) {
     T px_Z0 = (pt1 * std::cos(phi1)) + (pt2 * std::cos(phi2));
@@ -139,6 +166,17 @@ T CalculatePtZ0_Raw_Pair(const T pt1, const T pt2, const T phi1, const T phi2) {
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
+// --------
+// Rapidity
+// --------
+
+/// @brief Calculates the rapidity of a pair of particles using 4-vector objects.
+/// @tparam T Float, double.
+/// @param pt RVec Transvers momentum of the particle in the collection.
+/// @param eta RVec Pseudorapidity of the particle in the collection.
+/// @param phi RVec Angular variable of the particle in the collection.
+/// @param mass RVec reconstructed mass of the particle in the collection.
+/// @return A scalar columns containing the Rapidity of the first two particles in the collection.
 template <typename T>
 T CalculateRapidityZ0(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi, const ROOT::RVec<T>& mass) {
     ROOT::Math::PtEtaPhiMVector mu1(pt[0], eta[0], phi[0], mass[0]);
@@ -150,6 +188,13 @@ T CalculateRapidityZ0(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const R
     return std::abs(y_Z0); 
 }
 
+/// @brief Calculates the rapidity of a pair of particles.
+/// @tparam T Float, double.
+/// @param pt RVec Transvers momentum of the particle in the collection.
+/// @param eta RVec Pseudorapidity of the particle in the collection.
+/// @param phi RVec Angular variable of the particle in the collection.
+/// @param mass RVec reconstructed mass of the particle in the collection.
+/// @return A scalar columns containing the Rapidity of the first two particles in the collection.
 template <typename T>
 T CalculateRapidityZ0_Raw(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, const ROOT::RVec<T>& phi, const ROOT::RVec<T>& mass) {
     ROOT::RVec<T> pz_mu = pt * std::sinh(eta);
@@ -164,6 +209,17 @@ T CalculateRapidityZ0_Raw(const ROOT::RVec<T>& pt, const ROOT::RVec<T>& eta, con
     return std::abs(y_Z0); 
 }
 
+/// @brief Calculates the rapidity of a pair of particles.
+/// @tparam T Float, double.
+/// @param pt1 Transverse momentum of the first particle.
+/// @param pt2 Transverse momentum of the second particle.
+/// @param eta1 Pseudorapidity of the first particle.
+/// @param eta2 Pseudorapidity of the second particle.
+/// @param phi1 Angular variable of the first particle.
+/// @param phi2 Agular variable of the second particle.
+/// @param mass1 Reconstructed mass of the first particle.
+/// @param mass2 Reconstructed mass of the second particle.
+/// @return A scalar columns containing the Rapidity of the two particles given as input.
 template <typename T>
 T CalculateRapidityZ0_Raw_Pair(const T pt1, const T pt2, const T eta1, const T eta2, const T phi1, const T phi2, const T mass1, const T mass2) {
     T pz_mu1 = pt1 * std::sinh(eta1);
@@ -180,6 +236,14 @@ T CalculateRapidityZ0_Raw_Pair(const T pt1, const T pt2, const T eta1, const T e
     return std::abs(y_Z0); 
 }
 
+// ------------------------------------------------------------------------------------------------------------------------------------
+
+/// @brief Creates a std::vector<double> of bins to use in histogram creation.
+/// @param nbins Number of total bins.
+/// @param min Min bin value
+/// @param max Max bin value
+/// @param distribution Distribution of bins within the vector.
+/// @return A vector of doubles rapresenting the binning of an histogram.
 std::vector<double> CreateBins(int nbins, double min, double max, const std::string& distribution);
 
 #endif
