@@ -69,13 +69,15 @@ find_package(Doxygen)
 if(DOXYGEN_FOUND)
     set(DOXYGEN_GENERATE_HTML YES)
     set(DOXYGEN_GENERATE_LATEX NO)
+    set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
     
     doxygen_add_docs(
         docs
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        COMMENT "Generazione della documentazione Doxygen..."
+
+        COMMENT "Generating Doxygen doc..."
     )
 else()
-    message(WARNING "Doxygen non è stato trovato nel sistema. Il target 'docs' non sarà disponibile.")
+    message(WARNING "Doxygen not finded.")
 endif()
