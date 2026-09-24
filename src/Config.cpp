@@ -73,7 +73,9 @@ int Configure(config_struct& value, const std::string& json_path) {
 
             value.unfold.unfold_quantity = j.value("unfold_quantity", value.unfold.unfold_quantity);
             value.unfold.check_plot = j.value("check_plot", value.unfold.check_plot);
-
+            value.unfold.closure_test = j.value("closure_test", value.unfold.closure_test);
+            value.unfold.bkg_subtraction = j.value("bkg_subtraction", value.unfold.bkg_subtraction);
+            
             if (j.contains("l_scan")) {
                 const auto& j_l = j["l_scan"];
 
@@ -291,6 +293,8 @@ void Verbose_config(const config_struct& value) {
 
     std::cout << "    Unfold Quantity: " << value.unfold.unfold_quantity << std::endl;
     std::cout << "    Check Plots flag: " << value.unfold.check_plot << std::endl;
+    std::cout << "    Closure test flag: " << value.unfold.closure_test << std::endl;
+    std::cout << "    BKG subtraction flag: " << value.unfold.bkg_subtraction << std::endl;
 
     std::cout << "" << std::endl;
 

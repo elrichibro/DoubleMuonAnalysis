@@ -78,7 +78,9 @@ struct l_scan {
 struct unfold_config {
     std::string unfold_quantity = "";
     bool check_plot = false;
-    bool use_custom_bins;    
+    bool use_custom_bins = false;   
+    bool closure_test = false;
+    bool bkg_subtraction; 
     
     l_scan scan;
     bins pt_bins;
