@@ -48,17 +48,17 @@ EventSelectionHisto BuildEventSelection_Histo(ROOT::RDF::RNode node, const confi
 // Building Histograms for fitting procedure
 // -----------------------------------------
 
-/// @brief 
-/// @param ev_sel_histo 
-/// @param tag 
-/// @return 
+/// @brief Divides the TH2D into TH1D Invariant mass histograms for each bin of pt, y or phis (selected tag quantity). 
+/// @param ev_sel_histo Histogram struct obtained from event selection.
+/// @param tag Event quantity: pt, y, phis.
+/// @return A vector containing the TH1D histograms of the Invariant Mass for each bin of pt, y, phis.
 std::vector<std::unique_ptr<TH1D>> BuildEventFit_Histo(EventSelectionHisto& ev_sel_histo, const std::string& tag);
 
-/// @brief 
-/// @param tree 
-/// @param cfg 
-/// @param tag 
-/// @return 
+/// @brief Divides the unbinned data directly from Event selection ttree and fills a std vector of RooDataSet. That vector will be used for model generation with RooKeysPdf.
+/// @param tree Input unbinned data ttree.
+/// @param cfg General config struct.
+/// @param tag Studied quantity.
+/// @return A vector of unbinned type containers for model generation in fit procedure.
 std::vector<std::unique_ptr<RooDataSet>> BuildEventFit_SignalModel(TTree* tree, const config_struct& cfg, const std::string& tag);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
@@ -80,15 +80,22 @@ struct EventFitResult {
     double lambda;// Exponential lambda result.
     double lambda_err;// Lambda fit error.
     
-    int fit_status;// Fit status -> 0 = succes
+    int fit_status;// Fit status -> 0 = success
 };
 
-/// @brief Fits binned data with a signal model hardcoded. Saves the fit and residual plot into the output Event file.
-/// @param bin_idx Bin index of P_t, Y, Phis star.
 /// @param h_mll Histogram -> Binned data for input.
 /// @param o_dir Output directory.
 /// @param tag Identifies the ortogonal quantity.
 /// @return Returns a struct containing the fit results.
+
+/// @brief Fits binned data with a signal model obtained from MC unbinned data. Saves the fit results and the plot with residuals into the output Event file.
+/// @param bin_idx Bin index of P_t, Y, Phis*.
+/// @param h_mll Histogram -> Binned data for input.
+/// @param d_mll_model Unbinne data for model generation.
+/// @param o_dir Output directory.
+/// @param tag Studied quantity.
+/// @param save_plots Saving plots flag.
+/// @return A struct containing the fit results. Quantity of interest is the signal yield.
 EventFitResult EventSingleFit(int bin_idx, TH1D* h_mll, RooDataSet* d_mll_model, TDirectory* o_dir, const std::string& tag, const bool save_plots);
 
 /// @brief Wrapper for EventSingleFit that loops on all P_t, Y or Phi* bins.
@@ -96,6 +103,14 @@ EventFitResult EventSingleFit(int bin_idx, TH1D* h_mll, RooDataSet* d_mll_model,
 /// @param o_dir Output directory.
 /// @param tag Identifies the ortogonal quantity.
 /// @return Returns all the Fit results.
+
+/// @brief Wrapper for EventSingleFit that loops on all P_t, Y or Phi* bins.
+/// @param container Input histograms container.
+/// @param container_model Input unbinned data for model generation container.
+/// @param tag Studied quantity tag: P_t, Y, Phi*.
+/// @param save_plots Save plots flag.
+/// @param o_dir Output directory.
+/// @return A vector of Event single fit structs -> all the results for all (P_t, Y or Phi* -> only one quantity under study) bins.
 std::vector<EventFitResult> EventSingleFit_Wrapper(std::vector<std::unique_ptr<TH1D>>& container, std::vector<std::unique_ptr<RooDataSet>>& container_model,
 const std::string& tag, const bool save_plots, TDirectory* o_dir = nullptr);
 
@@ -105,9 +120,10 @@ const std::string& tag, const bool save_plots, TDirectory* o_dir = nullptr);
 // All Event procedure wrapper
 // ---------------------------
 
-/// @brief 
-/// @param cfg 
-/// @return 
+/// @brief Wrapper of all steps of Event option.
+/// @param ev_sel_histo Event selection histograms.
+/// @param cfg General configuration struct.
+/// @return A sigle TH1D of the signal with subtracted background.
 std::unique_ptr<TH1D> EventFit_SignalHisto_Wrapper(EventSelectionHisto& ev_sel_histo, const config_struct& cfg);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
@@ -116,24 +132,24 @@ std::unique_ptr<TH1D> EventFit_SignalHisto_Wrapper(EventSelectionHisto& ev_sel_h
 // Fit visualization/saving functions
 // ----------------------------------
 
-/// @brief 
-/// @param results 
-/// @param cfg 
-/// @param tag 
-/// @return 
+/// @brief Builds the P_t, Y or Phi* histogram with background subtraction. Obtained from fit procedure.
+/// @param results Vector containing all bins fit results.
+/// @param cfg General configuration struct.
+/// @param tag Studied quantity.
+/// @return A TH1D P_t, Y or Phi* histogram of the signal(only) yield.
 std::unique_ptr<TH1D> BuildFitResult_Histo(const std::vector<EventFitResult>& results, const config_struct& cfg, const std::string& tag);
 
-/// @brief 
-/// @param mll 
-/// @param model 
-/// @param data 
-/// @param bkg_pdf 
-/// @param res 
-/// @param h_mll 
-/// @param o_dir 
-/// @param bin_idx 
-/// @param tag 
-void SaveEventFitCanvas(RooRealVar& mll, RooAbsPdf& model, RooAbsData& data, RooAbsPdf& bkg_pdf, const EventFitResult& res, TH1D* h_mll, 
+/// @param mll RooFit observable.
+/// @param model RooFit signal pdf.
+/// @param data RooFit data.
+/// @param bkg_pdf RooFit background pdf.
+/// @param res Fit results struct
+/// @param h_mll Input histogram for bin tuning.
+/// @param o_dir Output directory.
+/// @param bin_idx Bin index for fit identification.
+/// @param tag Studied quantity.
+/// @return 0 if success, else error code.
+int SaveEventFitCanvas(RooRealVar& mll, RooAbsPdf& model, RooAbsData& data, RooAbsPdf& bkg_pdf, const EventFitResult& res, TH1D* h_mll, 
 TDirectory* o_dir, const int bin_idx, const std::string& tag);
 
 

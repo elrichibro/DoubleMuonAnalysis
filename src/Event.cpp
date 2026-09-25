@@ -21,25 +21,18 @@
 EventSelectionHisto BuildEventSelection_Histo(ROOT::RDF::RNode node, const config_struct& cfg) {
     ROOT::RDF::RNode node_event = node;
     EventSelectionHisto histo;
-      
-    std::vector<double> bins_pt, bins_y, bins_phis;
+
     int n_pt, n_y, n_phis;
 
-    // Choosing binning options
-    if (cfg.unfold.use_custom_bins == true) {
-        bins_pt = cfg.unfold.pt_bins.reco_vec;
-        bins_y = cfg.unfold.y_bins.reco_vec;
-        bins_phis = cfg.unfold.phis_bins.reco_vec;
+    // Binning options
+    std::vector<double> bins_pt = (cfg.unfold.use_custom_bins) ? cfg.unfold.pt_bins.reco_vec :
+    CreateBins(cfg.unfold.pt_bins.reco_bins, cfg.unfold.pt_bins.min, cfg.unfold.pt_bins.max, cfg.unfold.pt_bins.distribution);
 
-    } else {
-        const auto& pt = cfg.unfold.pt_bins;
-        const auto& y = cfg.unfold.y_bins;
-        const auto& phis = cfg.unfold.phis_bins;
-
-        bins_pt = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution);
-        bins_y = CreateBins(y.reco_bins, y.min, y.max, y.distribution);            
-        bins_phis = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution);
-    }
+    std::vector<double> bins_y = (cfg.unfold.use_custom_bins) ? cfg.unfold.y_bins.reco_vec : 
+    CreateBins(cfg.unfold.y_bins.reco_bins, cfg.unfold.y_bins.min, cfg.unfold.y_bins.max, cfg.unfold.y_bins.distribution);
+    
+    std::vector<double> bins_phis = (cfg.unfold.use_custom_bins) ? cfg.unfold.phis_bins.reco_vec : 
+    CreateBins(cfg.unfold.phis_bins.reco_bins, cfg.unfold.phis_bins.min, cfg.unfold.phis_bins.max, cfg.unfold.phis_bins.distribution);
 
     // Mll bins - HARDCODED
     int n_mll = 70;
@@ -59,12 +52,14 @@ EventSelectionHisto BuildEventSelection_Histo(ROOT::RDF::RNode node, const confi
     ROOT::RDF::TH2DModel model_mll_y("h2_mll_y", "Y vs Mll", n_y, bins_y.data(), n_mll, mll_bins.data());
     ROOT::RDF::TH2DModel model_mll_phis("h2_mll_phis", "Phis vs Mll", n_phis, bins_phis.data(), n_mll, mll_bins.data());
 
+    // 1D histograms
     histo.h1_mll = node_event.Histo1D({"hInvMass_fit","", 70, 60.0, 120.0}, "InvariantMass");
         
     histo.h1_pt = node_event.Histo1D({"hPt_event", "", n_pt, bins_pt.data()}, "Pt_Z");
     histo.h1_y = node_event.Histo1D({"hRapidity_event", "", n_y, bins_y.data()}, "Y_Z");
     histo.h1_phis = node_event.Histo1D({"hPhis_event", "", n_phis, bins_phis.data()}, "Phis_Z");
 
+    // 2D histograms
     histo.h2_mll_pt = node_event.Histo2D(model_mll_pt, "Pt_Z", "InvariantMass");
     histo.h2_mll_y = node_event.Histo2D(model_mll_y, "Y_Z", "InvariantMass");
     histo.h2_mll_phis = node_event.Histo2D(model_mll_phis, "Phis_Z", "InvariantMass");
@@ -93,6 +88,11 @@ std::vector<std::unique_ptr<TH1D>> BuildEventFit_Histo(EventSelectionHisto& ev_s
         std::cout << "ERROR: invalid tag input, exiting..." << std::endl;
     }
 
+    if (!histo) {
+        std::cout << "ERROR: invalid input histogram pointer: " << histo << ", exiting..." << std::endl;
+        return container;
+    }
+
     int n_bins = histo->GetNbinsX();
     
     container.reserve(n_bins);
@@ -102,10 +102,11 @@ std::vector<std::unique_ptr<TH1D>> BuildEventFit_Histo(EventSelectionHisto& ev_s
         int bin_root = i + 1;
 
         std::string name = "h_mll_" + tag + "_bin" + std::to_string(i);
+
+        // Projection -> Invariant Mass selection
         TH1D* histo_mll = histo->ProjectionY(name.c_str(), bin_root, bin_root);
 
         histo_mll->SetDirectory(nullptr);
-
         container.emplace_back(std::unique_ptr<TH1D>(histo_mll));
     }
 
@@ -115,31 +116,31 @@ std::vector<std::unique_ptr<TH1D>> BuildEventFit_Histo(EventSelectionHisto& ev_s
 
 
 std::vector<std::unique_ptr<RooDataSet>> BuildEventFit_SignalModel(TTree* tree, const config_struct& cfg, const std::string& tag) {
-    
-    std::vector<std::unique_ptr<RooDataSet>> container;
+
+    std::vector<std::unique_ptr<RooDataSet>> container;    
     std::vector<double> vector_bins;
 
-    if (cfg.unfold.use_custom_bins == true) {
-        if (tag == "pt") {
-            vector_bins = cfg.unfold.pt_bins.reco_vec;
-        } else if (tag == "y") {
-            vector_bins = cfg.unfold.y_bins.reco_vec;
-        } else if (tag == "phis") {
-            vector_bins = cfg.unfold.phis_bins.reco_vec;
-        }
+    if (!tree) {
+        std::cout << "ERROR: invalid input tree: " << tree << ", exiting..." << std::endl;
+        return container;    
+    }
+
+    // Bins settup
+    if (tag == "pt") {
+        vector_bins = (cfg.unfold.use_custom_bins) ? cfg.unfold.pt_bins.reco_vec : 
+        CreateBins(cfg.unfold.pt_bins.reco_bins, cfg.unfold.pt_bins.min, cfg.unfold.pt_bins.max, cfg.unfold.pt_bins.distribution);
+    
+    } else if (tag == "y") {
+        vector_bins = (cfg.unfold.use_custom_bins) ? cfg.unfold.y_bins.reco_vec: 
+        CreateBins(cfg.unfold.y_bins.reco_bins, cfg.unfold.y_bins.min, cfg.unfold.y_bins.max, cfg.unfold.y_bins.distribution);
+    
+    } else if (tag == "phis") {
+        vector_bins = (cfg.unfold.use_custom_bins) ? cfg.unfold.phis_bins.reco_vec :
+        CreateBins(cfg.unfold.phis_bins.reco_bins, cfg.unfold.phis_bins.min, cfg.unfold.phis_bins.max, cfg.unfold.phis_bins.distribution);
+    
     } else {
-        if (tag == "pt") {
-            const auto& pt = cfg.unfold.pt_bins;
-            vector_bins = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution);
-
-        } else if (tag == "y") {
-            const auto& y = cfg.unfold.y_bins;
-            vector_bins = CreateBins(y.reco_bins, y.min, y.max, y.distribution);            
-
-        } else if (tag == "phis") {
-            const auto& phis = cfg.unfold.phis_bins;
-            vector_bins = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution);
-        }
+        std::cout << "Error: invalid tag input " << tag << ", exiting..." << std::endl;
+        return container;
     }
 
     float min_pt = vector_bins.front();
@@ -153,11 +154,12 @@ std::vector<std::unique_ptr<RooDataSet>> BuildEventFit_SignalModel(TTree* tree, 
     
     
     for (int i = 0; i < n_bins; i++) {
-        mll_buffers[i].reserve(20000);
+        mll_buffers[i].reserve(30000);
     }
 
     float t_val, t_mll;
 
+    // Unrolling value
     tree->SetBranchAddress("InvariantMass", &t_mll);
     
     if (tag == "pt") {
@@ -172,6 +174,7 @@ std::vector<std::unique_ptr<RooDataSet>> BuildEventFit_SignalModel(TTree* tree, 
     for (Long64_t entry = 0; entry < nentries; entry++) {
         tree->GetEntry(entry);
         
+        // Bin identification 
         int i_vector = std::distance(vector_bins.begin(),  std::upper_bound(vector_bins.begin(), vector_bins.end(), t_val)) - 1;
         if ((i_vector < 0) || (i_vector >= n_bins)) {
            continue;
@@ -180,10 +183,12 @@ std::vector<std::unique_ptr<RooDataSet>> BuildEventFit_SignalModel(TTree* tree, 
         mll_buffers[i_vector].push_back(t_mll);
     }
 
+    // RooFit variable definition
     RooRealVar mll("mll", "Invariant Mass", 60.0, 120.0);
     RooArgSet vars(mll);
 
     for (int i = 0; i < n_bins; i++) {
+        // Fast control
         if (mll_buffers[i].empty()) {
             continue;
         }
@@ -193,11 +198,10 @@ std::vector<std::unique_ptr<RooDataSet>> BuildEventFit_SignalModel(TTree* tree, 
 
         auto data = std::make_unique<RooDataSet>(data_name.c_str(), data_name.c_str(), vars);
 
-        for (float mass : mll_buffers[i]) {
-            mll.setVal(mass);
+        for (int j = 0; j < mll_buffers[i].size(); j++) {
+            mll.setVal(mll_buffers[i].at(j));
             data->add(vars);
         }
-
         container.push_back(std::move(data));
     }
 
@@ -262,7 +266,12 @@ EventFitResult EventSingleFit(int bin_idx, TH1D* h_mll, RooDataSet* d_mll_model,
     result.fit_status = fit_res ? fit_res->status() : -1;
 
     if (save_plots) {
-        SaveEventFitCanvas(mll, model, data_hist, bkg_pdf, result, h_mll, o_dir, bin_idx, tag);
+        int canvas_check = SaveEventFitCanvas(mll, model, data_hist, bkg_pdf, result, h_mll, o_dir, bin_idx, tag);
+        
+        if (canvas_check != 0) {
+            std::cout << "ERROR: invalid saving operation in SaveEventFitCanvas, exiting..." << std::endl;
+            return result;
+        }
     }
     
     return result;
@@ -313,8 +322,10 @@ std::unique_ptr<TH1D> EventFit_SignalHisto_Wrapper(EventSelectionHisto& ev_sel_h
     ROOT::RDataFrame mc_frame("MC_Event_Tree", cfg.selection.o_sel_file_data);
     ROOT::RDF::RNode node_event_model = mc_frame;
 
+    // Event selection histograms
     EventSelectionHisto event_model_histo = BuildEventSelection_Histo(node_event_model, cfg);
 
+    // Selecting InvMass histograms for signal fit procedure.
     std::vector<std::unique_ptr<TH1D>> event_container = BuildEventFit_Histo(ev_sel_histo, tag);
 
     // Unpacking model
@@ -326,11 +337,17 @@ std::unique_ptr<TH1D> EventFit_SignalHisto_Wrapper(EventSelectionHisto& ev_sel_h
         return nullptr;
     }
 
+    // Selecting InvMass unbinned data signal model generatio
     std::vector<std::unique_ptr<RooDataSet>> event_model_container = BuildEventFit_SignalModel(model_tree, cfg, tag);
+    
+    // ----------------------
+    // Starting fit procedure
+    // ----------------------
     
     std::unique_ptr<TFile> o_fit_file = nullptr;
     TDirectory* fit_dir;
 
+    // Saving option
     if (cfg.event.save_fit_plots) {
         // Output file
         o_fit_file = std::make_unique<TFile>(cfg.event.o_event_file.c_str(), "UPDATE");        
@@ -350,6 +367,7 @@ std::unique_ptr<TH1D> EventFit_SignalHisto_Wrapper(EventSelectionHisto& ev_sel_h
         }
     }
 
+    // Core -> FIT !!!
     std::vector<EventFitResult> event_results = EventSingleFit_Wrapper(event_container, event_model_container, tag, cfg.event.save_fit_plots, fit_dir);
 
     if (cfg.event.save_fit_plots) {
@@ -358,6 +376,7 @@ std::unique_ptr<TH1D> EventFit_SignalHisto_Wrapper(EventSelectionHisto& ev_sel_h
         o_fit_file->Close();
     }
 
+    // TH1D only signal
     std::unique_ptr<TH1D> h_sig = BuildFitResult_Histo(event_results, cfg, tag);
 
     return h_sig;
@@ -366,32 +385,33 @@ std::unique_ptr<TH1D> EventFit_SignalHisto_Wrapper(EventSelectionHisto& ev_sel_h
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 std::unique_ptr<TH1D> BuildFitResult_Histo(const std::vector<EventFitResult>& results, const config_struct& cfg, const std::string& tag) {
-     std::vector<double> vector_bins;
     
-    if (cfg.unfold.use_custom_bins == true) {
-        if (tag == "pt") {
-            vector_bins = cfg.unfold.pt_bins.reco_vec;
-        } else if (tag == "y") {
-            vector_bins = cfg.unfold.y_bins.reco_vec;
-        } else if (tag == "phis") {
-            vector_bins = cfg.unfold.phis_bins.reco_vec;
-        }
+    std::vector<double> vector_bins;
+
+    // Bins settup
+    if (tag == "pt") {
+        vector_bins = (cfg.unfold.use_custom_bins) ? cfg.unfold.pt_bins.reco_vec : 
+        CreateBins(cfg.unfold.pt_bins.reco_bins, cfg.unfold.pt_bins.min, cfg.unfold.pt_bins.max, cfg.unfold.pt_bins.distribution);
+    
+    } else if (tag == "y") {
+        vector_bins = (cfg.unfold.use_custom_bins) ? cfg.unfold.y_bins.reco_vec: 
+        CreateBins(cfg.unfold.y_bins.reco_bins, cfg.unfold.y_bins.min, cfg.unfold.y_bins.max, cfg.unfold.y_bins.distribution);
+    
+    } else if (tag == "phis") {
+        vector_bins = (cfg.unfold.use_custom_bins) ? cfg.unfold.phis_bins.reco_vec :
+        CreateBins(cfg.unfold.phis_bins.reco_bins, cfg.unfold.phis_bins.min, cfg.unfold.phis_bins.max, cfg.unfold.phis_bins.distribution);
+    
     } else {
-        if (tag == "pt") {
-            const auto& pt = cfg.unfold.pt_bins;
-            vector_bins = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution);
-
-        } else if (tag == "y") {
-            const auto& y = cfg.unfold.y_bins;
-            vector_bins = CreateBins(y.reco_bins, y.min, y.max, y.distribution);            
-
-        } else if (tag == "phis") {
-            const auto& phis = cfg.unfold.phis_bins;
-            vector_bins = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution);
-        }
+        std::cout << "Error: invalid tag input " << tag << ", exiting..." << std::endl;
+        return nullptr;
     }
     
     int n_bins = vector_bins.size() - 1;
+
+    if (results.size() != n_bins) {
+        std::cout << "ERROR: mismatch between vectors: " << results.size() << " vs " << n_bins << ", exiting..." << std::endl;
+        return nullptr;
+    }
 
     std::string name = "h_signal_" + tag;
     auto histo = std::make_unique<TH1D>(name.c_str(), name.c_str(), n_bins, vector_bins.data());
@@ -404,23 +424,26 @@ std::unique_ptr<TH1D> BuildFitResult_Histo(const std::vector<EventFitResult>& re
         histo->SetBinContent(bin_root, results[i].n_sig);
         histo->SetBinError(bin_root, results[i].n_sig_err);
     }
+
     return histo;
 }
 
-void SaveEventFitCanvas(RooRealVar& mll, RooAbsPdf& model, RooAbsData& data, RooAbsPdf& bkg_pdf, const EventFitResult& res, TH1D* h_mll,
+int SaveEventFitCanvas(RooRealVar& mll, RooAbsPdf& model, RooAbsData& data, RooAbsPdf& bkg_pdf, const EventFitResult& res, TH1D* h_mll,
 TDirectory* o_dir, const int bin_idx, const std::string& tag) {
     
-    if (!o_dir) {
-        return;
+    // Checking input pointers
+    if (!o_dir || !h_mll) {
+        return 1;
     }
 
     std::cout << "Saving histogram for bin: " << bin_idx << std::endl;
+    
+    // Setting saving directory
     o_dir->cd();
 
     int n_bins_frame = h_mll->GetNbinsX();
 
     TCanvas canvas(("canvas_" + tag + "_bin_" + std::to_string(bin_idx)).c_str(), "", 800, 800);
-    
     TPad* pad_main  = new TPad("pad_main", "", 0.0, 0.30, 1.0, 1.0);
     TPad* pad_resid = new TPad("pad_resid", "", 0.0, 0.0, 1.0, 0.30);
     
@@ -480,4 +503,5 @@ TDirectory* o_dir, const int bin_idx, const std::string& tag) {
 
     delete frame;
     delete frame_pull;
+    return 0;
 }
