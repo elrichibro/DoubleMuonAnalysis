@@ -11,6 +11,7 @@ const cuts_config cfg_c) {
     
     ResultsRespMatrix results;
 
+    // Summing collection objects -> reconstructions flag -> fast exit if sum(tight) > 2
     int n_tight = ROOT::VecOps::Sum(flags.reco_tight);
 
     // Fast exit -> Experiment cut
@@ -25,6 +26,7 @@ const cuts_config cfg_c) {
     const int n_muons_rec = kin_rec.pt.size();
     const int n_muons_gen = kin_gen.pt.size();
 
+    // Defualt values
     float m_rec = 0;
     int rec1 = -1;
     int rec2 = -1;
@@ -42,6 +44,8 @@ const cuts_config cfg_c) {
         if (flags.reco_tight[i] != 1) {
             continue;
         }
+
+        // Fiducial region -> [ pt > JSON_cut && |eta| < JSON_cut ]
         bool pass_kin = (((kin_rec.pt[i] > cfg_c.pt_cut) && (std::abs(kin_rec.eta[i]) < cfg_c.eta_cut)) || (!cfg_f.en_kinematics));
         
         if (pass_kin) {
@@ -49,25 +53,32 @@ const cuts_config cfg_c) {
         }
     }
 
+    // Two reconstructed muons
     if (reco_idx.size() == 2) {
         rec1 = reco_idx[0];
         rec2 = reco_idx[1];
         
+        // Opposite charge condition
         if (kin_rec.charge[rec1] != kin_rec.charge[rec2]) {
-            m_rec = CalculateInvariantMass_Pair<float>(kin_rec.pt[rec1], kin_rec.pt[rec2], kin_rec.eta[rec1], kin_rec.eta[rec2], kin_rec.phi[rec1],
-            kin_rec.phi[rec2], kin_rec.mass[rec1], kin_rec.mass[rec2]);
+
+            // Invariant mass of reconstructed pair
+            m_rec = CalculateInvariantMass_Pair<float>(kin_rec.pt[rec1], kin_rec.pt[rec2], kin_rec.eta[rec1], kin_rec.eta[rec2], 
+                kin_rec.phi[rec1], kin_rec.phi[rec2], kin_rec.mass[rec1], kin_rec.mass[rec2]);
             
+            // Invariant mass fiducial region
             if ((m_rec > 60) && (m_rec < 120)) {
                 pass_reco = true;
             }
         }
     }
 
+    // Loop on generated muons
     for (int i = 0; i < n_muons_gen; i++) {
         if (abs(flags.gen_pdg_idx[i]) != 13 || (flags.gen_status[i] != 1)) {
             continue;
         }
     
+        // Mask identification
         bool mask = ((flags.gen_status_flg[i] & (1 << 0)) > 0) && (((flags.gen_status_flg[i] & (1 << 7)) > 0) || ((flags.gen_status_flg[i] & (1 << 8)) > 0)) && 
         (((flags.gen_status_flg[i] & (1 << 13)) > 0) || ((flags.gen_status_flg[i] & (1 << 14)) > 0));
 
@@ -75,6 +86,7 @@ const cuts_config cfg_c) {
             continue;
         }
         
+        // Kinematical region (same as reconstructed)
         bool pass_kin = (((kin_gen.pt[i] > cfg_c.pt_cut) && (std::abs(kin_gen.eta[i]) < cfg_c.eta_cut)) || (!cfg_f.en_kinematics));
         
         if (pass_kin) {
@@ -82,20 +94,26 @@ const cuts_config cfg_c) {
         }
     }
 
+    // Two generated muons
     if (gen_idx.size() == 2) {
         gen1 = gen_idx[0];
         gen2 = gen_idx[1];
         
+        // PDG Id condition
         if (flags.gen_pdg_idx[gen1] != flags.gen_pdg_idx[gen2]) {
+            
+            // Invariant mass
             m_gen = CalculateInvariantMass_Pair<float>(kin_gen.pt[gen1], kin_gen.pt[gen2], kin_gen.eta[gen1], kin_gen.eta[gen2],
              kin_gen.phi[gen1], kin_gen.phi[gen2], kin_gen.mass[gen1], kin_gen.mass[gen2]);
             
+            // Selection in fiducial region
             if ((m_gen > 60) && (m_gen < 120)) {
                 pass_gen = true;
             }
         }
     }
 
+    // Matched muons condition
     if (pass_reco && pass_gen) {
         bool match1 = ((flags.reco_idx_gen[rec1] == gen1) && (flags.reco_idx_gen[rec2] == gen2));
         bool match2 = ((flags.reco_idx_gen[rec1] == gen2) && (flags.reco_idx_gen[rec2] == gen1));
@@ -103,12 +121,16 @@ const cuts_config cfg_c) {
         matched = (match1 || match2);
     }
 
+
     if (matched) {
+        // Flag
         results.match = true;
         
+        // Invariant masses
         results.mll_rec = m_rec;
         results.mll_gen = m_gen;
         
+        // Interesting quantities
         results.pt_gen = CalculatePtZ0_Raw_Pair<float>(kin_gen.pt[gen1], kin_gen.pt[gen2], kin_gen.phi[gen1], kin_gen.phi[gen2]);
         results.pt_rec = CalculatePtZ0_Raw_Pair<float>(kin_rec.pt[rec1], kin_rec.pt[rec2], kin_rec.phi[rec1], kin_rec.phi[rec2]);
         
@@ -121,10 +143,15 @@ const cuts_config cfg_c) {
         results.phis_gen = CalculatePhiStar_Pair<float>(kin_gen.eta[gen1], kin_gen.eta[gen2], kin_gen.phi[gen1], kin_gen.phi[gen2]);
         results.phis_rec = CalculatePhiStar_Pair<float>(kin_rec.eta[rec1], kin_rec.eta[rec2], kin_rec.phi[rec1], kin_rec.phi[rec2]);
     
+    // Missed muons
     } else if ((pass_gen) && (!pass_reco)) {
+        // Flag
         results.miss = true;
+
+        // Invariant mass
         results.mll_gen = m_gen;
 
+        // Only generated muons quantities
         results.pt_gen = CalculatePtZ0_Raw_Pair<float>(kin_gen.pt[gen1], kin_gen.pt[gen2], kin_gen.phi[gen1], kin_gen.phi[gen2]);
 
         results.y_gen = CalculateRapidityZ0_Raw_Pair<float>(kin_gen.pt[gen1], kin_gen.pt[gen2], kin_gen.eta[gen1], kin_gen.eta[gen2],
@@ -132,10 +159,15 @@ const cuts_config cfg_c) {
 
         results.phis_gen = CalculatePhiStar_Pair<float>(kin_gen.eta[gen1], kin_gen.eta[gen2], kin_gen.phi[gen1], kin_gen.phi[gen2]);
 
+    // Faked muons
     } else if (pass_reco && !matched) {
+        // Flag
         results.fake = true;
+        
+        // Reconstructed invariant mass
         results.mll_rec = m_rec;
 
+        // Only reconstructed quantities
         results.pt_rec = CalculatePtZ0_Raw_Pair<float>(kin_rec.pt[rec1], kin_rec.pt[rec2], kin_rec.phi[rec1], kin_rec.phi[rec2]);
 
         results.y_rec = CalculateRapidityZ0_Raw_Pair<float>(kin_rec.pt[rec1], kin_rec.pt[rec2], kin_rec.eta[rec1], kin_rec.eta[rec2],
@@ -143,7 +175,6 @@ const cuts_config cfg_c) {
 
         results.phis_rec = CalculatePhiStar_Pair<float>(kin_rec.eta[rec1], kin_rec.eta[rec2], kin_rec.phi[rec1], kin_rec.phi[rec2]);
     }
-
     return results;
 }
 
@@ -153,6 +184,7 @@ ROOT::RDF::RNode CalculateRespMatrixWrapper(ROOT::RDF::RNode node, const flags_c
     ROOT::RDF::RNode node_RM = node;
 
     node_RM = node_RM
+        // Filling result struct
         .Define("RespMatrix_mask", [flags_RM, cuts_RM](const ROOT::RVec<float>& pt_rec, const ROOT::RVec<float>& eta_rec, const ROOT::RVec<float>& phi_rec, const ROOT::RVec<float>& mass_rec, const ROOT::RVec<int>& charge_rec,
         const ROOT::RVec<float>& pt_gen, const ROOT::RVec<float>& eta_gen, const ROOT::RVec<float>& phi_gen, const ROOT::RVec<float>& mass_gen,
         const ROOT::RVec<bool>& reco_tight, const ROOT::RVec<int>& reco_idx_gen, const ROOT::RVec<int>& gen_pdg_idx, const ROOT::RVec<int>& gen_status, const ROOT::RVec<int>& gen_status_flg) {
@@ -164,15 +196,17 @@ ROOT::RDF::RNode CalculateRespMatrixWrapper(ROOT::RDF::RNode node, const flags_c
             return CalculateRespMatrix(kin_rec, kin_gen, val, flags_RM, cuts_RM);
         
         }, {"Muon_pt", "Muon_eta", "Muon_phi", "Muon_mass", "Muon_charge", "GenPart_pt", "GenPart_eta", "GenPart_phi", 
-            "GenPart_mass", "Muon_tightId", "Muon_genPartIdx", "GenPart_pdgId", "GenPart_status", "GenPart_statusFlags"});
+            "GenPart_mass", "Muon_tightId", "Muon_genPartIdx", "GenPart_pdgId", "GenPart_status", "GenPart_statusFlags"})
     
-    node_RM = node_RM
+        // Defining flags
         .Define("Matched", [](const ResultsRespMatrix& resp){ return resp.match; }, {"RespMatrix_mask"})
         .Define("Missed", [](const ResultsRespMatrix& resp){ return resp.miss; }, {"RespMatrix_mask"})
         .Define("Faked", [](const ResultsRespMatrix& resp){ return resp.fake; }, {"RespMatrix_mask"})
-        .Filter("Matched || Missed || Faked"); 
+        
+        // Filtering events
+        .Filter("Matched || Missed || Faked")
 
-    node_RM = node_RM
+        // Defining response matrix quantities
         .Define("Rec_InvMass", [](const ResultsRespMatrix& res) { return res.mll_rec; }, {"RespMatrix_mask"})
         .Define("Gen_InvMass", [](const ResultsRespMatrix& res) { return res.mll_gen; }, {"RespMatrix_mask"})
             
@@ -211,8 +245,10 @@ ROOT::RDF::RNode EventSelection(ROOT::RDF::RNode node, const config_struct& cfg)
     }
 
     node_event = node_event
+        // Defiing mask with kinematical cuts
         .Define("GoodMuon", good_muon)
 
+        // Selecting variables in collection
         .Define("GM_Pt", "Muon_pt[GoodMuon]")
         .Define("GM_Eta", "Muon_eta[GoodMuon]")
         .Define("GM_Phi", "Muon_phi[GoodMuon]")
@@ -222,6 +258,7 @@ ROOT::RDF::RNode EventSelection(ROOT::RDF::RNode node, const config_struct& cfg)
         .Define("EventPair", "Sum(GoodMuon) == 2")
         .Define("GoodEvent", "EventPair && (GM_Charge[0] != GM_Charge[1])")
 
+        // Invariant mass booking
         .Define("InvariantMass", [] (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
          const ROOT::RVec<float>& mass) -> float {
             
@@ -229,8 +266,10 @@ ROOT::RDF::RNode EventSelection(ROOT::RDF::RNode node, const config_struct& cfg)
         
         }, {"GM_Pt", "GM_Eta", "GM_Phi", "GM_Mass"})
 
+        // Invariant mass selection
         .Filter(event_cut, "InvMass selection -> Good Event")
 
+        // Defining Z0 quantities of interest
         .Define("Pt_Z", [] (const ROOT::RVec<float>& pt, const ROOT::RVec<float>& eta, const ROOT::RVec<float>& phi,
          const ROOT::RVec<float>& mass) {
             
