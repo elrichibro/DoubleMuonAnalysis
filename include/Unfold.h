@@ -69,15 +69,15 @@ ControlHisto BuildControlHisto(ROOT::RDF::RNode node, const config_struct& cfg);
 
 // Unfold Density struct
 struct UnfoldDensities {
-    std::unique_ptr<TUnfoldDensity> pt_unf;
-    std::unique_ptr<TUnfoldDensity> y_unf;
-    std::unique_ptr<TUnfoldDensity> phis_unf;
+    std::unique_ptr<TUnfoldDensity> pt_unf;// Transverse momentum unfold density
+    std::unique_ptr<TUnfoldDensity> y_unf;// Rapidity unfold density
+    std::unique_ptr<TUnfoldDensity> phis_unf;// Phi* unfold density
 };
 
 /// @brief Creates the Unfold Density for LScan, ScanTau or ScanSURE application.
 /// @param histo Response matrix result container.
 /// @param tag Quantity identifier.
-/// @return Struct containing the Unfold
+/// @return Struct containing the Unfold density (needed for unfold procedure).
 UnfoldDensities CreateUnfoldDensity(RespMatrixHisto& histo, const std::string& tag);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
@@ -88,19 +88,22 @@ UnfoldDensities CreateUnfoldDensity(RespMatrixHisto& histo, const std::string& t
 
 /// @brief Unfold Result struct
 struct UnfoldResult {
-    std::unique_ptr<TUnfoldDensity> unf_density;
+    std::unique_ptr<TUnfoldDensity> unf_density;// Final unfold density
     
-    std::unique_ptr<TH1> h1_out_unf;
-    std::unique_ptr<TH2> h2_out_cov;
-    std::unique_ptr<TH2> h2_out_corr;
+    std::unique_ptr<TH1> h1_out_unf;// Output unfolded signal histogram
+    std::unique_ptr<TH2> h2_out_cov;// Output covariance
+    std::unique_ptr<TH2> h2_out_corr;// Output correlation
 
-    std::unique_ptr<TGraph> LCurveScan;
+    std::unique_ptr<TGraph> LCurveScan;// LScan graph
     std::unique_ptr<TSpline> logTauX;
     std::unique_ptr<TSpline> logTauY;
+    
     double tau = 0.0;
     int idx_best = -1;
+    
     double chi2A = 0.0;
     double chi2L = 0.0;
+    
     int ndf = 0;
 };
 
@@ -111,7 +114,7 @@ struct UnfoldResult {
 /// @param fake_histo Histogram for BKG substraction.
 /// @param cfg General configure struct.
 /// @param tag Unfold quantity identifier.
-/// @return Unfold result struct: Unfolded signal histogram.
+/// @return Unfold result struct: Unfolded signal histogram. 
 UnfoldResult ApplyUnfold(std::unique_ptr<TUnfoldDensity> density, TH1D* event_histo, TH1D* resp_histo, TH1D* fake_histo, 
 const config_struct& cfg, const std::string& tag);
 
@@ -121,22 +124,20 @@ const config_struct& cfg, const std::string& tag);
 // Visualization options
 // ---------------------
 
-/// @brief 
-/// @param canvas 
-/// @param results 
-/// @param histo_resp 
-/// @param eff_histos 
-/// @param tag 
-/// @return 
+/// @brief Visualizes into a vector the plots obtained from the unfold procedure. Smart pointers for longer lifetime -> visualization.
+/// @param canvas Canvas container.
+/// @param results Results from unfold procedure.
+/// @param resp_histo Struct containing the response matrix histograms.
+/// @param tag Unfolded/studied quantity.
+/// @return 0 if succeds, else errore code.
 int VisualizeUnfoldResults(std::vector<std::unique_ptr<TCanvas>>& canvas, UnfoldResult& results, RespMatrixHisto& resp_histo,  const std::string& tag);   
 
-/// @brief 
-/// @param canvas 
-/// @param resp_histo 
-/// @param control_histo 
-/// @param tag 
-/// @return 
+/// @brief Visualizes the control plots: Efficiency, Purity, Stability and Response matrix for optimization of the binning before the unfolding procedure.
+/// @param canvas Canvas container for visualization.
+/// @param resp_histo Struct containing the response matrix plots.
+/// @param control_histo Control plots container
+/// @param tag Studied quantity
+/// @return 0 if success, else errore code.
 int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMatrixHisto& resp_histo, ControlHisto& control_histo, const std::string& tag);
-
 
 #endif

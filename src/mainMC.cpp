@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
     }
 
     // ----------
-    // Acceptance
+    // ACCEPTANCE
     // ----------
 
     if (cfg.general.operation_mode.find("Acceptance") != std::string::npos) {
@@ -107,91 +107,105 @@ int main(int argc, char* argv[]) {
             dataset_file = cfg.io.in_mc_file;
         }
 
-        ROOT::EnableImplicitMT();// MultiThread option: ON
-
         ROOT::RDataFrame data_frame(dataset_tree, dataset_file);
+        ROOT::RDF::RNode node_ACC = data_frame;
 
         if (verbose){ 
             std::cout << "RDataFrame object created, unpacking tree: " << dataset_tree 
             << ", from file: " << dataset_file << ", starting selection ..." << std::endl;
         }
-            
-        ROOT::RDF::RNode node_ACC = data_frame;
-
+        
         std::vector<float> results = CalculateAcceptance(node_ACC, "aFSR", 2);
         
         if (results.size() != 2) {
             std::cout << "ERROR: invalid results size: " << results.size() << ", exiting.." << std::endl;
             return 1;
         }
-            
+
         std::cout << "Geometrical acceptance: " << results.at(0) << "+-" << results.at(1) << std::endl;
     }
 
     // ----------
-    // Resolution
+    // RESOLUTION
     // ----------
 
-    if (cfg.general.operation_mode.find("Resolution") != std::string::npos) {
+    else if (cfg.general.operation_mode.find("Resolution") != std::string::npos) {
 
         ROOT::RDataFrame data_frame("MC_RespMatrix_Tree", cfg.selection.o_sel_file_data);
         ROOT::RDF::RNode node_resolution = data_frame;
 
-        //ROOT::EnableImplicitMT();// MultiThread option: ON
-
         ResolutionResults resolution =  CalculateResolution(node_resolution, cfg);
         
         if (app != nullptr) {                
-            std::cout << "Starting visualization..." << std::endl;
+            std::cout << "Starting Resolution visualization..." << std::endl;
             std::string tag = cfg.resolution.quantity;
             
             std::vector<double> x_value;
             std::vector<double> y_value;
+            std::vector<double> entries;
+
+            int bins = resolution.mean.size();
+
+            x_value.reserve(bins);
+            y_value.reserve(bins);
+            entries.reserve(bins);
 
             for (int i = 0; i < resolution.mean.size(); i++) {
                 if (resolution.events[i] > 1) {
                     x_value.push_back(resolution.mean[i]);
                     y_value.push_back(resolution.sigma[i]);
+                    entries.push_back(static_cast<double>(resolution.events[i]));
                 }
             }
 
-            auto canvas = TCanvas(("c_res_" + tag).c_str(), ("Resolution_ " + tag).c_str(), 800, 600);
+            TCanvas* canvas = new TCanvas(("c_res_" + tag).c_str(), ("Resolution_ " + tag).c_str(), 800, 600);
+            canvas->SetGrid();
 
-            TGraph* graph = new TGraph(x_value.size(), x_value.data(), y_value.data());
-
-            std::string axis;
-            if (tag == "pt") {
-                axis = ";Mean P_t [GeV];#sigma P_t [GeV]";
-            } else {
-                axis = ";Mean;Sigma";
-            }
-
+            auto graph = std::make_unique<TGraph>(x_value.size(), x_value.data(), y_value.data());
+            
+            std::string axis = (tag == "pt") ? ";Mean P_t [GeV];#sigma P_t [GeV]" : ";Mean;Sigma";
             std::string title = "Resolution " + tag + axis;
+
             graph->SetTitle(title.c_str());
-            graph->SetMarkerStyle(20);
+            graph->SetMarkerStyle(8);
             graph->SetMarkerSize(0.7);
             graph->SetMarkerColor(kBlue+1);
-            graph->SetLineColor(kBlue+1);
-            canvas.SetGrid();
 
             graph->Draw("AP");
+
+
+            TCanvas* canvas2 = new TCanvas("canvas2", ("Resolution_events_ " + tag).c_str(), 800, 600);
+            canvas2->SetGrid();
+
+            auto graph2 = std::make_unique<TGraph>(x_value.size(), x_value.data(), entries.data());
             
+            std::string axis2 = (tag == "pt") ? ",#sigma P_t [GeV];Entries" : ";Mean;Entries";
+            std::string title2 = "Resolution " + tag + axis2;
+
+            graph2->SetTitle(title2.c_str());
+            graph2->SetMarkerStyle(8);
+            graph2->SetMarkerSize(0.7);
+            graph2->SetMarkerColor(kBlue+1);
+
+            graph2->Draw("AP");
+
             app->Run();
             
-            delete app; 
+            delete app;
+            app = nullptr; 
         } else {
             std::cout << "No visualization booked." << std::endl;
         }
-
+        std::cout << "End of program." << std::endl;
+        return 0;
     }
 
     // ---------
     // Selection
     // ---------
 
-    if (cfg.general.operation_mode.find("Selection") != std::string::npos) {
+    else if (cfg.general.operation_mode.find("Selection") != std::string::npos) {
         try {
-            ROOT::EnableImplicitMT();// MultiThread option: ON
 
             if (cfg.selection.dataset == "DATA") {
                 dataset_tree = cfg.io.tree_data_name;
@@ -267,9 +281,11 @@ int main(int argc, char* argv[]) {
 
             if ((cfg.selection.visual_sel) && (app != nullptr)) {                
                 std::cout << "Starting visualization..." << std::endl;
+                app->SetReturnFromRun(true);
+            
                 app->Run();
-                
-                delete app; 
+                delete app;
+                app = nullptr; 
             } else {
                 std::cout << "No visualization booked." << std::endl;
             }
@@ -278,14 +294,16 @@ int main(int argc, char* argv[]) {
             std::cout << "Error nature: " << except.what() << std::endl;
             return 1;
         }
+        
+        std::cout << "End of program." << std::endl;
+        return 0;
     }
 
     // --------
     // Analysis
     // --------
 
-    if (cfg.general.operation_mode == "Analysis") {
-        ROOT::EnableImplicitMT();// MultiThread option: ON
+    else if (cfg.general.operation_mode == "Analysis") {
         
         if (cfg.analysis.analysis_mode == "Unfold") {
             std::string tag = cfg.unfold.unfold_quantity;
@@ -379,12 +397,13 @@ int main(int argc, char* argv[]) {
                 app->Run();
                 
                 delete app;
-                
-                return 0;
             } else {
-                std::cout << " Unfold procedure applied but no visualization was booked." << std::endl;
-                return 1;
+                std::cout << " Unfold procedure applied but no visualization was booked. End of program." << std::endl;
+                return 0;
             }
+            
+            std::cout << "End of program." << std::endl;
+            return 0;
 
         } else if (cfg.analysis.analysis_mode == "Event") {
             std::vector<std::unique_ptr<TCanvas>> canvas;
@@ -440,13 +459,16 @@ int main(int argc, char* argv[]) {
                 app->Run();
                 
                 delete app;
-                
-                return 0;
             } else {
                 std::cout << " Unfold procedure applied but no visualization was booked." << std::endl;
                 return 1;
             }
+            std::cout << "End of program." << std::endl;
+            return 0;
         }
+    } else {
+        std::cout << "ERROR: invalid operation mode input: " << cfg.general.operation_mode << ", exiting..." << std::endl;
+        return 1;
     }
 
     return 0;

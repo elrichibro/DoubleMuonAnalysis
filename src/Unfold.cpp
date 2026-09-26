@@ -6,37 +6,13 @@
 #include <TMarker.h>
 #include <TLegend.h>
 
-/*
-Reconstructed Muon:
-    - Tight flag
-    - pt > 25 GeV
-    - |eta| < 2.4 
-
-Generated Muon:
-    - Pdg index = 13/-13
-    - Generator status flags: 0 + (7 || 8) + (13 || 14)
-    - pt > 25 GeV
-    - |eta| < 2.4
-
-Reconstructed pair:
-    - 2 reconstructed muons
-    - Opposite charge
-    - Invariant mass range -> 60 < m_ll < 120 GeV
-
-Generated pair:
-    - 2 Generated muons
-    - Opposite pdg index0
-    - Invariant mass range -> 60 < m_ll < 120 GeV
-
-Match :
-    - 2 posibilities -> match between Generator index and mother index for reconstructed particle (that is the muon in the GenPart collection)
-*/
-
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
     
     ROOT::RDF::RNode node_unf = node;
+    
+    // Initializing container
     RespMatrixHisto resp_histo;
 
     // Defining Unfold quantities with over/underflow bins
@@ -54,105 +30,72 @@ RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct&
     // Bin vectors initialization
     std::vector<double> reco_bins_pt, gen_bins_pt, reco_bins_y, gen_bins_y, reco_bins_phis, gen_bins_phis;
 
-    // Custom bins JSON file option
-    if (cfg.unfold.use_custom_bins == true) {
-        
-        reco_bins_pt = cfg.unfold.pt_bins.reco_vec;
-        gen_bins_pt = cfg.unfold.pt_bins.gen_vec;
-        
-        reco_bins_y = cfg.unfold.y_bins.reco_vec;
-        gen_bins_y = cfg.unfold.y_bins.gen_vec;
-        
-        reco_bins_phis = cfg.unfold.phis_bins.reco_vec;
-        gen_bins_phis = cfg.unfold.phis_bins.gen_vec;
+    const auto& pt = cfg.unfold.pt_bins;
+    const auto& y = cfg.unfold.y_bins;
+    const auto& phis = cfg.unfold.phis_bins;
 
-        int n_reco_pt = static_cast<int>(reco_bins_pt.size()) - 1;
-        int n_gen_pt  = static_cast<int>(gen_bins_pt.size()) - 1;
+    // Selection between custom/CreateBins bins -> JSON settup
 
-        int n_reco_y = static_cast<int>(reco_bins_y.size()) - 1;
-        int n_gen_y  = static_cast<int>(gen_bins_y.size()) - 1;
+    // -----
+    // Pt_Z0
+    // -----
 
-        int n_reco_phis = static_cast<int>(reco_bins_phis.size()) - 1;
-        int n_gen_phis  = static_cast<int>(gen_bins_phis.size()) - 1;
+    reco_bins_pt = (cfg.unfold.use_custom_bins) ? pt.reco_vec : CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution);
+    gen_bins_pt = (cfg.unfold.use_custom_bins) ? pt.gen_vec : CreateBins(pt.gen_bins, pt.min, pt.max, pt.distribution);
+    
+    // ----
+    // Y_Z0
+    // ----
 
-        // ------------------
-        // Matched Histograms
-        // ------------------
+    reco_bins_y = (cfg.unfold.use_custom_bins) ? y.reco_vec : CreateBins(y.reco_bins, y.min, y.max, y.distribution);
+    gen_bins_y = (cfg.unfold.use_custom_bins) ? y.gen_vec : CreateBins(y.gen_bins, y.min, y.max, y.distribution);
 
-        auto node_matched = node_unf.Filter("Matched");
-        resp_histo.h1_pt_test = node_matched.Histo1D({"h_rec_pt_matched", "", n_reco_pt, reco_bins_pt.data()}, "Rec_Pt");
-        resp_histo.h1_y_test = node_matched.Histo1D({"h_rec_y_matched", "", n_reco_y, reco_bins_y.data()}, "Rec_Y");
-        resp_histo.h1_phis_test = node_matched.Histo1D({"h_rec_phis_matched", "", n_reco_phis, reco_bins_phis.data()}, "Rec_Phis");
+    // -------
+    // Phi*_Z0
+    // -------
 
-        // --------------------
-        // Faked BKG Histograms
-        // --------------------
+    reco_bins_phis = (cfg.unfold.use_custom_bins) ? phis.reco_vec : CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution);
+    gen_bins_phis = (cfg.unfold.use_custom_bins) ? phis.gen_vec : CreateBins(phis.gen_bins, phis.min, phis.max, phis.distribution);
 
-        auto node_faked = node_unf.Filter("Faked");
-        resp_histo.h1_pt_fake = node_faked.Histo1D({"h_rec_pt_faked", "", n_reco_pt, reco_bins_pt.data()}, "Rec_Pt");
-        resp_histo.h1_y_fake = node_faked.Histo1D({"h_rec_y_faked", "", n_reco_y, reco_bins_y.data()}, "Rec_Y");
-        resp_histo.h1_phis_fake = node_faked.Histo1D({"h_rec_phis_faked", "", n_reco_phis, reco_bins_phis.data()}, "Rec_Phis");
+    int n_reco_pt = static_cast<int>(reco_bins_pt.size()) - 1;
+    int n_gen_pt  = static_cast<int>(gen_bins_pt.size()) - 1;
 
-        // ------------------
-        // Response Histogram
-        // ------------------
+    int n_reco_y = static_cast<int>(reco_bins_y.size()) - 1;
+    int n_gen_y  = static_cast<int>(gen_bins_y.size()) - 1;
 
-        resp_histo.h2_pt = node_unf.Histo2D({"hResp_pt","", n_reco_pt, reco_bins_pt.data(), n_gen_pt, gen_bins_pt.data()}, "Rec_Pt_Unf",
-        "Gen_Pt_Unf", "weight");
+    int n_reco_phis = static_cast<int>(reco_bins_phis.size()) - 1;
+    int n_gen_phis  = static_cast<int>(gen_bins_phis.size()) - 1;
 
-        resp_histo.h2_y = node_unf.Histo2D({"hResp_y","", n_reco_y, reco_bins_y.data(), n_gen_y, gen_bins_y.data()}, "Rec_Y_Unf", "Gen_Y_Unf",
-        "weight");
+    // ------------------
+    // Matched Histograms
+    // ------------------
 
-        resp_histo.h2_phis = node_unf.Histo2D({"hResp_phis","", n_reco_phis, reco_bins_phis.data(), n_gen_phis, gen_bins_phis.data()}, 
-        "Rec_Phis_Unf", "Gen_Phis_Unf", "weight");
+    auto node_matched = node_unf.Filter("Matched");
+    resp_histo.h1_pt_test = node_matched.Histo1D({"h_rec_pt_matched", "", n_reco_pt, reco_bins_pt.data()}, "Rec_Pt");
+    resp_histo.h1_y_test = node_matched.Histo1D({"h_rec_y_matched", "", n_reco_y, reco_bins_y.data()}, "Rec_Y");
+    resp_histo.h1_phis_test = node_matched.Histo1D({"h_rec_phis_matched", "", n_reco_phis, reco_bins_phis.data()}, "Rec_Phis");
 
-    // Standard JSON file bin option
-    } else {
-        const auto& pt = cfg.unfold.pt_bins;
-        const auto& y = cfg.unfold.y_bins;
-        const auto& phis = cfg.unfold.phis_bins;
+    // --------------------
+    // Faked BKG Histograms
+    // --------------------
 
-        // Creation of the bin vectors.
-        reco_bins_pt = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution);
-        gen_bins_pt = CreateBins(pt.gen_bins, pt.min, pt.max, pt.distribution);
-            
-        reco_bins_y = CreateBins(y.reco_bins, y.min, y.max, y.distribution);
-        gen_bins_y = CreateBins(y.gen_bins, y.min, y.max, y.distribution);
-            
-        reco_bins_phis = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution);
-        gen_bins_phis = CreateBins(phis.gen_bins, phis.min, phis.max, phis.distribution);
-        
-        // ------------------
-        // Matched Histograms
-        // ------------------
+    auto node_faked = node_unf.Filter("Faked");
+    resp_histo.h1_pt_fake = node_faked.Histo1D({"h_rec_pt_faked", "", n_reco_pt, reco_bins_pt.data()}, "Rec_Pt");
+    resp_histo.h1_y_fake = node_faked.Histo1D({"h_rec_y_faked", "", n_reco_y, reco_bins_y.data()}, "Rec_Y");
+    resp_histo.h1_phis_fake = node_faked.Histo1D({"h_rec_phis_faked", "", n_reco_phis, reco_bins_phis.data()}, "Rec_Phis");
 
-        auto node_matched = node_unf.Filter("Matched");
-        resp_histo.h1_pt_test = node_matched.Histo1D({"h_rec_pt_matched", "", pt.reco_bins, reco_bins_pt.data()}, "Rec_Pt");
-        resp_histo.h1_y_test = node_matched.Histo1D({"h_rec_y_matched", "", y.reco_bins, reco_bins_y.data()}, "Rec_Y");
-        resp_histo.h1_phis_test = node_matched.Histo1D({"h_rec_phis_matched", "", phis.reco_bins, reco_bins_phis.data()}, "Rec_Phis");
+    // ------------------
+    // Response Histogram
+    // ------------------
 
-        // --------------------
-        // Faked BKG Histograms
-        // --------------------
+    resp_histo.h2_pt = node_unf.Histo2D({"hResp_pt","", n_reco_pt, reco_bins_pt.data(), n_gen_pt, gen_bins_pt.data()}, "Rec_Pt_Unf",
+    "Gen_Pt_Unf", "weight");
 
-        auto node_faked = node_unf.Filter("Faked");
-        resp_histo.h1_pt_fake = node_faked.Histo1D({"h_rec_pt_faked", "", pt.reco_bins, reco_bins_pt.data()}, "Rec_Pt");
-        resp_histo.h1_y_fake = node_faked.Histo1D({"h_rec_y_faked", "", y.reco_bins, reco_bins_y.data()}, "Rec_Y");
-        resp_histo.h1_phis_fake = node_faked.Histo1D({"h_rec_phis_faked", "", phis.reco_bins, reco_bins_phis.data()}, "Rec_Phis");
+    resp_histo.h2_y = node_unf.Histo2D({"hResp_y","", n_reco_y, reco_bins_y.data(), n_gen_y, gen_bins_y.data()}, "Rec_Y_Unf", 
+    "Gen_Y_Unf", "weight");
 
-        // ------------------
-        // Response Histogram
-        // ------------------
-
-        resp_histo.h2_pt = node_unf.Histo2D({"hResp_pt","", pt.reco_bins, reco_bins_pt.data(), pt.gen_bins , gen_bins_pt.data()}, "Rec_Pt_Unf",
-        "Gen_Pt_Unf", "weight");
-
-        resp_histo.h2_y = node_unf.Histo2D({"hResp_y","", y.reco_bins, reco_bins_y.data(), y.gen_bins, gen_bins_y.data()}, "Rec_Y_Unf", 
-        "Gen_Y_Unf", "weight");
-
-        resp_histo.h2_phis = node_unf.Histo2D({"hResp_phis","", phis.reco_bins, reco_bins_phis.data(), phis.gen_bins, gen_bins_phis.data()}, 
-        "Rec_Phis_Unf", "Gen_Phis_Unf", "weight");
-    }
+    resp_histo.h2_phis = node_unf.Histo2D({"hResp_phis","", n_reco_phis, reco_bins_phis.data(), n_gen_phis, gen_bins_phis.data()}, 
+    "Rec_Phis_Unf", "Gen_Phis_Unf", "weight");
 
     return resp_histo;
 }
@@ -161,36 +104,26 @@ RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct&
 
 ControlHisto BuildControlHisto(ROOT::RDF::RNode node, const config_struct& cfg) {
     ROOT::RDF::RNode node_histo = node;
+    
+    // Initializating container
     ControlHisto control_histo;
 
     node_histo = node_histo.Define("weight", [](){ return 1.0; }, {});
 
-    std::vector<double> reco_bins_pt, gen_bins_pt, reco_bins_y, gen_bins_y, reco_bins_phis, gen_bins_phis;
 
+    // Bins initialization
     const auto& pt = cfg.unfold.pt_bins;
     const auto& y = cfg.unfold.y_bins;
     const auto& phis = cfg.unfold.phis_bins;
 
-    if (cfg.unfold.use_custom_bins == true) {
-        reco_bins_pt = pt.reco_vec;
-        gen_bins_pt = pt.gen_vec;
-        
-        reco_bins_y = y.reco_vec;
-        gen_bins_y = y.gen_vec;
-        
-        reco_bins_phis = phis.reco_vec;
-        gen_bins_phis = phis.gen_vec;
+    std::vector<double> reco_bins_pt = (cfg.unfold.use_custom_bins) ? pt.reco_vec : CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution);
+    std::vector<double> gen_bins_pt = (cfg.unfold.use_custom_bins) ? pt.gen_vec : CreateBins(pt.gen_bins, pt.min, pt.max, pt.distribution);
     
-    } else {
-        reco_bins_pt = CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution);
-        gen_bins_pt = CreateBins(pt.gen_bins, pt.min, pt.max, pt.distribution);
-            
-        reco_bins_y = CreateBins(y.reco_bins, y.min, y.max, y.distribution);
-        gen_bins_y = CreateBins(y.gen_bins, y.min, y.max, y.distribution);
-            
-        reco_bins_phis = CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution);
-        gen_bins_phis = CreateBins(phis.gen_bins, phis.min, phis.max, phis.distribution);
-    }
+    std::vector<double> reco_bins_y = (cfg.unfold.use_custom_bins) ? y.reco_vec : CreateBins(y.reco_bins, y.min, y.max, y.distribution);
+    std::vector<double> gen_bins_y = (cfg.unfold.use_custom_bins) ? y.gen_vec : CreateBins(y.gen_bins, y.min, y.max, y.distribution);
+    
+    std::vector<double> reco_bins_phis = (cfg.unfold.use_custom_bins) ? phis.reco_vec : CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution);
+    std::vector<double> gen_bins_phis = (cfg.unfold.use_custom_bins) ? phis.gen_vec : CreateBins(phis.gen_bins, phis.min, phis.max, phis.distribution);
 
     int n_reco_pt = static_cast<int>(reco_bins_pt.size()) - 1;
     int n_gen_pt = static_cast<int>(gen_bins_pt.size()) - 1;
@@ -200,6 +133,7 @@ ControlHisto BuildControlHisto(ROOT::RDF::RNode node, const config_struct& cfg) 
     
     int n_reco_phis = static_cast<int>(reco_bins_phis.size()) - 1;
     int n_gen_phis = static_cast<int>(gen_bins_phis.size()) - 1;
+
 
     // Find bin index in a bin vector -> used for purity/stability
     auto FindBinIndex = [](float value, const std::vector<double>& bins) -> int {
@@ -420,9 +354,6 @@ int VisualizeUnfoldResults(std::vector<std::unique_ptr<TCanvas>>& canvas, Unfold
     // Canvas 1 - Response Matrix
     // --------------------------
 
-    std::string name_c1 = "Response matrix " + tag;
-    auto c1 = std::make_unique<TCanvas>(name_c1.c_str(), name_c1.c_str(), 800, 600);
-    
     TH2D* histo_resp;
     if (tag == "pt") {
         histo_resp = resp_histo.h2_pt.GetPtr();
@@ -436,14 +367,18 @@ int VisualizeUnfoldResults(std::vector<std::unique_ptr<TCanvas>>& canvas, Unfold
         std::cout << "ERROR: invalid Response Matrix histogram, exiting..." << std::endl;
         return 1;
     }
-
-    //c1->SetLogz();
+    /*
+    
+    std::string name_c1 = "Response matrix " + tag;
+    auto c1 = std::make_unique<TCanvas>(name_c1.c_str(), name_c1.c_str(), 800, 600);
+    
     histo_resp->Draw("COLZ");
 
     std::string title_reco = tag + " reco [GeV]";
     std::string title_gen = tag + " gen [GeV]";
     histo_resp->GetXaxis()->SetTitle(title_reco.c_str());
     histo_resp->GetYaxis()->SetTitle(title_gen.c_str());
+    */
     
     // ----------------
     // Canvas 2 - LScan
@@ -498,7 +433,7 @@ int VisualizeUnfoldResults(std::vector<std::unique_ptr<TCanvas>>& canvas, Unfold
     // ----------------------------
     // Canvas 4 - Covariance Matrix
     // ----------------------------
-
+/*
     std::string name_c4 = "Covariance matrix " + tag;
     auto c4 = std::make_unique<TCanvas>(name_c4.c_str(), name_c4.c_str(), 800, 600);
     results.h2_out_cov->Draw("COLZ");
@@ -510,12 +445,12 @@ int VisualizeUnfoldResults(std::vector<std::unique_ptr<TCanvas>>& canvas, Unfold
     std::string name_c6 = "Correlation matrix " + tag;
     auto c6 = std::make_unique<TCanvas>(name_c6.c_str(), name_c6.c_str(), 800, 600);
     results.h2_out_corr->Draw("COLZ");
-
-    canvas.push_back(std::move(c1));
+*/
+    //canvas.push_back(std::move(c1));
     canvas.push_back(std::move(c2));
     canvas.push_back(std::move(c3));
-    canvas.push_back(std::move(c4));
-    canvas.push_back(std::move(c6));
+    //canvas.push_back(std::move(c4));
+    //canvas.push_back(std::move(c6));
 
     return 0;
 }
