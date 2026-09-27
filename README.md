@@ -6,13 +6,13 @@ This is my final project for the Computing Methods for Experimental Physics exam
 ---
 
 ## General options
-The code support three modes of operation and can run in both: data and MonteCarlo independently:
-- Selection: Filters the events of interest creating a smaller subdataset containing the information needed for efficiecies calculus.
-- Template: Creates an intermediate data state for better analysis optimization ad for binning separation. The template phase can create both types of data: binned(TH3D) or unbinned(RVecs).
-- Analysis: Reads the template input choosing the operation type of datasets(histo(binned) or data(unbinned)). Then starts the Fit process (the fit model is hardcoded) which reads the input parameters values and starts the minimization. The task of this phase is to obtain the scale factors for cross-section calculus. 
+To obtain the differential cross section several steps must be followed to tune the analysis parameters. The program relies on two datasets: reconstructed experiment data and simulated MonteCarlo data. It's important to follow the specific combinations of these two datasets acording to the operation modes.
+The workflow is:
+- Selection of the 'interest' data.
+- Computation of the pre-analysis quantities such as Acceptance and Resolution.
+- Analysis procedure: unfold, event selection, cross section final calculus. 
 
 ---
-
 ## Usage
 
 The program is entirely commanded by a JSON configuration file. 
@@ -28,6 +28,58 @@ To run the analysis, use the following syntax:
 
 ---
 
+# Operation Mode: Selection
+The complete dataset (DATA + MC) is at least 150 GB of size. Two input strategies are supported in this code:
+1. Download the two individual data packages (1 DATA, 1 MC  2GB each) and store them within the 'data' directory.
+2. Use the stream of the OpeData server and use the dataset directly. Analysis times in this case depends on the enthernet connection.
+To maximize the computational efficiency of the analysis, the selection mode filters the usless quantities, reducing the dataset size to approx 500 MB. The output path is configurable via the JSON file.
+
+To use Selection operation mode one must fix:
+```json
+"general": { 
+"data_mode": "",
+"operation_mode":"Selection",
+}
+```
+- data_mode to 'online' or 'local' string.
+```json
+"selection": {
+  "dataset": "",
+  "selection_mode": "",
+  "save_sel_data":false,
+  "save_sel_plots":false,
+  "visual_sel":false,
+  "o_sel_file_plots":"../output/selection_plots.root",
+  "o_sel_file_data":"../output/selection_data.root"
+}
+```
+- **dataset**: 'MC' (RespMatrix/Event selection mode) and 'DATA' (Event selection mode).
+- **selection_mode**: 'RespMatrix' or 'Event'
+  - **RespMatrix** builds a quantities needed for Response matrix calculus.
+  - **Event** selects transverse momentum, rapidity, phi* and invariant mass of the reconstructed Z0.
+- **save_sel_data**: saves selected data (Important).
+- **save_sel_plots**: saves plots.
+- **visual_sel**: books the visualization of saved plots.
+- **o_sel_file_plots** and **o_sel_file_data**: are the output file paths.
+
+The following section is used to tune the selected data.
+```json
+  "flag_RM": {
+    "en_kinematics":true,
+    "en_isolation":false,
+    "en_mass_window":false,
+    "en_tight_muon":false
+  },
+  "cut_RM": {
+    "pt_cut":25.0,
+    "eta_cut":2.5,
+    "mass_min":60.0,
+    "mass_max":120.0
+  }
+```
+
+---
+
 # Run Commands
 
 cmake ..
@@ -40,50 +92,6 @@ make -j(n proc)
 # Analysis procedure
 If the output directory is empty follow this steps:
 (All the JSON parameters are Case-sensitive)
-
-- Data Selection:
-  - The **Selection** can be done to **MC** or **DATA** datasets.
-  - The Selection must be done with a selection option that can be **TagAndProbe** or **RespoMatrix**.
-  - For each selection option there are specific physical cuts. The cuts flas(for implementation) and values are specified in the JSON file.
-  - The important JSON parameters are:
-    ```json
-    "general": { 
-    "dataset": "MC",
-    "operation_mode":"Selection",
-    }
-    ```
-    - "dataset" : MC or DATA. Applies the selection procedure to this sample.
-    - "operation_mode" : Selection -> needed
-    ```json
-    "selection": {
-    "selection_mode": "TagAndProbe",
-    "save_sel_plots":true,
-    "save_sel_data":true,
-    "visual_sel":false,
-    "o_sel_file_plots":"../output/risultati_plots.root",
-    "o_sel_file_data":"../output/risultati_data.root"
-    }
-    ```
-    - "selection_mode" : **TagAndProbe(TP)** or **RespMatrix(RM)**.
-    - "save_sel_data" : true -> For Selection step.
-    - "save_sel_plots" or "visual_sel" : optional.
-    - "o_sel_file_data": file path of Selection data output.
-    ```json
-    "flag_TP": {
-      "en_kinematics":true,
-      "en_mass_window":true
-    }
-
-    "cut_TP": {
-      "pt_cut":25.0,
-      "eta_cut":2.4,
-      "iso_cut":0.15,
-      "mass_min":60.0,
-      "mass_max":120.0
-    }
-    ```
-    - "flag_TP": Are the cuts flags that manage the implementation.
-    - "cut_TP": Are the cuts values 
 
 - Template creation:
   - The Template step creates a new subsample from Selection sample. This step its necessary if you want to change the binning of the 3D histogram.

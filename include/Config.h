@@ -14,6 +14,7 @@
 
 /// @brief Stores general settup status
 struct general_config {
+    std::string data_mode = "";
     std::string operation_mode = "";// Operation mode: Selection, Analysis, Acceptance, Resolution
     int verbose = 0;// General verbose flag
     bool visualize = false;// General visualization flag
@@ -23,8 +24,12 @@ struct general_config {
 struct io_config {
     std::string tree_data_name = "";// Data tree name
     std::string in_data_file = "";// Input data file path
+    std::string in_online_data_file = "";
+    
     std::string tree_mc_name = "";// MonteCarlo tree name
     std::string in_mc_file = "";// Input MonteCarlo file path
+    std::string in_online_mc_file = "";
+
     std::string val_file = "";// Validation json file path
 };
 
@@ -110,7 +115,6 @@ struct event_config {
 /// @brief Flags for enabling/disablig specifics selections cuts
 struct flags_config {
     bool en_kinematics = false;// Enables/Disables the kinematic cut, composed by transverse momentum and pseudorapidity cuts
-    bool en_isolation = false;// Enables/Disables isolation selection
     bool en_mass_window = false;// Enables/Disables the fiducial invariant mass region 
     bool en_tight_muon = false;// Enables/Disables the tight muon ID flag
 };
@@ -119,7 +123,6 @@ struct flags_config {
 struct cuts_config {
     float pt_cut = 0.0f;// Minimum transeverse momentum value
     float eta_cut = 3.0f;// Pseudorapidity acceptance
-    float iso_cut = 0.3f;// Isolation cut value
     float mass_min = 0.0f;// Invariant mass Min value
     float mass_max = 200.0f;// Invariant mass Max value
 };
@@ -170,8 +173,10 @@ struct config_struct {
 };
 
 // ------------------------------------------------------------------------------------------------------------------------------------
+
+// -----------------------
 // Configuration functions
-// ------------------------------------------------------------------------------------------------------------------------------------
+// -----------------------
 
 /// @brief Sets the json file information into the system struct.
 /// @param value Reference to the configuration struct.
@@ -198,5 +203,7 @@ using validation_type = std::unordered_map<std::uint32_t, std::vector<std::pair<
 /// @param json_path Validation json file path.
 /// @return Returns the validation map.
 validation_type Validation_load(const std::string& json_path);
+
+std::vector<std::string> ReadOnlineDataPaths(const std::string& txt_file_path);
 
 #endif
