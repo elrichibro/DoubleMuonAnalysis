@@ -30,11 +30,14 @@ To run the analysis, use the following syntax:
 
 # Operation Mode: Selection
 The complete dataset (DATA + MC) is at least 150 GB of size. Two input strategies are supported in this code:
+
 1. Download the two individual data packages (1 DATA, 1 MC  2GB each) and store them within the 'data' directory.
 2. Use the stream of the OpeData server and use the dataset directly. Analysis times in this case depends on the enthernet connection.
+
 To maximize the computational efficiency of the analysis, the selection mode filters the usless quantities, reducing the dataset size to approx 500 MB. The output path is configurable via the JSON file.
 
 To use Selection operation mode one must fix:
+
 ```json
 "general": { 
 "data_mode": "",
@@ -55,7 +58,7 @@ To use Selection operation mode one must fix:
 ```
 - **dataset**: 'MC' (RespMatrix/Event selection mode) and 'DATA' (Event selection mode).
 - **selection_mode**: 'RespMatrix' or 'Event'
-  - **RespMatrix** builds a quantities needed for Response matrix calculus.
+  - **RespMatrix** builds the quantities needed for Response matrix calculus.
   - **Event** selects transverse momentum, rapidity, phi* and invariant mass of the reconstructed Z0.
 - **save_sel_data**: saves selected data (Important).
 - **save_sel_plots**: saves plots.
@@ -77,8 +80,17 @@ The following section is used to tune the selected data.
     "mass_max":120.0
   }
 ```
-
 ---
+# Operation Mode: Pre-analysis
+
+The following pre-analysis operation modes are available in the framework:
+
+- Acceptance operation mode: Processes the unfiltered Monte Carlo dataset to compute the detector geometrical efficiency. Using generator-level events (Z -> \mu+\mu-), it calculates the fraction of reconstructible events  from all generated ones that pass the matching condition and the fiducial kinematical cuts.
+
+- Resolution Mode: Uses the selected Response Matrix dataset (local or online) to determine the experimental resolution. Using the matched flag, that is true only when the two generated muons match the reconstructed muons and satisfy all kinematic selection. Using fine binning at the generator level, it extracts the relative reconstructed distributions for each bin to study how detector resolution varies(p_t, |y| and phi*).
+
+- Unfolding -> Control Histograms Mode: Computes efficiency, purity, and stability for each bins configuration. This mode is usefull to select a propper binning settup for unfolding procedure.
+
 
 # Run Commands
 

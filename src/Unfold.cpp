@@ -475,6 +475,60 @@ int VisualizeUnfoldResults(std::vector<std::unique_ptr<TCanvas>>& canvas, Unfold
     return 0;
 }
 
+int GetCrossSection(std::vector<std::unique_ptr<TCanvas>>& canvas, UnfoldResult& results, const std::string& tag) {
+    TH1D* h_result = (TH1D*)results.h1_out_unf->Clone("h_result");
+
+    for (int i = 1; i <= h_result->GetNbinsX(); ++i) {
+        double N = h_result->GetBinContent(i);
+        if (N >= 0) {
+            h_result->SetBinError(i, std::sqrt(N));
+        } else {
+            h_result->SetBinError(i, 0);
+        }
+    }
+
+    h_result->Scale(1.0 / 8700);
+    
+    std::string name_c = "Differential Cross Section_" + tag + ";";
+    auto c0 = std::make_unique<TCanvas>(name_c.c_str(), name_c.c_str(), 800, 600);
+    h_result->SetLineColor(kBlack);
+    h_result->SetMarkerColor(kRed);
+    h_result->SetMarkerStyle(20);
+    h_result->SetStats(0);
+
+    if (tag == "pt") {
+        h_result->GetXaxis()->SetTitle("p_{T}^{Z} [GeV]");
+        h_result->GetYaxis()->SetTitle("d#sigma/dp_{T}^{Z} [pb/GeV]");
+    } else if (tag == "y") {
+        h_result->GetXaxis()->SetTitle("|y^{Z}|");
+        h_result->GetYaxis()->SetTitle("d#sigma/dy^{Z} [pb]");
+    } else if (tag == "phis") {
+        h_result->GetXaxis()->SetTitle("#phi_{#eta}^{*}");
+        h_result->GetYaxis()->SetTitle("d#sigma/d #phi_{#eta}^{*} [pb]");
+    } else {
+        std::cout << "ERROR: invalid input tag, pls insert 'pt', 'y' or 'phis', exiting..." << std::endl;
+        return 1;
+    }
+
+    c0->SetTickx(1);
+    c0->SetTicky(1);
+
+    h_result->GetXaxis()->SetTitleSize(0.045);
+    h_result->GetYaxis()->SetTitleSize(0.045);
+
+    h_result->Scale(1, "width");
+
+    h_result->Draw("E");
+
+    TLegend* leg = new TLegend(0.6, 0.7, 0.88, 0.88);
+    leg->AddEntry(h_result, "Data", "lep");
+    leg->Draw();
+
+    canvas.push_back(std::move(c0));
+    return 0;
+}
+
+
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMatrixHisto& resp_histo, ControlHisto& control_histo, const std::string& tag) {

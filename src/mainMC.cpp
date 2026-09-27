@@ -405,6 +405,8 @@ int main(int argc, char* argv[]) {
             }
 
             if (visualize && (app != nullptr)) {
+                int chec_cross = GetCrossSection(canvas, result, tag);
+                
                 int check = VisualizeUnfoldResults(canvas, result, resp_histo, tag);
                 
                 if (check != 0) {

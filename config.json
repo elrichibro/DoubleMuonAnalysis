@@ -43,7 +43,7 @@
   },
 
   "unfold":{
-    "unfold_quantity": "phis",
+    "unfold_quantity": "y",
     "check_plot":false,
     "use_custom_bins":true,
     "closure_test":false,

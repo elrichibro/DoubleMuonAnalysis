@@ -132,6 +132,9 @@ const config_struct& cfg, const std::string& tag);
 /// @return 0 if succeds, else errore code.
 int VisualizeUnfoldResults(std::vector<std::unique_ptr<TCanvas>>& canvas, UnfoldResult& results, RespMatrixHisto& resp_histo,  const std::string& tag);   
 
+int GetCrossSection(std::vector<std::unique_ptr<TCanvas>>& canvas, UnfoldResult& results, const std::string& tag);
+
+
 /// @brief Visualizes the control plots: Efficiency, Purity, Stability and Response matrix for optimization of the binning before the unfolding procedure.
 /// @param canvas Canvas container for visualization.
 /// @param resp_histo Struct containing the response matrix plots.
