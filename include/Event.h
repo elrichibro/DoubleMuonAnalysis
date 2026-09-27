@@ -96,7 +96,8 @@ struct EventFitResult {
 /// @param tag Studied quantity.
 /// @param save_plots Saving plots flag.
 /// @return A struct containing the fit results. Quantity of interest is the signal yield.
-EventFitResult EventSingleFit(int bin_idx, TH1D* h_mll, RooDataSet* d_mll_model, TDirectory* o_dir, const std::string& tag, const bool save_plots);
+EventFitResult EventSingleFit(int bin_idx, TH1D* h_mll, RooDataSet* d_mll_model, TH1D* h_mll_model, TDirectory* o_dir, const std::string& tag, 
+    const bool save_plots, const bool local);
 
 /// @brief Wrapper for EventSingleFit that loops on all P_t, Y or Phi* bins.
 /// @param container Container for binned input data.
@@ -111,8 +112,9 @@ EventFitResult EventSingleFit(int bin_idx, TH1D* h_mll, RooDataSet* d_mll_model,
 /// @param save_plots Save plots flag.
 /// @param o_dir Output directory.
 /// @return A vector of Event single fit structs -> all the results for all (P_t, Y or Phi* -> only one quantity under study) bins.
-std::vector<EventFitResult> EventSingleFit_Wrapper(std::vector<std::unique_ptr<TH1D>>& container, std::vector<std::unique_ptr<RooDataSet>>& container_model,
-const std::string& tag, const bool save_plots, TDirectory* o_dir = nullptr);
+std::vector<EventFitResult> EventSingleFit_Wrapper(std::vector<std::unique_ptr<TH1D>>& container, 
+    std::vector<std::unique_ptr<RooDataSet>>& container_model, std::vector<std::unique_ptr<TH1D>>& container_model_histo, 
+    const std::string& tag, const bool save_plots, TDirectory* o_dir, const bool local);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
@@ -124,7 +126,7 @@ const std::string& tag, const bool save_plots, TDirectory* o_dir = nullptr);
 /// @param ev_sel_histo Event selection histograms.
 /// @param cfg General configuration struct.
 /// @return A sigle TH1D of the signal with subtracted background.
-std::unique_ptr<TH1D> EventFit_SignalHisto_Wrapper(EventSelectionHisto& ev_sel_histo, const config_struct& cfg);
+std::unique_ptr<TH1D> EventFit_SignalHisto_Wrapper(EventSelectionHisto& ev_sel_histo, const config_struct& cfg, const std::string& tag);
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 

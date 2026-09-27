@@ -4,6 +4,9 @@
 #include <fstream>
 #include <iostream>
 
+#include <vector>
+#include <string>
+
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 int Configure(config_struct& value, const std::string& json_path) {
@@ -22,6 +25,7 @@ int Configure(config_struct& value, const std::string& json_path) {
         if (json_obj.contains("general")) {
             const auto& j = json_obj["general"];
 
+            value.general.data_mode = j.value("data_mode", value.general.data_mode);
             value.general.operation_mode = j.value("operation_mode", value.general.operation_mode);
             value.general.verbose = j.value("verbose", value.general.verbose);
             value.general.visualize = j.value("visualize", value.general.visualize);
@@ -32,8 +36,12 @@ int Configure(config_struct& value, const std::string& json_path) {
 
             value.io.tree_data_name = j.value("tree_data_name", value.io.tree_data_name);
             value.io.in_data_file = j.value("in_data_file", value.io.in_data_file);
+            value.io.in_online_data_file = j.value("in_online_data_file", value.io.in_online_data_file);
+
             value.io.tree_mc_name = j.value("tree_mc_name", value.io.tree_mc_name);
             value.io.in_mc_file = j.value("in_mc_file", value.io.in_mc_file);
+            value.io.in_online_mc_file = j.value("in_online_mc_file", value.io.in_online_mc_file);
+
             value.io.val_file = j.value("val_file", value.io.val_file);
         }
 
@@ -145,7 +153,6 @@ int Configure(config_struct& value, const std::string& json_path) {
             const auto& j = json_obj["flag_ES"];
 
             value.flag_ES.en_kinematics = j.value("en_kinematics", value.flag_ES.en_kinematics);
-            value.flag_ES.en_isolation = j.value("en_isolation", value.flag_ES.en_isolation);
             value.flag_ES.en_mass_window = j.value("en_mass_window", value.flag_ES.en_mass_window);
             value.flag_ES.en_tight_muon = j.value("en_tight_muon", value.flag_ES.en_tight_muon);
         }
@@ -155,7 +162,6 @@ int Configure(config_struct& value, const std::string& json_path) {
 
             value.cut_ES.pt_cut = j.value("pt_cut", value.cut_ES.pt_cut);
             value.cut_ES.eta_cut = j.value("eta_cut", value.cut_ES.eta_cut);
-            value.cut_ES.iso_cut = j.value("iso_cut", value.cut_ES.iso_cut);
             value.cut_ES.mass_min = j.value("mass_min", value.cut_ES.mass_min);
             value.cut_ES.mass_max = j.value("mass_max", value.cut_ES.mass_max);
         }
@@ -164,7 +170,6 @@ int Configure(config_struct& value, const std::string& json_path) {
             const auto& j = json_obj["flag_RM"];
 
             value.flag_RM.en_kinematics = j.value("en_kinematics", value.flag_RM.en_kinematics);
-            value.flag_RM.en_isolation = j.value("en_isolation", value.flag_RM.en_isolation);
             value.flag_RM.en_mass_window = j.value("en_mass_window", value.flag_RM.en_mass_window);
             value.flag_RM.en_tight_muon = j.value("en_tight_muon", value.flag_RM.en_tight_muon);
         }
@@ -174,7 +179,6 @@ int Configure(config_struct& value, const std::string& json_path) {
 
             value.cut_RM.pt_cut = j.value("pt_cut", value.cut_RM.pt_cut);
             value.cut_RM.eta_cut = j.value("eta_cut", value.cut_RM.eta_cut);
-            value.cut_RM.iso_cut = j.value("iso_cut", value.cut_RM.iso_cut);
             value.cut_RM.mass_min = j.value("mass_min", value.cut_RM.mass_min);
             value.cut_RM.mass_max = j.value("mass_max", value.cut_RM.mass_max);
         }
@@ -236,6 +240,7 @@ void Verbose_config(const config_struct& value) {
     // -------
     
     std::cout << "General settings:" << std::endl;
+    std::cout << "    Data mode: " << value.general.data_mode << std::endl;
     std::cout << "    Operation mode: " << value.general.operation_mode << std::endl;
     std::cout << "    Verbose mode: " << value.general.verbose << std::endl;
     std::cout << "    Visualize flag: " << value.general.visualize << std::endl;
@@ -250,9 +255,13 @@ void Verbose_config(const config_struct& value) {
 
     std::cout << "I/O settings:" << std::endl;
     std::cout << "    Input data file: " << value.io.in_data_file << std::endl;
+    std::cout << "    Online input data: " << value.io.in_online_data_file << std::endl;
     std::cout << "    Data Tree: " << value.io.tree_data_name << std::endl;
+
     std::cout << "    Input MC file: " << value.io.in_mc_file << std::endl;
+    std::cout << "    Online input MC: " << value.io.in_online_mc_file<< std::endl;
     std::cout << "    MC Tree: " << value.io.tree_mc_name << std::endl;
+
     std::cout << "    Validation file: " << value.io.val_file << std::endl;
     
     std::cout << "" << std::endl;
@@ -433,7 +442,6 @@ void Verbose_config(const config_struct& value) {
 
     std::cout << "Event Selection flags:" << std::endl;
     std::cout << "    Kinematics: " << value.flag_ES.en_kinematics << std::endl;
-    std::cout << "    Isolation: " << value.flag_ES.en_isolation << std::endl;
     std::cout << "    Mass window: " << value.flag_ES.en_mass_window << std::endl;
     std::cout << "    Tight muon: " << value.flag_ES.en_tight_muon << std::endl;
 
@@ -442,7 +450,6 @@ void Verbose_config(const config_struct& value) {
     std::cout << "Event Selection cuts:" << std::endl;
     std::cout << "    p_T cut: " << value.cut_ES.pt_cut << std::endl;
     std::cout << "    Eta cut: " << value.cut_ES.eta_cut << std::endl;
-    std::cout << "    Isolation cut: " << value.cut_ES.iso_cut << std::endl;
     std::cout << "    Max mass: " << value.cut_ES.mass_max << std::endl;
     std::cout << "    Min mass: " << value.cut_ES.mass_min << std::endl;
 
@@ -450,7 +457,6 @@ void Verbose_config(const config_struct& value) {
 
     std::cout << "RespMatrix flags:" << std::endl;
     std::cout << "    Kinematics: " << value.flag_RM.en_kinematics << std::endl;
-    std::cout << "    Isolation: " << value.flag_RM.en_isolation << std::endl;
     std::cout << "    Mass window: " << value.flag_RM.en_mass_window << std::endl;
     std::cout << "    Tight muon: " << value.flag_RM.en_tight_muon << std::endl;
 
@@ -459,7 +465,6 @@ void Verbose_config(const config_struct& value) {
     std::cout << "RespMatrix cuts:" << std::endl;
     std::cout << "    p_T cut: " << value.cut_RM.pt_cut << std::endl;
     std::cout << "    Eta cut: " << value.cut_RM.eta_cut << std::endl;
-    std::cout << "    Isolation cut: " << value.cut_RM.iso_cut << std::endl;
     std::cout << "    Max mass: " << value.cut_RM.mass_max << std::endl;
     std::cout << "    Min mass: " << value.cut_RM.mass_min << std::endl;
 
@@ -540,4 +545,26 @@ validation_type Validation_load(const std::string& json_path) {
         validation_map[run] = std::move(blocks);
     }
     return validation_map;
+}
+
+
+std::vector<std::string> ReadOnlineDataPaths(const std::string& txt_file_path) {
+    std::vector<std::string> container;
+    
+    std::ifstream file(txt_file_path);
+
+    if (!file.is_open()) {
+        std::cerr << "[ERROR] Impossibile aprire il file di testo: " << txt_file_path << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        if (!line.empty() && line[0] != '#') {
+            container.push_back(line);
+        }
+    }
+
+    file.close();
+    return container;
 }

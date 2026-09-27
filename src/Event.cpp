@@ -3,12 +3,14 @@
 #include "Utils.h"
 
 #include <RooAddPdf.h>
+#include <RooHistPdf.h>
 #include <RooKeysPdf.h>
 #include <RooExponential.h>
 
 #include <RooFitResult.h>
 #include <RooPlot.h>
 #include <RooHist.h>
+
 
 #include <TCanvas.h>
 #include <TPad.h>
@@ -23,16 +25,14 @@ EventSelectionHisto BuildEventSelection_Histo(ROOT::RDF::RNode node, const confi
     EventSelectionHisto histo;
 
     int n_pt, n_y, n_phis;
+    const auto& pt = cfg.unfold.pt_bins;
+    const auto& y = cfg.unfold.y_bins;
+    const auto& phis = cfg.unfold.phis_bins;
 
     // Binning options
-    std::vector<double> bins_pt = (cfg.unfold.use_custom_bins) ? cfg.unfold.pt_bins.reco_vec :
-    CreateBins(cfg.unfold.pt_bins.reco_bins, cfg.unfold.pt_bins.min, cfg.unfold.pt_bins.max, cfg.unfold.pt_bins.distribution);
-
-    std::vector<double> bins_y = (cfg.unfold.use_custom_bins) ? cfg.unfold.y_bins.reco_vec : 
-    CreateBins(cfg.unfold.y_bins.reco_bins, cfg.unfold.y_bins.min, cfg.unfold.y_bins.max, cfg.unfold.y_bins.distribution);
-    
-    std::vector<double> bins_phis = (cfg.unfold.use_custom_bins) ? cfg.unfold.phis_bins.reco_vec : 
-    CreateBins(cfg.unfold.phis_bins.reco_bins, cfg.unfold.phis_bins.min, cfg.unfold.phis_bins.max, cfg.unfold.phis_bins.distribution);
+    std::vector<double> bins_pt = (cfg.unfold.use_custom_bins) ? pt.reco_vec : CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution);
+    std::vector<double> bins_y = (cfg.unfold.use_custom_bins) ? y.reco_vec : CreateBins(y.reco_bins, y.min, y.max, y.distribution);
+    std::vector<double> bins_phis = (cfg.unfold.use_custom_bins) ? phis.reco_vec : CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution);
 
     // Mll bins - HARDCODED
     int n_mll = 70;
@@ -127,16 +127,16 @@ std::vector<std::unique_ptr<RooDataSet>> BuildEventFit_SignalModel(TTree* tree, 
 
     // Bins settup
     if (tag == "pt") {
-        vector_bins = (cfg.unfold.use_custom_bins) ? cfg.unfold.pt_bins.reco_vec : 
-        CreateBins(cfg.unfold.pt_bins.reco_bins, cfg.unfold.pt_bins.min, cfg.unfold.pt_bins.max, cfg.unfold.pt_bins.distribution);
+        const auto& pt = cfg.unfold.pt_bins;    
+        vector_bins = (cfg.unfold.use_custom_bins) ? pt.reco_vec : CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution);
     
     } else if (tag == "y") {
-        vector_bins = (cfg.unfold.use_custom_bins) ? cfg.unfold.y_bins.reco_vec: 
-        CreateBins(cfg.unfold.y_bins.reco_bins, cfg.unfold.y_bins.min, cfg.unfold.y_bins.max, cfg.unfold.y_bins.distribution);
+        const auto& y = cfg.unfold.y_bins;
+        vector_bins = (cfg.unfold.use_custom_bins) ? y.reco_vec : CreateBins(y.reco_bins, y.min, y.max, y.distribution);
     
     } else if (tag == "phis") {
-        vector_bins = (cfg.unfold.use_custom_bins) ? cfg.unfold.phis_bins.reco_vec :
-        CreateBins(cfg.unfold.phis_bins.reco_bins, cfg.unfold.phis_bins.min, cfg.unfold.phis_bins.max, cfg.unfold.phis_bins.distribution);
+        const auto& phis = cfg.unfold.phis_bins;
+        vector_bins = (cfg.unfold.use_custom_bins) ? phis.reco_vec : CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution);
     
     } else {
         std::cout << "Error: invalid tag input " << tag << ", exiting..." << std::endl;
@@ -210,16 +210,25 @@ std::vector<std::unique_ptr<RooDataSet>> BuildEventFit_SignalModel(TTree* tree, 
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-EventFitResult EventSingleFit(int bin_idx, TH1D* h_mll, RooDataSet* d_mll_model, TDirectory* o_dir, const std::string& tag, const bool save_plots) {
+EventFitResult EventSingleFit(int bin_idx, TH1D* h_mll, RooDataSet* d_mll_model, TH1D* h_mll_model, TDirectory* o_dir, 
+    const std::string& tag, const bool save_plots, const bool local) {
     EventFitResult result;
 
     result.bin_idx = bin_idx;
     
     // Unpacking histogram
-    if (!h_mll || !d_mll_model) {
-        std::cout << "ERROR: invalid input histogram, exiting..." << std::endl;
+    if (!h_mll) {
+        std::cout << "ERROR: invalid input histogram data, exiting..." << std::endl;
         return result;
     }
+
+    if (!h_mll_model && !d_mll_model) {
+        std::cout << "ERROR: invalid input model, exiting..." << std::endl;
+        return result;
+    }
+    
+    std::unique_ptr<RooAbsPdf> sig_pdf = nullptr;
+    std::unique_ptr<RooDataHist> mc_data_hist = nullptr;
 
     // Defining variable
     RooRealVar mll("mll", "m_{#mu#mu}", 60.0, 120.0, "GeV");
@@ -227,8 +236,16 @@ EventFitResult EventSingleFit(int bin_idx, TH1D* h_mll, RooDataSet* d_mll_model,
     // Defining data
     RooDataHist data_hist(("h_mll_" + tag + "_bin_" + std::to_string(bin_idx)).c_str(), "", mll, h_mll);
 
+    if (local) {
+        sig_pdf = std::make_unique<RooKeysPdf>("sig_pdf", "Signal PDF from MC", mll, *d_mll_model, RooKeysPdf::MirrorBoth);
+    } else {
+        mc_data_hist = std::make_unique<RooDataHist>("sig_histo", "Signal PDF from MC", mll, h_mll_model);
+        auto hist_pdf = std::make_unique<RooHistPdf>("sig_pdf", "Signal PDF from MC (Hist)", mll, *mc_data_hist);
+        hist_pdf->setInterpolationOrder(3);
+        sig_pdf = std::move(hist_pdf);
+    }
+
     // Signal distribution
-    RooKeysPdf sig_pdf("sig_pdf", "Signal PDF from MC (KDE)", mll, *d_mll_model, RooKeysPdf::MirrorBoth);
     
     //RooHistPdf sig_pdf("sig_pdf", "Signal PDF from MC", mll, hist_mc_model);
     //sig_pdf.setInterpolationOrder(3);    
@@ -243,7 +260,7 @@ EventFitResult EventSingleFit(int bin_idx, TH1D* h_mll, RooDataSet* d_mll_model,
     RooRealVar n_bkg("n_bkg", "Bkg Yield", total_entries * 0.1, 0.0, total_entries * 1.5);
 
     // MODEL
-    RooAddPdf model("model", "Signal + Bkg", RooArgList(sig_pdf, bkg_pdf), RooArgList(n_sig, n_bkg));
+    RooAddPdf model("model", "Signal + Bkg", RooArgList(*sig_pdf, bkg_pdf), RooArgList(n_sig, n_bkg));
 
     // Fit
     std::unique_ptr<RooFitResult> fit_res(model.fitTo(
@@ -279,7 +296,10 @@ EventFitResult EventSingleFit(int bin_idx, TH1D* h_mll, RooDataSet* d_mll_model,
 
 
 
-std::vector<EventFitResult> EventSingleFit_Wrapper(std::vector<std::unique_ptr<TH1D>>& container, std::vector<std::unique_ptr<RooDataSet>>& container_model, const std::string& tag, const bool save_plots, TDirectory* o_dir) {
+std::vector<EventFitResult> EventSingleFit_Wrapper(std::vector<std::unique_ptr<TH1D>>& container, 
+    std::vector<std::unique_ptr<RooDataSet>>& container_model, std::vector<std::unique_ptr<TH1D>>& container_model_histo, 
+    const std::string& tag, const bool save_plots, TDirectory* o_dir, const bool local) {
+    
     // Fit global container
     std::vector<EventFitResult> results;
 
@@ -291,12 +311,20 @@ std::vector<EventFitResult> EventSingleFit_Wrapper(std::vector<std::unique_ptr<T
     // Loop on Input histograms -> check needed(?)
     for (int i = 0; i < container.size(); i++) {
         
+        RooDataSet* data_model = nullptr;
+        TH1D* histo_model = nullptr;
+
         // Getting smart pointer
         TH1D* histo = container[i].get();
-        RooDataSet* data_model = container_model[i].get();
+        
+        if (local) {
+            data_model = container_model[i].get();
+        } else {
+            histo_model = container_model_histo[i].get();
+        }
 
         // Fit
-        EventFitResult res = EventSingleFit(i, histo, data_model, o_dir, tag, save_plots);
+        EventFitResult res = EventSingleFit(i, histo, data_model, histo_model, o_dir, tag, save_plots, local);
 
         // Fit status + counting
         if (res.fit_status == 0) {
@@ -315,8 +343,8 @@ std::vector<EventFitResult> EventSingleFit_Wrapper(std::vector<std::unique_ptr<T
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-std::unique_ptr<TH1D> EventFit_SignalHisto_Wrapper(EventSelectionHisto& ev_sel_histo, const config_struct& cfg) {
-    std::string tag = cfg.event.event_quantity;
+std::unique_ptr<TH1D> EventFit_SignalHisto_Wrapper(EventSelectionHisto& ev_sel_histo, const config_struct& cfg, const std::string& tag) {
+    const bool local = (cfg.general.data_mode == "local");
     
     // MC DATASET -> Model
     ROOT::RDataFrame mc_frame("MC_Event_Tree", cfg.selection.o_sel_file_data);
@@ -328,24 +356,33 @@ std::unique_ptr<TH1D> EventFit_SignalHisto_Wrapper(EventSelectionHisto& ev_sel_h
     // Selecting InvMass histograms for signal fit procedure.
     std::vector<std::unique_ptr<TH1D>> event_container = BuildEventFit_Histo(ev_sel_histo, tag);
 
-    // Unpacking model
-    std::unique_ptr<TFile> model_file(TFile::Open(cfg.selection.o_sel_file_data.c_str(), "READ"));
-    TTree* model_tree = model_file->Get<TTree>("MC_Event_Tree");
+    std::vector<std::unique_ptr<RooDataSet>> event_model_container;
+    std::vector<std::unique_ptr<TH1D>> event_model_container_histo;
 
-    if (!model_file || !model_file) {
-        std::cout << "ERROR: invalid read operation" << std::endl;
-        return nullptr;
+    if (local) {
+        // Unpacking model
+        std::unique_ptr<TFile> model_file(TFile::Open(cfg.selection.o_sel_file_data.c_str(), "READ"));
+        TTree* model_tree = model_file->Get<TTree>("MC_Event_Tree");
+
+        if (!model_file || !model_file) {
+            std::cout << "ERROR: invalid read operation" << std::endl;
+            return nullptr;
+        }
+
+        // Selecting InvMass unbinned data signal model generatio
+        event_model_container = BuildEventFit_SignalModel(model_tree, cfg, tag);
+    
+    } else {
+        // Selecting InvMass histograms for model signal fit procedure.
+        event_model_container_histo = BuildEventFit_Histo(event_model_histo, tag);
     }
 
-    // Selecting InvMass unbinned data signal model generatio
-    std::vector<std::unique_ptr<RooDataSet>> event_model_container = BuildEventFit_SignalModel(model_tree, cfg, tag);
-    
     // ----------------------
     // Starting fit procedure
-    // ----------------------
+    // ----------------------  
     
     std::unique_ptr<TFile> o_fit_file = nullptr;
-    TDirectory* fit_dir;
+    TDirectory* fit_dir = nullptr;
 
     // Saving option
     if (cfg.event.save_fit_plots) {
@@ -368,7 +405,8 @@ std::unique_ptr<TH1D> EventFit_SignalHisto_Wrapper(EventSelectionHisto& ev_sel_h
     }
 
     // Core -> FIT !!!
-    std::vector<EventFitResult> event_results = EventSingleFit_Wrapper(event_container, event_model_container, tag, cfg.event.save_fit_plots, fit_dir);
+    std::vector<EventFitResult> event_results = EventSingleFit_Wrapper(event_container, event_model_container, event_model_container_histo,
+     tag, cfg.event.save_fit_plots, fit_dir, local);
 
     if (cfg.event.save_fit_plots) {
         o_fit_file->cd();
@@ -390,16 +428,16 @@ std::unique_ptr<TH1D> BuildFitResult_Histo(const std::vector<EventFitResult>& re
 
     // Bins settup
     if (tag == "pt") {
-        vector_bins = (cfg.unfold.use_custom_bins) ? cfg.unfold.pt_bins.reco_vec : 
-        CreateBins(cfg.unfold.pt_bins.reco_bins, cfg.unfold.pt_bins.min, cfg.unfold.pt_bins.max, cfg.unfold.pt_bins.distribution);
+        const auto& pt = cfg.unfold.pt_bins;    
+        vector_bins = (cfg.unfold.use_custom_bins) ? pt.reco_vec : CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution);
     
     } else if (tag == "y") {
-        vector_bins = (cfg.unfold.use_custom_bins) ? cfg.unfold.y_bins.reco_vec: 
-        CreateBins(cfg.unfold.y_bins.reco_bins, cfg.unfold.y_bins.min, cfg.unfold.y_bins.max, cfg.unfold.y_bins.distribution);
+        const auto& y = cfg.unfold.y_bins;
+        vector_bins = (cfg.unfold.use_custom_bins) ? y.reco_vec : CreateBins(y.reco_bins, y.min, y.max, y.distribution);
     
     } else if (tag == "phis") {
-        vector_bins = (cfg.unfold.use_custom_bins) ? cfg.unfold.phis_bins.reco_vec :
-        CreateBins(cfg.unfold.phis_bins.reco_bins, cfg.unfold.phis_bins.min, cfg.unfold.phis_bins.max, cfg.unfold.phis_bins.distribution);
+        const auto& phis = cfg.unfold.phis_bins;
+        vector_bins = (cfg.unfold.use_custom_bins) ? phis.reco_vec : CreateBins(phis.reco_bins, phis.min, phis.max, phis.distribution);
     
     } else {
         std::cout << "Error: invalid tag input " << tag << ", exiting..." << std::endl;
