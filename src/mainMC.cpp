@@ -79,7 +79,9 @@ int main(int argc, char* argv[]) {
     std::cout << "Validation Map created." << std::endl;
 
     std::string dataset_tree = "";
-    std::string dataset_file = "";
+    std::vector<std::string> dataset_file;
+
+    const bool local = (cfg.general.data_mode == "local");
 
     ROOT::EnableImplicitMT();// MultiThread option: ON
 
@@ -98,13 +100,16 @@ int main(int argc, char* argv[]) {
     // ----------
 
     if (cfg.general.operation_mode.find("Acceptance") != std::string::npos) {
-
         if (cfg.acceptance.dataset == "DATA") {
             std::cout << "ERROR: Invalid dataset with Acceptance Operation Mode, only MC is permitted, exiting..." << std::endl;
             return 1;
         } else if (cfg.acceptance.dataset == "MC") {
             dataset_tree = cfg.io.tree_mc_name;
-            dataset_file = cfg.io.in_mc_file;
+            if (local) {
+                dataset_file.push_back(cfg.io.in_mc_file);
+            } else {
+                dataset_file = ReadOnlineDataPaths(cfg.io.in_online_mc_file);
+            }
         }
 
         ROOT::RDataFrame data_frame(dataset_tree, dataset_file);
@@ -112,7 +117,7 @@ int main(int argc, char* argv[]) {
 
         if (verbose){ 
             std::cout << "RDataFrame object created, unpacking tree: " << dataset_tree 
-            << ", from file: " << dataset_file << ", starting selection ..." << std::endl;
+            << ", in" <<  cfg.general.data_mode <<  " data operation mode, starting selection ..." << std::endl;
         }
         
         std::vector<float> results = CalculateAcceptance(node_ACC, "aFSR", 2);
@@ -131,6 +136,7 @@ int main(int argc, char* argv[]) {
 
     else if (cfg.general.operation_mode.find("Resolution") != std::string::npos) {
 
+        std::cout << "WARNING: The Resolution Operation mode is settable in online/local data mode through the selection input file." << std::endl; 
         ROOT::RDataFrame data_frame("MC_RespMatrix_Tree", cfg.selection.o_sel_file_data);
         ROOT::RDF::RNode node_resolution = data_frame;
 
@@ -173,7 +179,6 @@ int main(int argc, char* argv[]) {
 
             graph->Draw("AP");
 
-
             TCanvas* canvas2 = new TCanvas("canvas2", ("Resolution_events_ " + tag).c_str(), 800, 600);
             canvas2->SetGrid();
 
@@ -209,27 +214,36 @@ int main(int argc, char* argv[]) {
 
             if (cfg.selection.dataset == "DATA") {
                 dataset_tree = cfg.io.tree_data_name;
-                dataset_file = cfg.io.in_data_file;
+                
+                if (local) {
+                    dataset_file.push_back(cfg.io.in_data_file);  
+                } else {
+                    dataset_file = ReadOnlineDataPaths(cfg.io.in_online_data_file);
+                }
                 
                 std::cout << "Initializing Selection operation in DATA." << std::endl;
+            
             } else if (cfg.selection.dataset == "MC") {
                 dataset_tree = cfg.io.tree_mc_name;
-                dataset_file = cfg.io.in_mc_file;
-                
+
+                if (local) {
+                    dataset_file.push_back(cfg.io.in_mc_file);  
+                } else {
+                    dataset_file = ReadOnlineDataPaths(cfg.io.in_online_mc_file);
+                }
                 std::cout << "Initializing Selection operation in MC." << std::endl;
             }
 
-            ROOT::RDataFrame selection_data_frame(dataset_tree, dataset_file);
-            
             // ----------
             // RespMatrix
             // ----------
             
+            ROOT::RDataFrame selection_data_frame(dataset_tree, dataset_file);
             ROOT::RDF::RNode node_RM = selection_data_frame;
             
             if (cfg.selection.selection_mode.find("RespMatrix") != std::string::npos) {
                 if (cfg.selection.dataset == "DATA") {
-                    std::cout << "ERROR: invalid Selection dataset for Response Matrix Calculus, pls select MC dataset in Selection settup, exiting..."
+                    std::cout << "ERROR: invalid Selection dataset for Response Matrix Calculus, pls select 'MC' dataset in Selection settup, exiting..."
                      << std::endl;
                     return 1; 
                 }
@@ -281,7 +295,6 @@ int main(int argc, char* argv[]) {
 
             if ((cfg.selection.visual_sel) && (app != nullptr)) {                
                 std::cout << "Starting visualization..." << std::endl;
-                app->SetReturnFromRun(true);
             
                 app->Run();
                 delete app;
@@ -304,28 +317,34 @@ int main(int argc, char* argv[]) {
     // --------
 
     else if (cfg.general.operation_mode == "Analysis") {
-        
+        std::cout << "WARNING: The Analysis operation mode is settable in online/local data mode through the selection input file." << std::endl; 
+
         if (cfg.analysis.analysis_mode == "Unfold") {
-            std::string tag = cfg.unfold.unfold_quantity;
-            std::vector<std::unique_ptr<TCanvas>> canvas;
+            // P_t_Z0, |Y_Z0|, Phi*_Z0
+            const std::string tag = cfg.unfold.unfold_quantity;
+
+            // Canvas container
+            std::vector<std::unique_ptr<TCanvas>> canvas;    
 
             // MonteCarlo DATASET
             ROOT::RDataFrame mc_frame("MC_RespMatrix_Tree", cfg.selection.o_sel_file_data);
             ROOT::RDF::RNode node_RM = mc_frame;
             
+            // Response matrix struct
             RespMatrixHisto resp_histo = BuildRespMatrixHisto(node_RM, cfg);
 
             if (cfg.unfold.check_plot) {
-                
+                // Control histograms
                 ControlHisto control_histo = BuildControlHisto(node_RM, cfg);
                 
                 if (visualize && app != nullptr) {
-                
+                    // Event loop for Control histograms -> Pre-Unfold option.
                     int check_control = VisualizeControlPlots(canvas, resp_histo, control_histo, tag);
-                    app->Run();
-                    delete app;
+
+                    app->Run();// Problem HERE !
                     
-                    return 0; 
+                    delete app;
+                    return 0;
                 } else {
                     std::cout << "check_plot True but no visualization was booked, exiting..." << std::endl;
                     return 1;
@@ -336,13 +355,11 @@ int main(int argc, char* argv[]) {
             ROOT::RDataFrame data_frame("DATA_Event_Tree", cfg.selection.o_sel_file_data);
             ROOT::RDF::RNode node_event = data_frame;
 
-            // First Event Loop on MonteCarlo
-            UnfoldDensities density = CreateUnfoldDensity(resp_histo, tag);// OR HERE
-            UnfoldResult result;
-            
-            EventSelectionHisto event_histo_struct = BuildEventSelection_Histo(node_event, cfg);
+            // First Event Loop on MonteCarlo sample.
+            UnfoldDensities density = CreateUnfoldDensity(resp_histo, tag);
 
-            // Signal Fitter - Second Event Loop on data
+            // Event selection -> filtered histograms
+            EventSelectionHisto event_histo_struct = BuildEventSelection_Histo(node_event, cfg);
 
             std::unique_ptr<TH1D> event_histo;
 
@@ -352,11 +369,14 @@ int main(int argc, char* argv[]) {
             
             } else if (cfg.unfold.bkg_subtraction == true){
                 std::cout << "Initializing Unfold procedure with BKG substraction fit." << std::endl;
-                event_histo = EventFit_SignalHisto_Wrapper(event_histo_struct, cfg);
+
+                // Second event loop on Event/DATA sample.
+                event_histo = EventFit_SignalHisto_Wrapper(event_histo_struct, cfg, tag);
             
             } else {
                 std::cout << "Initializing Standard Unfold procedure." << std::endl;
 
+                // Second event loop on Event/DATA sample.
                 if (tag == "pt") {
                     event_histo.reset(event_histo_struct.h1_pt.GetPtr());
                 } else if (tag == "y") {
@@ -366,27 +386,25 @@ int main(int argc, char* argv[]) {
                 }
             }
             
-            // Old method
-            //EventHisto event_histo = BuildEventHisto(node_event, cfg);
-
+            UnfoldResult result;
             if (tag == "pt") {
                 result = ApplyUnfold(std::move(density.pt_unf), event_histo.get(), resp_histo.h1_pt_test.GetPtr(), 
-                resp_histo.h1_pt_fake.GetPtr(), cfg, "Pt_Z0");
+                resp_histo.h1_pt_fake.GetPtr(), cfg, tag);
             
             } else if (tag == "y") {
                 result = ApplyUnfold(std::move(density.y_unf), event_histo.get(), resp_histo.h1_y_test.GetPtr(), 
-                resp_histo.h1_y_fake.GetPtr(), cfg, "Y_Z0");
+                resp_histo.h1_y_fake.GetPtr(), cfg, tag);
             
             } else if (tag == "phis") {
                 result = ApplyUnfold(std::move(density.phis_unf), event_histo.get(), resp_histo.h1_phis_test.GetPtr(),
-                resp_histo.h1_phis_fake.GetPtr(), cfg, "Phis_Z0");
+                resp_histo.h1_phis_fake.GetPtr(), cfg, tag);
             
             } else {
                 std::cout << "ERROR: invalid unfold quantity input, exiting..." << std::endl;
                 return 1;
             }
 
-            if (visualize && app != nullptr) {
+            if (visualize && (app != nullptr)) {
                 int check = VisualizeUnfoldResults(canvas, result, resp_histo, tag);
                 
                 if (check != 0) {
@@ -406,18 +424,19 @@ int main(int argc, char* argv[]) {
             return 0;
 
         } else if (cfg.analysis.analysis_mode == "Event") {
+            const std::string tag = cfg.event.event_quantity; 
             std::vector<std::unique_ptr<TCanvas>> canvas;
 
             // DATA DATASET
             ROOT::RDataFrame data_frame("DATA_Event_Tree", cfg.selection.o_sel_file_data);
             ROOT::RDF::RNode node_event = data_frame;
+            
             EventSelectionHisto event_histo_struct = BuildEventSelection_Histo(node_event, cfg);
 
-            std::unique_ptr<TH1D> event_histo = EventFit_SignalHisto_Wrapper(event_histo_struct, cfg);
-            std::string tag = cfg.event.event_quantity;
+            std::unique_ptr<TH1D> event_histo = EventFit_SignalHisto_Wrapper(event_histo_struct, cfg, tag);
             TH1D* histo_ev;
 
-            if (visualize && app != nullptr) {                
+            if (visualize && (app != nullptr)) {                
                 if (tag == "pt") {
                     histo_ev = event_histo_struct.h1_pt.GetPtr();
                 } else if (tag == "y") {
@@ -445,6 +464,12 @@ int main(int argc, char* argv[]) {
         
                 histo->SetLineColor(kRed);
                 histo->SetLineWidth(2);
+
+                histo_ev->Scale(1, "width");
+                histo->Scale(1, "width");
+
+                histo_ev->Scale(1.0 / histo_ev->Integral("width"));
+                histo->Scale(1.0 / histo->Integral("width"));
 
                 double max_val = std::max(histo_ev->GetMaximum(), histo->GetMaximum());
                 histo_ev->SetMaximum(max_val * 1.25);

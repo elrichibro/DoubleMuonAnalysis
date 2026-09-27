@@ -66,9 +66,9 @@ RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct&
     int n_reco_phis = static_cast<int>(reco_bins_phis.size()) - 1;
     int n_gen_phis  = static_cast<int>(gen_bins_phis.size()) - 1;
 
-    // ------------------
-    // Matched Histograms
-    // ------------------
+    // -----------------------
+    // Matched test Histograms
+    // -----------------------
 
     auto node_matched = node_unf.Filter("Matched");
     resp_histo.h1_pt_test = node_matched.Histo1D({"h_rec_pt_matched", "", n_reco_pt, reco_bins_pt.data()}, "Rec_Pt");
@@ -415,19 +415,39 @@ int VisualizeUnfoldResults(std::vector<std::unique_ptr<TCanvas>>& canvas, Unfold
     results.h1_out_unf->SetLineColor(kRed);
     results.h1_out_unf->SetMarkerColor(kRed);
     results.h1_out_unf->SetMarkerStyle(20);
-    results.h1_out_unf->Scale(1,"width");
-    results.h1_out_unf->Draw("E");
     results.h1_out_unf->SetStats(0);
 
     h_truth_GEN->SetLineColor(kBlue);
     h_truth_GEN->SetLineWidth(2);
-    h_truth_GEN->Scale(1,"width");
-    h_truth_GEN->Draw("HIST SAME");
     h_truth_GEN->SetStats(0);
 
+    results.h1_out_unf->Scale(1, "width");
+    h_truth_GEN->Scale(1, "width");
+
+    results.h1_out_unf->Scale(1.0 / results.h1_out_unf->Integral("width"));
+    h_truth_GEN->Scale(1.0 / h_truth_GEN->Integral("width"));
+
+    double max_unf = results.h1_out_unf->GetMaximum();
+    double max_gen = h_truth_GEN->GetMaximum();
+    double max_y   = std::max(max_unf, max_gen) * 1.20;
+
+    results.h1_out_unf->SetMaximum(max_y);
+    h_truth_GEN->SetMaximum(max_y);
+
+    results.h1_out_unf->SetMinimum(0);
+    h_truth_GEN->SetMinimum(0);
+
+    if (max_unf >= max_gen) {
+        results.h1_out_unf->Draw("E");
+        h_truth_GEN->Draw("HIST SAME");
+    } else {
+        h_truth_GEN->Draw("HIST");
+        results.h1_out_unf->Draw("E SAME");
+    }
+
     TLegend* leg = new TLegend(0.6, 0.7, 0.88, 0.88);
-    leg->AddEntry(results.h1_out_unf.get(), "Unfolded", "lep");
-    leg->AddEntry(h_truth_GEN, "MC Truth (gen)", "l");
+    leg->AddEntry(results.h1_out_unf.get(), "Unfolded DATA signal", "lep");
+    leg->AddEntry(h_truth_GEN, "MC signal (gen level)", "l");
     leg->Draw();
     
     // ----------------------------
@@ -482,6 +502,10 @@ int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMat
     //c1->SetLogz();
     histo_resp->Draw("TEXTS COLZ");
 
+    // ------------------
+    // Canvas 5 - Control
+    // ------------------
+
     std::string title_reco = tag + " reco [GeV]";
     std::string title_gen = tag + " gen [GeV]";
     histo_resp->GetXaxis()->SetTitle(title_reco.c_str());
@@ -525,6 +549,8 @@ int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMat
         h_stab->SetLineColor(6);
         h_stab->SetLineWidth(2);
         h_stab->SetStats(0);
+
+        // NO SCALING ?
 
         h_eff->Draw("HIST");
         h_pur->Draw("HIST SAME");
