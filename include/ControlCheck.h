@@ -42,6 +42,7 @@ std::vector<float> CalculateAcceptance(ROOT::RDF::RNode node, const std::string&
 // ----------
 
 struct ResolutionResults {
+    std::vector<double> central_value;
     std::vector<double> mean;
     std::vector<double> sigma;
     std::vector<int> events;

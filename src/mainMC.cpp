@@ -145,19 +145,22 @@ int main(int argc, char* argv[]) {
         if (app != nullptr) {                
             std::cout << "Starting Resolution visualization..." << std::endl;
             std::string tag = cfg.resolution.quantity;
-            
+
+            std::vector<double> central_value;
             std::vector<double> x_value;
             std::vector<double> y_value;
             std::vector<double> entries;
 
             int bins = resolution.mean.size();
 
+            central_value.reserve(bins);
             x_value.reserve(bins);
             y_value.reserve(bins);
             entries.reserve(bins);
 
             for (int i = 0; i < resolution.mean.size(); i++) {
                 if (resolution.events[i] > 1) {
+                    central_value.push_back(resolution.central_value[i]);
                     x_value.push_back(resolution.mean[i]);
                     y_value.push_back(resolution.sigma[i]);
                     entries.push_back(static_cast<double>(resolution.events[i]));
@@ -167,7 +170,7 @@ int main(int argc, char* argv[]) {
             TCanvas* canvas = new TCanvas(("c_res_" + tag).c_str(), ("Resolution_ " + tag).c_str(), 800, 600);
             canvas->SetGrid();
 
-            auto graph = std::make_unique<TGraph>(x_value.size(), x_value.data(), y_value.data());
+            auto graph = std::make_unique<TGraph>(central_value.size(), central_value.data(), y_value.data());
             
             std::string axis = (tag == "pt") ? ";Mean P_t [GeV];#sigma P_t [GeV]" : ";Mean;Sigma";
             std::string title = "Resolution " + tag + axis;

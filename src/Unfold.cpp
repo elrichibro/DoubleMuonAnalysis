@@ -309,7 +309,7 @@ UnfoldResult ApplyUnfold(std::unique_ptr<TUnfoldDensity> density, TH1D* event_hi
     // Starting the Second Event Loop on DATA !
     
     // Subtracting fake background
-    //results.unf_density->SubtractBackground(fake_histo, "Fake signal", 1.0, 0.05);
+    results.unf_density->SubtractBackground(fake_histo, "Fake signal", 1.0, 0.05);
     
     TGraph *lc = nullptr;
     TSpline *sx = nullptr;
