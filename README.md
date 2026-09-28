@@ -1,11 +1,11 @@
-### DoubleMuonAnalysis
+# DoubleMuonAnalysis
 This program uses ROOT's RDataFrame to analyze a CMS OpenData DoubleMuone dataset and eventually provide the differential cross section of the Z0 boson decaying in mu+ mu- as a function of p_t, a special angular variable phi* and the rapidity.
 
 This is my final project for the Computing Methods for Experimental Physics exam at University of Pisa, started the 15/08/2026.
 
 ---
 
-## General options
+# General options
 To obtain the differential cross section several steps must be followed to tune the analysis parameters. The program works on two datasets: reconstructed experiment data and simulated MonteCarlo data. It's important to follow the specific combinations of these two datasets acording to the operation modes.
 The workflow is:
 - Selection of the 'interest' data.
@@ -14,7 +14,7 @@ The workflow is:
 
 ---
 
-## Prerequisites and Dependencies
+# Prerequisites and Dependencies
 - **C++17 Compiler**
 - **CMake**: minimum version required 3.14
 - **ROOT**: with the following components:
@@ -34,7 +34,7 @@ The workflow is:
 
 ---
 
-## Installation and usage
+# Installation and usage
 The user must have 'git' packet in his pc. The first step is to copy the repo into the user device.
 
 ```bash
@@ -52,16 +52,16 @@ Then the following command starts the program with the JSON file configuration s
 ./analyze_mc ../config.json $[options]
 ```
 
-# Command options:
+## Command options:
 
 - **-v, --verbose** : Enable verbose output (prints event loops progress, debug info).
 - **-c, --control** : Enables only the verbose of the configuration setup.
 - **-vis, --visualize** : Enable visualization through TApplication.
 
-## Data setup:
+# Data setup:
 To run the program, the required datasets must be linked (online data mode) throght a txt file or locally downloaded (local data mode) from the server.
 
-# Online Mode (Recommended)
+## Online Mode (recommended)
 This mode streams data directly from the CERN OpenData servers via network protocols, avoiding large local downloads. Instead of downloading full ROOT files, download the file index (`.txt`):
 
 - **Experiment data**:
@@ -85,7 +85,7 @@ Then, on the project directory move the **.txt** files into the data directory a
   }
 ```
 ---
-# Local Mode
+## Local Mode
 Use this option if you prefer to store ROOT files directly on your local pc.
 
 - **Experiment data**:
@@ -114,7 +114,7 @@ Then, in the project directory move the downloaded **.root** files into the data
 The complete dataset (DATA + MC) is at least 150 GB of size. Two input strategies are supported in this code:
 
 1. Download two individual data packages (1 DATA, 1 MC  2GB each) and store them within the 'data' directory.
-2. Use the stream of the OpeData server and use the entire dataset directly. Analysis times in this case depends on the enthernet connection.
+2. Use the stream of the OpeData server and use the entire dataset directly. Analysis times in this case depends on the enthernet connection. (recommended)
 
 To maximize the computational efficiency of the analysis, the selection mode filters the usless quantities, reducing the dataset size to approx 500 MB. The output path is configurable via the JSON file.
 
@@ -338,33 +338,76 @@ Custom setup:
 
 ---
 
-# 
+# Operation mode: Analysis
+The Analysis mode offers two sub-modes: **Unfold** and **Event**.
 
+- **Unfold**: Calculates the response matrix, and unflol the input signal yield to extract the final differential cross section.
+- **Event**: Performs signal fit on the data to obtain signal yields before feeding it into the unfolding procedure.
 
+```json
+  "analysis": {
+    "analysis_mode":"",
+    "o_fit_file":"../output/risultati_fit.root"
+  }
+```
+- **analysis_mode**: 'Unfold' or 'Event'
+- **o_fit_file**: analysis output file path. (currently not used)
 
-## Physics logic:
+## Event:
+This options is used to check the fit procedure where the background is subtrancted from the signal yield. 
 
-- Muon track reconstruction: (flag)
-    - Standalone-muon tracks
-    - Tracker muon tracks (X)
-    - Global muon tracks (X)
-- Muon identification: (flag)
-    - Loose muon ID
-    - Medium muon ID (?)
-    - Tight muon ID (X)
-    - Soft muon ID
-    - High momentum muon ID
-- Muon isolation: (95% efficiency) (cuts)
-    - PF isolation: Delta R < 0.4 -> R_iso < 0.15
-    - Track based isolation: Delta R < 0.3 -> R_iso < 0.05
+This yield is used to build the input histogram tofor the unfolding density matrix, the initializing the 
+unfolding procedure. 
+
+The fit procedure is based on RooFit workframe and this steps can be slow depending on the minimization(hardcoded) options.
+
+```json
+  "event": {
+    "event_quantity":"",
+    "o_event_file":"../output/event_fit.root",
+    "save_fit_plots":false
+  }
+```
+
+- **event_quantity**: Kinematical quantity to fit: 'pt', 'y' or 'phis'.
+- **o_event_file**: Output file path.
+- **save_fit_plots**: Flag that enables saving plots. Should be set to 'false' if unfold analysis option is used.
+
+## Unfold: 
+This step is crucial for the analysis results. A good pre-analysis phase for bining tuning should me done. 
+```json
+"unfold":{
+  "unfold_quantity": "",
+  "check_plot":false,
+  "use_custom_bins":true,
+  "closure_test":false,
+  "bkg_subtraction":false,
+}
+```
+
+- **unfold_quantity**: Unfolded quantity, can be 'pt', 'y' or 'phis'.
+- **check_plot**: Only used in pre-analysis step.
+- **use_custom_bins**: Enables custom binning (recommended).
+- **closure_test**: Enables the closure test that fix as unfold input the MonteCarlo reconstructed muon signal (used for Response matrix generation). So the perfect match between MC generated and Unfolding output is expected.
+- **bkg_subtraction**: Enables the bkg subtraction throught fit procedure.
+
+### Regularization
+The LScan method is used withing the unfolding procedure to find the best regularization parameter value(tau). The setup options for the minimization procedure are:
+
+```json
+"l_scan":{
+  "n_iter": 100,
+  "tau_min":0.0,
+  "tau_max":0.0
+}
+```
+
+- **n_iter**: Number of minimization iterations.
+- **tau_min**: Minimum tau value. 
+- **tau_max**: Maximum tau value.
+
+If tau_min == tau_max then the algorithm sets the optimal search range. 
 
 ---
-
-## Event Selection -> Fiducial Region
-
-- p_T > 25 GeV
-- |eta| < 2.4
-- 60 GeV < m_{mu+mu-} < 120 GeV
-
 
 This project will be under active development for the August and September months.
