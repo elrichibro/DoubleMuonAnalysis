@@ -145,6 +145,7 @@ ResolutionResults CalculateResolution(ROOT::RDF::RNode node, const config_struct
 
     // Initializing struct
     ResolutionResults result;
+    result.central_value.resize(n_bins);
     result.mean.resize(n_bins);
     result.sigma.resize(n_bins);
     result.events.resize(n_bins);
@@ -173,8 +174,9 @@ ResolutionResults CalculateResolution(ROOT::RDF::RNode node, const config_struct
 
     // For each bin content
     for (int j = 0; j < n_bins; j++) {
-        const auto& bin = bin_buffers[j];
+        result.central_value[j] = (vector_bins[j] + vector_bins[j +1 ]) / 2.0;
         
+        const auto& bin = bin_buffers[j];
         int entries = bin.size();
         result.events[j] = entries;
 
