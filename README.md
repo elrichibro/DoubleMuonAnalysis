@@ -196,7 +196,9 @@ This configuration, as explained, opens a stream to the OpenData server and filt
 The following pre-analysis operation modes are available in the framework:
 
 ---
-- Acceptance operation mode: Processes the unfiltered Monte Carlo dataset to compute the detector geometrical efficiency. Using generator-level events (Z -> \mu+\mu-), it calculates the fraction of reconstructible events  from all generated ones that pass the matching condition and the fiducial kinematical cuts.
+
+## Acceptance operation mode:
+Processes the unfiltered Monte Carlo dataset to compute the detector geometrical efficiency. Using generator-level events (Z -> \mu+\mu-), it calculates the fraction of reconstructible events  from all generated ones that pass the matching condition and the fiducial kinematical cuts.
 
   ```json
   "general": { 
@@ -227,8 +229,11 @@ The following pre-analysis operation modes are available in the framework:
     "dataset":"MC"
   }
   ```
+
 ---
-- Resolution Mode: Uses the selected Response Matrix dataset (local or online) to determine the experimental resolution. Using the matched flag, that is true only when the two generated muons match the reconstructed muons and satisfy all kinematic selection. Using fine binning at the generator level, it extracts the relative reconstructed distributions for each bin to study how detector resolution varies(p_t, |y| and phi*).
+
+## Resolution operation mode: 
+Uses the selected Response Matrix dataset (local or online) to determine the experimental resolution. Using the matched flag, that is true only when the two generated muons match the reconstructed muons and satisfy all kinematic selection. Using fine binning at the generator level, it extracts the relative reconstructed distributions for each bin to study how detector resolution varies(p_t, |y| and phi*).
   
   ```json
   "general": { 
@@ -272,7 +277,8 @@ The following pre-analysis operation modes are available in the framework:
 
 ---
 
-- Unfolding -> Control Histograms Mode: Computes efficiency, purity, and stability for each bins configuration. This mode is usefull to select a propper binning setup for unfolding procedure.
+## Unfolding -> Control Histograms Mode:
+Computes efficiency, purity, and stability for each bins configuration. This mode is usefull to select a propper binning setup for unfolding procedure.
 
   ```json
     "general": { 
@@ -308,7 +314,8 @@ The following pre-analysis operation modes are available in the framework:
   
 
 ---
-# Bins
+
+## Bins
 The bins are settable from:
   
 ```json
@@ -341,7 +348,7 @@ Custom setup:
 # Operation mode: Analysis
 The Analysis mode offers two sub-modes: **Unfold** and **Event**.
 
-- **Unfold**: Calculates the response matrix, and unflol the input signal yield to extract the final differential cross section.
+- **Unfold**: Calculates the response matrix, and unfold the input signal yield to extract the final differential cross section.
 - **Event**: Performs signal fit on the data to obtain signal yields before feeding it into the unfolding procedure.
 
 ```json
@@ -354,9 +361,9 @@ The Analysis mode offers two sub-modes: **Unfold** and **Event**.
 - **o_fit_file**: analysis output file path. (currently not used)
 
 ## Event:
-This options is used to check the fit procedure where the background is subtrancted from the signal yield. 
+This options is used to check the fit procedure, here the background is subtrancted from total yield. 
 
-This yield is used to build the input histogram tofor the unfolding density matrix, the initializing the 
+Then, the signal yield is used to build the input histogram tofor the unfolding density matrix, the initializing the 
 unfolding procedure. 
 
 The fit procedure is based on RooFit workframe and this steps can be slow depending on the minimization(hardcoded) options.
@@ -388,7 +395,7 @@ This step is crucial for the analysis results. A good pre-analysis phase for bin
 - **unfold_quantity**: Unfolded quantity, can be 'pt', 'y' or 'phis'.
 - **check_plot**: Only used in pre-analysis step.
 - **use_custom_bins**: Enables custom binning (recommended).
-- **closure_test**: Enables the closure test that fix as unfold input the MonteCarlo reconstructed muon signal (used for Response matrix generation). So the perfect match between MC generated and Unfolding output is expected.
+- **closure_test**: Enables the closure test that fix, as unfold input, the MonteCarlo reconstructed muon signal (used for Response matrix generation). So the perfect match between MC truth-level and Unfolding output is expected.
 - **bkg_subtraction**: Enables the bkg subtraction throught fit procedure.
 
 ### Regularization
@@ -408,6 +415,37 @@ The LScan method is used withing the unfolding procedure to find the best regula
 
 If tau_min == tau_max then the algorithm sets the optimal search range. 
 
+An example of final unfolding setup is:
+```json
+"analysis": {
+  "analysis_mode":"Unfold",
+  "o_fit_file":"../output/risultati_fit.root"
+},
+
+"unfold":{
+  "unfold_quantity": "y",
+  "check_plot":false,
+  "use_custom_bins":true,
+  "closure_test":false,
+  "bkg_subtraction":true,
+
+  "l_scan":{
+    "n_iter": 100,
+    "tau_min":0.0,
+    "tau_max":0.0
+  },
+  
+  "y_bins":{
+    "reco_bins":30,
+    "gen_bins":15,
+    "min":0.001,
+    "max":2.4,
+    "distribution":"linear",
+    "reco_vec":[0.001, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4],
+    "gen_vec":[0.001, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4]
+  }
+}
+```
 ---
 
 This project will be under active development for the August and September months.
