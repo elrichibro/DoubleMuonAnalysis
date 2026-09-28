@@ -12,7 +12,7 @@
 // General Configuration struct
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-/// @brief Stores general settup status
+/// @brief Stores general setup status
 struct general_config {
     std::string data_mode = "";
     std::string operation_mode = "";// Operation mode: Selection, Analysis, Acceptance, Resolution
@@ -39,12 +39,12 @@ struct io_config {
 // Modality options
 // ----------------
 
-/// @brief Acceptance settup struct
+/// @brief Acceptance setup struct
 struct acceptance_config {
     std::string dataset = "";// Dataset: MC
 };
 
-/// @brief Resolution settup struct
+/// @brief Resolution setup struct
 struct resolution_config {
     std::string quantity = "";// Resolution quantity
     int gen_bins = 0;// Number of fine bins for reconstruction process
@@ -52,7 +52,7 @@ struct resolution_config {
     double max = 0;// Max bin value
 };
 
-/// @brief Selection mode settup
+/// @brief Selection mode setup
 struct selection_config {
     std::string dataset = "";// Dataset: MC, DATA
     std::string selection_mode = "";// TagAndProbe or RespMatrix
@@ -65,7 +65,7 @@ struct selection_config {
     std::string o_sel_file_data = "";// Output file path for data
 };
 
-/// @brief Analysis mode settup config
+/// @brief Analysis mode setup config
 struct analysis_config {
     std::string analysis_mode = "";// Analysis mode: Unfold, Event
     std::string o_fit_file = "";// Analysis output file path
@@ -131,7 +131,7 @@ struct cuts_config {
 // Plots Info
 // ----------
 
-/// @brief Plot settup struct.
+/// @brief Plot setup struct.
 struct plot_config {
     std::string title_axis = "";// Plot title.
     float axis_min = 0.0f;// Plot min axis value.
@@ -139,7 +139,7 @@ struct plot_config {
     int nbins = 50;// Plot number of bins.
 };
 
-// Canvas settup struct.
+// Canvas setup struct.
 struct canvas_config {
     int width = 800;
     int height = 600; 

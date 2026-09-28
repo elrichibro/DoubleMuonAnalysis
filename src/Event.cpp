@@ -125,7 +125,7 @@ std::vector<std::unique_ptr<RooDataSet>> BuildEventFit_SignalModel(TTree* tree, 
         return container;    
     }
 
-    // Bins settup
+    // Bins setup
     if (tag == "pt") {
         const auto& pt = cfg.unfold.pt_bins;    
         vector_bins = (cfg.unfold.use_custom_bins) ? pt.reco_vec : CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution);
@@ -426,7 +426,7 @@ std::unique_ptr<TH1D> BuildFitResult_Histo(const std::vector<EventFitResult>& re
     
     std::vector<double> vector_bins;
 
-    // Bins settup
+    // Bins setup
     if (tag == "pt") {
         const auto& pt = cfg.unfold.pt_bins;    
         vector_bins = (cfg.unfold.use_custom_bins) ? pt.reco_vec : CreateBins(pt.reco_bins, pt.min, pt.max, pt.distribution);

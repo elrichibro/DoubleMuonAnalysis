@@ -272,7 +272,7 @@ void Verbose_config(const config_struct& value) {
     // Acceptance
     // ----------
     
-    std::cout << "Acceptance settup:" << std::endl;
+    std::cout << "Acceptance setup:" << std::endl;
     std::cout << "" << std::endl;
 
     std::cout << "    Dataset: " << value.acceptance.dataset << std::endl;
@@ -285,7 +285,7 @@ void Verbose_config(const config_struct& value) {
     // Resolution
     // ----------
 
-    std::cout << "Resolution settup:" << std::endl;
+    std::cout << "Resolution setup:" << std::endl;
     std::cout << "" << std::endl;
     
     std::cout << "    Quantity: " << value.resolution.quantity << std::endl;
@@ -301,7 +301,7 @@ void Verbose_config(const config_struct& value) {
     // Selection
     // ---------
 
-    std::cout << "Selection settup:" << std::endl;
+    std::cout << "Selection setup:" << std::endl;
     std::cout << "" << std::endl;
 
     std::cout << "    Dataset: " << value.selection.dataset << std::endl;
@@ -320,7 +320,7 @@ void Verbose_config(const config_struct& value) {
     // Analysis
     // --------
 
-    std::cout << "Analysis settup:" << std::endl;
+    std::cout << "Analysis setup:" << std::endl;
     std::cout << "" << std::endl;
 
     std::cout << "    Analysis Mode: " << value.analysis.analysis_mode << std::endl;
@@ -334,7 +334,7 @@ void Verbose_config(const config_struct& value) {
     // Unfold
     // ------
 
-    std::cout << "    Unfold settup: " << std::endl;
+    std::cout << "    Unfold setup: " << std::endl;
 
     std::cout << "" << std::endl;
 
@@ -427,7 +427,7 @@ void Verbose_config(const config_struct& value) {
     std::cout << "--------------------------------------------------------------------" << std::endl;
     std::cout << "" << std::endl;
 
-    std::cout << "    Event Fit settup: " << std::endl;
+    std::cout << "    Event Fit setup: " << std::endl;
     std::cout << "        Event quantity fit: " << value.event.event_quantity << std::endl;
     std::cout << "        Event Output file path: " << value.event.o_event_file << std::endl;
     std::cout << "        Save fit plots: " << value.event.save_fit_plots << std::endl;

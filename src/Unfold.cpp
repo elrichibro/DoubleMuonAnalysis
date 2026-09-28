@@ -34,7 +34,7 @@ RespMatrixHisto BuildRespMatrixHisto(ROOT::RDF::RNode node, const config_struct&
     const auto& y = cfg.unfold.y_bins;
     const auto& phis = cfg.unfold.phis_bins;
 
-    // Selection between custom/CreateBins bins -> JSON settup
+    // Selection between custom/CreateBins bins -> JSON setup
 
     // -----
     // Pt_Z0

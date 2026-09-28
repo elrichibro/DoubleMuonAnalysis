@@ -13,19 +13,101 @@ The workflow is:
 - Analysis procedure: unfold, event selection, cross section final calculus. 
 
 ---
-## Usage
 
-The program is entirely commanded by a JSON configuration file. 
-To run the analysis, use the following syntax:
+## Prerequisites and Dependencies
+- **C++17 Compiler**
+- **CMake**: minimum version required 3.14
+- **ROOT**: with the following components:
+  - *ROOTDataFrame*
+  - *Core*
+  - *Hist*
+  - *Tree*
+  - *RIO*
+  - *MathCore*
+  - *RooFit*
+  - *RooFitCore*
+  - *Minuit*
+  - *Unfold*
+- **nlohmann_json**
+- **Doxygen**: only for documentation
+- **GoogleTest**: only for testing
 
-./analyse_mc <path/to/config.json> [options]
+---
+
+## Installation and usage
+The user must have 'git' packet in his pc. The first step is to copy the repo into the user device.
+
+```bash
+$ git clone https://github.com/elrichibro/DoubleMuonAnalysis.git
+$ cd DoubleMuonAnalysis
+$ mkdir build 
+$ cd build
+$ cmake ..
+$ make -j$(nproc)
+```
+
+Then the following command starts the program with the JSON file configuration setup:
+
+```bash
+./analyze_mc ../config.json $[options]
+```
 
 # Command options:
 
 - **-v, --verbose** : Enable verbose output (prints event loops progress, debug info).
-- **-c, --control** : Enables only the verbose of the configuration settup.
+- **-c, --control** : Enables only the verbose of the configuration setup.
 - **-vis, --visualize** : Enable visualization through TApplication.
 
+## Data setup:
+To run the program, the required datasets must be linked (online data mode) throght a txt file or locally downloaded (local data mode) from the server.
+
+# Online Mode (Recommended)
+This mode streams data directly from the CERN OpenData servers via network protocols, avoiding large local downloads. Instead of downloading full ROOT files, download the file index (`.txt`):
+
+- **Experiment data**:
+  - Go to https://opendata.cern.ch/record/30555, click on **Download index** and save the **.txt** format file.
+  - Download the validation JSON file (11.4 KiB) from https://opendata.cern.ch/record/14220.
+
+- **MonteCarlo data**:
+  - Go to https://opendata.cern.ch/record/35671, click on **Download index** and save the **.txt** format file. 
+
+Then, on the project directory move the **.txt** files into the data directory and link them throught the JSON configuration file. Example:
+
+```json
+  "io": {
+    "tree_data_name":"Events",
+    "in_data_file":"",
+    "in_online_data_file":"../data/CMS_Run2016H_DoubleMuon_NANOAOD_UL2016_MiniAODv2_NanoAODv9-v1_2510000_file_index.txt",
+    "tree_mc_name":"Events",
+    "in_mc_file":"",
+    "in_online_mc_file":"../data/CMS_mc_RunIISummer20UL16NanoAODv9_DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8_NANOAODSIM_106X_mcRun2_asymptotic_v17-v1_40000_file_index.txt",
+    "val_file":"../data/validation_muon_run.json"
+  }
+```
+---
+# Local Mode
+Use this option if you prefer to store ROOT files directly on your local pc.
+
+- **Experiment data**:
+  - Go to https://opendata.cern.ch/record/30555, open the **List of files** and download one **.root** dataset file.
+  - Download the luminosity validation JSON file (11.4 KiB) from https://opendata.cern.ch/record/14220.
+
+- **MonteCarlo data**:  
+  - Go to https://opendata.cern.ch/record/35671, open the **List of files** and download one **.root** dataset file.
+
+Then, in the project directory move the downloaded **.root** files into the data directory and link them throught the JSON configuration file.Example:
+
+```json
+  "io": {
+    "tree_data_name":"Events",
+    "in_data_file":"../data/dati0.root",
+    "in_online_data_file":"",
+    "tree_mc_name":"Events",
+    "in_mc_file":"../data/dati0MC.root",
+    "in_online_mc_file":"",
+    "val_file":"../data/validation_muon_run.json"
+  }
+```
 ---
 
 # Operation Mode: Selection
@@ -108,10 +190,12 @@ An example can be:
 This configuration, as explained, opens a stream to the OpenData server and filters the entire MonteCarlo dataset reducing its size, saving it into '../output/selection_data.root' in a TTree (ttree name hardcoded). 
 
 ---
+
 # Operation Mode: Pre-analysis
 
 The following pre-analysis operation modes are available in the framework:
 
+---
 - Acceptance operation mode: Processes the unfiltered Monte Carlo dataset to compute the detector geometrical efficiency. Using generator-level events (Z -> \mu+\mu-), it calculates the fraction of reconstructible events  from all generated ones that pass the matching condition and the fiducial kinematical cuts.
 
   ```json
@@ -143,7 +227,7 @@ The following pre-analysis operation modes are available in the framework:
     "dataset":"MC"
   }
   ```
-
+---
 - Resolution Mode: Uses the selected Response Matrix dataset (local or online) to determine the experimental resolution. Using the matched flag, that is true only when the two generated muons match the reconstructed muons and satisfy all kinematic selection. Using fine binning at the generator level, it extracts the relative reconstructed distributions for each bin to study how detector resolution varies(p_t, |y| and phi*).
   
   ```json
@@ -156,7 +240,7 @@ The following pre-analysis operation modes are available in the framework:
   - **data_mode** : 'online' or 'local' is avaible
   - **operation_mode**: 'Resolution' is required.
 
-```json
+  ```json
   "resolution":{
     "quantity":"phis",
     "gen_bins":10,
@@ -184,9 +268,11 @@ The following pre-analysis operation modes are available in the framework:
     "max":200
   }
   ```
-  This settup creates a generated grid of 1000 bins and plots the Standard deviation as a function of the generated central value.
+  This setup creates a generated grid of 1000 bins and plots the Standard deviation as a function of the generated central value.
 
-- Unfolding -> Control Histograms Mode: Computes efficiency, purity, and stability for each bins configuration. This mode is usefull to select a propper binning settup for unfolding procedure.
+---
+
+- Unfolding -> Control Histograms Mode: Computes efficiency, purity, and stability for each bins configuration. This mode is usefull to select a propper binning setup for unfolding procedure.
 
   ```json
     "general": { 
@@ -216,9 +302,9 @@ The following pre-analysis operation modes are available in the framework:
   }
   ```
 
-    - **unfold_quantity** : 'pt', 'y' and 'phis' quantities are avaible.
-    - **check_plot**: 'true' enables the control plots option.
-    - **use_custom_bins**: 'true' uses the custom bins settable directly by JSON file input. And 'false' sets the bins from CreateBins method.
+  - **unfold_quantity** : 'pt', 'y' and 'phis' quantities are avaible.
+  - **check_plot**: 'true' enables the control plots option.
+  - **use_custom_bins**: 'true' uses the custom bins settable directly by JSON file input. And 'false' sets the bins from CreateBins method.
   
 
 ---
@@ -237,7 +323,7 @@ The bins are settable from:
 },
 ```
 
-Non custom settup:
+Non custom setup:
 
 - **reco_bins**: Sets the reconstructed bins number.
 - **gen_bins**: Sets the generated bins number.
@@ -245,32 +331,16 @@ Non custom settup:
 - **max**: Sets the maximum bin value.
 - **distribution**: Distribution of the bins along the axis.
 
-Custom settup:
+Custom setup:
 
 - **reco_vec**: Bins vector of reconstructed quantity.
 - **gen_vec**: Bins vector of generated quantity.
 
-# Run Commands
-
-cmake ..
-make -j(n proc)
-
-./analyse_mc <path/to/config.json> [options]
-
 ---
 
-## JSON file (config.json)
+# 
 
-The config.json file controls all the parameters of the analysis, from I/O paths to physics cuts, allowing the modification the analysis without recompiling the project.
 
-- General:
-- Input/Output:
-- Flags:
-- Cuts:
-- Plots:
-- Analysis:
-
----
 
 ## Physics logic:
 

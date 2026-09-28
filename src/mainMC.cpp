@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (control) {
-        std::cout << "Control config settup done, exiting." << std::endl;
+        std::cout << "Control config setup done, exiting." << std::endl;
         return 0;
     }
 
@@ -246,7 +246,7 @@ int main(int argc, char* argv[]) {
             
             if (cfg.selection.selection_mode.find("RespMatrix") != std::string::npos) {
                 if (cfg.selection.dataset == "DATA") {
-                    std::cout << "ERROR: invalid Selection dataset for Response Matrix Calculus, pls select 'MC' dataset in Selection settup, exiting..."
+                    std::cout << "ERROR: invalid Selection dataset for Response Matrix Calculus, pls select 'MC' dataset in Selection setup, exiting..."
                      << std::endl;
                     return 1; 
                 }
