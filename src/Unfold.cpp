@@ -258,7 +258,7 @@ ControlHisto BuildControlHisto(ROOT::RDF::RNode node, const config_struct& cfg) 
 
     // Histogram creation
     control_histo.h1_Eff_pt = CreateHistogrm(h_matched_pt, h_eff_den_pt, "h1_Eff_pt", "Efficiency; Gen_Pt_Z0 [GeV]; Efficiency");
-    control_histo.h1_Pur_pt = CreateHistogrm(h_pur_num_pt,h_pur_den_pt, "h1_Pur_pt", "Purity; Rec_Pt_Z0 [GeV]; Purity");
+    control_histo.h1_Pur_pt = CreateHistogrm(h_pur_num_pt, h_pur_den_pt, "h1_Pur_pt", "Purity; Rec_Pt_Z0 [GeV]; Purity");
     control_histo.h1_Stab_pt = CreateHistogrm(h_stab_num_pt, h_matched_pt, "h1_Stab_pt", "Stability; Gen_Pt_Z0 [GeV]; Stability");
 
     control_histo.h1_Eff_y = CreateHistogrm(h_matched_y, h_eff_den_y, "h1_Eff_y", "Efficiency; Gen_Y_Z0; Efficiency");
@@ -437,17 +437,30 @@ int VisualizeUnfoldResults(std::vector<std::unique_ptr<TCanvas>>& canvas, Unfold
     results.h1_out_unf->SetMinimum(0);
     h_truth_GEN->SetMinimum(0);
 
-    if (max_unf >= max_gen) {
-        results.h1_out_unf->Draw("E");
-        h_truth_GEN->Draw("HIST SAME");
+    results.h1_out_unf->Draw("E");
+    h_truth_GEN->Draw("HIST SAME");
+
+    if (tag == "pt") {
+        results.h1_out_unf->GetXaxis()->SetTitle("p_{t} [GeV]");
+        results.h1_out_unf->GetYaxis()->SetTitle("p_{t} pdf");
+    } else if (tag == "y") {
+        results.h1_out_unf->GetXaxis()->SetTitle("|y^{Z}|");
+        results.h1_out_unf->GetYaxis()->SetTitle("|y^{Z}| pdf");
+    } else if (tag == "phis") {
+        results.h1_out_unf->GetXaxis()->SetTitle("#phi_{#eta}^{*}");
+        results.h1_out_unf->GetYaxis()->SetTitle("#phi_{#eta}^{*} pdf");
     } else {
-        h_truth_GEN->Draw("HIST");
-        results.h1_out_unf->Draw("E SAME");
+        std::cout << "ERROR: invalid input tag, pls insert 'pt', 'y' or 'phis', exiting..." << std::endl;
+        return 1;
     }
 
     TLegend* leg = new TLegend(0.6, 0.7, 0.88, 0.88);
     leg->AddEntry(results.h1_out_unf.get(), "Unfolded DATA signal", "lep");
     leg->AddEntry(h_truth_GEN, "MC signal (gen level)", "l");
+    leg->AddEntry((TObject*)0, Form("#tau: %.3e", results.tau), "");
+    leg->AddEntry((TObject*)0, Form("Ndf: %d", results.ndf), "");
+    leg->AddEntry((TObject*)0, Form("chi2A: %.3f", results.chi2A), "");
+    leg->AddEntry((TObject*)0, Form("chi2L: %.3f", results.chi2L), "");
     leg->Draw();
     
     // ----------------------------
@@ -504,7 +517,7 @@ int GetCrossSection(std::vector<std::unique_ptr<TCanvas>>& canvas, UnfoldResult&
         h_result->GetYaxis()->SetTitle("d#sigma/dy^{Z} [pb]");
     } else if (tag == "phis") {
         h_result->GetXaxis()->SetTitle("#phi_{#eta}^{*}");
-        h_result->GetYaxis()->SetTitle("d#sigma/d #phi_{#eta}^{*} [pb]");
+        h_result->GetYaxis()->SetTitle("d#sigma/d#phi_{#eta}^{*} [pb]");
     } else {
         std::cout << "ERROR: invalid input tag, pls insert 'pt', 'y' or 'phis', exiting..." << std::endl;
         return 1;
@@ -522,6 +535,10 @@ int GetCrossSection(std::vector<std::unique_ptr<TCanvas>>& canvas, UnfoldResult&
 
     TLegend* leg = new TLegend(0.6, 0.7, 0.88, 0.88);
     leg->AddEntry(h_result, "Data", "lep");
+    leg->AddEntry((TObject*)0, Form("#tau: %.3e", results.tau), "");
+    leg->AddEntry((TObject*)0, Form("Ndf: %d", results.ndf), "");
+    leg->AddEntry((TObject*)0, Form("chi2A: %.3f", results.chi2A), "");
+    leg->AddEntry((TObject*)0, Form("chi2L: %.3f", results.chi2L), "");
     leg->Draw();
 
     canvas.push_back(std::move(c0));
@@ -553,8 +570,7 @@ int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMat
         return 1;
     }
 
-    //c1->SetLogz();
-    histo_resp->Draw("TEXTS COLZ");
+    histo_resp->Draw("COLZ");
 
     // ------------------
     // Canvas 5 - Control
@@ -562,6 +578,15 @@ int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMat
 
     std::string title_reco = tag + " reco [GeV]";
     std::string title_gen = tag + " gen [GeV]";
+
+    if (tag == "pt") {
+        title_reco = tag + " reco [GeV]";
+        title_gen = tag + " gen [GeV]";    
+    } else {
+        title_reco = tag + " reco";
+        title_gen = tag + " gen";   
+    }
+
     histo_resp->GetXaxis()->SetTitle(title_reco.c_str());
     histo_resp->GetYaxis()->SetTitle(title_gen.c_str());
     
@@ -595,6 +620,8 @@ int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMat
         h_eff->SetMinimum(0.0);
         h_eff->SetMaximum(1.15);
         h_eff->SetStats(0);
+        h_eff->GetYaxis()->SetTitle(("Efficiency/Purity/Stability_" + tag).c_str());
+        h_eff->GetXaxis()->SetTitle((tag).c_str());
 
         h_pur->SetLineColor(kBlue);
         h_pur->SetLineWidth(2);
@@ -603,8 +630,6 @@ int VisualizeControlPlots(std::vector<std::unique_ptr<TCanvas>>& canvas, RespMat
         h_stab->SetLineColor(6);
         h_stab->SetLineWidth(2);
         h_stab->SetStats(0);
-
-        // NO SCALING ?
 
         h_eff->Draw("HIST");
         h_pur->Draw("HIST SAME");

@@ -83,11 +83,6 @@ struct EventFitResult {
     int fit_status;// Fit status -> 0 = success
 };
 
-/// @param h_mll Histogram -> Binned data for input.
-/// @param o_dir Output directory.
-/// @param tag Identifies the ortogonal quantity.
-/// @return Returns a struct containing the fit results.
-
 /// @brief Fits binned data with a signal model obtained from MC unbinned data. Saves the fit results and the plot with residuals into the output Event file.
 /// @param bin_idx Bin index of P_t, Y, Phis*.
 /// @param h_mll Histogram -> Binned data for input.
@@ -98,12 +93,6 @@ struct EventFitResult {
 /// @return A struct containing the fit results. Quantity of interest is the signal yield.
 EventFitResult EventSingleFit(int bin_idx, TH1D* h_mll, RooDataSet* d_mll_model, TH1D* h_mll_model, TDirectory* o_dir, const std::string& tag, 
     const bool save_plots, const bool local);
-
-/// @brief Wrapper for EventSingleFit that loops on all P_t, Y or Phi* bins.
-/// @param container Container for binned input data.
-/// @param o_dir Output directory.
-/// @param tag Identifies the ortogonal quantity.
-/// @return Returns all the Fit results.
 
 /// @brief Wrapper for EventSingleFit that loops on all P_t, Y or Phi* bins.
 /// @param container Input histograms container.
