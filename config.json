@@ -38,7 +38,7 @@
   },
   
   "analysis": {
-    "analysis_mode":"Unfold",
+    "analysis_mode":"Event",
     "o_fit_file":"../output/risultati_fit.root"
   },
 
@@ -95,9 +95,9 @@
     },
 
   "event": {
-    "event_quantity":"pt",
+    "event_quantity":"phis",
     "o_event_file":"../output/event_fit.root",
-    "save_fit_plots":false
+    "save_fit_plots":true
   },
 
   "flag_ES": {

@@ -63,7 +63,11 @@ Then the following command starts the program with the JSON file configuration s
 - **-vis, --visualize** : Enable visualization through TApplication.
 
 # Data setup:
-To run the program, the required datasets must be linked (online data mode) throght a txt file or locally downloaded (local data mode) from the server.
+To run the program, the required datasets must be linked (online data mode) throght a txt file or locally downloaded (local data mode) from the server. The user must create two folders for the input/output data.
+```bash
+mkdir data
+mkdir output
+```
 
 ## Online Mode (recommended)
 This mode streams data directly from the CERN OpenData servers via network protocols, avoiding large local downloads. Instead of downloading full ROOT files, download the file index (`.txt`):
