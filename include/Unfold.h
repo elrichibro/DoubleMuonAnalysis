@@ -132,8 +132,12 @@ const config_struct& cfg, const std::string& tag);
 /// @return 0 if succeds, else errore code.
 int VisualizeUnfoldResults(std::vector<std::unique_ptr<TCanvas>>& canvas, UnfoldResult& results, RespMatrixHisto& resp_histo,  const std::string& tag);   
 
+/// @brief Plots the final cross section
+/// @param canvas Canvas container for visualization option.
+/// @param results Unfold struct containing results.
+/// @param tag Unfolded quantity.
+/// @return 0 if success, else error code.
 int GetCrossSection(std::vector<std::unique_ptr<TCanvas>>& canvas, UnfoldResult& results, const std::string& tag);
-
 
 /// @brief Visualizes the control plots: Efficiency, Purity, Stability and Response matrix for optimization of the binning before the unfolding procedure.
 /// @param canvas Canvas container for visualization.

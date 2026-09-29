@@ -34,6 +34,10 @@ The workflow is:
 
 ---
 
+# DOCS
+https://elrichibro.github.io/DoubleMuonAnalysis/
+
+---
 # Installation and usage
 The user must have 'git' packet in his pc. The first step is to copy the repo into the user device.
 
@@ -84,6 +88,7 @@ Then, on the project directory move the **.txt** files into the data directory a
     "val_file":"../data/validation_muon_run.json"
   }
 ```
+
 ---
 ## Local Mode
 Use this option if you prefer to store ROOT files directly on your local pc.

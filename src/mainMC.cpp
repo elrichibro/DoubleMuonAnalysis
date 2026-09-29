@@ -172,7 +172,7 @@ int main(int argc, char* argv[]) {
 
             auto graph = std::make_unique<TGraph>(central_value.size(), central_value.data(), y_value.data());
             
-            std::string axis = (tag == "pt") ? ";Mean P_t [GeV];#sigma P_t [GeV]" : ";Mean;Sigma";
+            std::string axis = (tag == "pt") ? ";Central Gen value p_{t} [GeV];Std p_{t} [GeV]" : ";Central bin value;Std";
             std::string title = "Resolution " + tag + axis;
 
             graph->SetTitle(title.c_str());
